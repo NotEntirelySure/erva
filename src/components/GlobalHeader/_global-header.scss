@@ -1,0 +1,25 @@
+.globalHeader {
+    border: 2px solid grey;
+    display:flex;
+    justify-content:space-between;
+
+}
+.logoContainer {
+    height: auto;
+    padding: 0.5% 0% 0.5% 2%;
+
+    
+  }
+  .logoImage {
+      width: 25%;
+      height: auto;
+  }
+
+  .officeLogo {
+    width: 50%;
+    height: auto;
+    padding-right: 20px;
+  }
+
+  .searchBar {padding-top: 1.5%;}
+  .userAvatar{padding-right: 1%;}

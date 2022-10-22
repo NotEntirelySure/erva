@@ -1,0 +1,30 @@
+.pageHeading{
+  padding-top: 1%;
+  padding-bottom: 1%;
+  text-align: center;}
+
+  // .headingText{
+//   color: orange;
+//   font-weight: bold;
+// }
+
+.cardContainer {
+  padding-left: 2%;}
+.locationCard {
+  width: 350px;
+  
+}
+
+.cardImage {
+  width: 100%;
+  height: auto;
+  cursor: pointer;
+}
+
+.facilityAddress {
+  color: #5E6365;
+  text-transform: capitalize;
+  font-weight: bold;
+  font-size: large;
+  margin-bottom: 0px;
+}

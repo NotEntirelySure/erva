@@ -1,0 +1,61 @@
+{
+  "name": "erva",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@babel/preset-react": "^7.17.12",
+    "@carbon/icons-react": "^11.2.0",
+    "@mappedin/mappedin-js": "^4.0.20",
+    "@mappedin/react-native-sdk": "^4.0.20",
+    "@testing-library/jest-dom": "^5.16.4",
+    "@testing-library/react": "^13.1.1",
+    "@testing-library/user-event": "^13.5.0",
+    "antd": "^4.20.2",
+    "carbon-components": "^10.56.0",
+    "carbon-components-react": "^8.2.0",
+    "carbon-icons": "^7.0.7",
+    "jsonwebtoken": "^8.5.1",
+    "react": "^18.1.0",
+    "react-dom": "^18.1.0",
+    "react-native": "^0.68.2",
+    "react-native-sdk": "^1.0.0",
+    "react-native-webview": "^11.21.0",
+    "react-router": "^6.3.0",
+    "react-router-dom": "^6.3.0",
+    "react-script-tag": "^1.1.2",
+    "react-scripts": "5.0.1",
+    "sass": "^1.51.0",
+    "web-vitals": "^2.1.4"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "includePaths": [
+    "node_modules"
+  ],
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "description": "Building diagram management system",
+  "main": "index.js",
+  "author": "NotEntirelySure <72530241+NotEntirelySure@users.noreply.github.com>",
+  "license": "MIT"
+}
