@@ -1,28 +1,28 @@
+//allows access to .env file for environment variable declaration
+require('dotenv').config();
 const jwt = require("jsonwebtoken");
 const speakeasy = require("speakeasy");
 const QRCode = require('qrcode');
 const Pool = require('pg').Pool
 const pool = new Pool({
-  user: 'superuser',
-  host: 'localhost',
-  database: 'erva',
-  password: 'root',
-  port: 5432,
+  user: process.env.API_BASE_USER_ACCOUNT,
+  host: process.env.API_BASE_HOST_URL,
+  database: process.env.API_BASE_DATABASE_NAME,
+  password: process.env.API_BASE_DATABASE_PASSWORD,
+  port: process.env.API_BASE_PORT_NUMBER,
 });
 
-const encryptionKey = '_@3w-L2*=5SFhP}p29eyp*ll48Q0io[2'
-
-const login = (username, password, otp, jwtSecret) => {
+const login = (loginValues) => {
   return new Promise(async(resolve, reject) => { 
     try {
-      const secretRequest = await pool.query(`SELECT convert_from(decrypt(users_otp_key::bytea, '${encryptionKey}', 'aes'), 'SQL_ASCII') from users where users_email='${username.toLowerCase()}';`);
+      const secretRequest = await pool.query(`SELECT convert_from(decrypt(users_otp_key::bytea, '${process.env.DATABASE_PASSWORD_ENCRYPTION_KEY}', 'aes'), 'SQL_ASCII') from users where users_email='${loginValues.user.toLowerCase()}';`);
       if (secretRequest.rows.length === 0) {resolve({"error":401,"message":"authentication error"})}
       if (secretRequest.rows.length > 0) {
         
         const isVerified = speakeasy.totp.verify({
           secret:secretRequest.rows[0].convert_from,
           encoding: 'base32',
-          token:otp
+          token:loginValues.otp
         });
         
         if (isVerified) {
@@ -38,7 +38,7 @@ const login = (username, password, otp, jwtSecret) => {
               FROM users
               INNER JOIN accounttypes AS at
               ON users.users_fk_type=at.at_id
-              WHERE users_email='${username}' AND users_password=crypt('${password}', users_password);`
+              WHERE users_email='${loginValues.user}' AND users_password=crypt('${loginValues.pass}', users_password);`
             )
             if (userInfo.rowCount > 0) {
               if (userInfo.rows[0].users_enabled) {
@@ -50,7 +50,7 @@ const login = (username, password, otp, jwtSecret) => {
                   "email":userInfo.rows[0].users_email,
                   "type":userInfo.rows[0].at_name
                 }
-                const token = jwt.sign(payload, jwtSecret, {expiresIn: "1d"});
+                const token = jwt.sign(payload, process.env.JWT_SECRET_KEY, {expiresIn: "1d"});
                 resolve({"jwt":token});
               }
               if (userInfo.rows[0].users_enabled) {resolve({"error":401,"message":"account disabled"})}
@@ -67,12 +67,12 @@ const login = (username, password, otp, jwtSecret) => {
    }) 
 }
 
-const register = (fname, lname, email, password, otp, otpSecret) => {
+const register = (registrationValues) => {
   return new Promise(function(resolve, reject) {
     const isVerified = speakeasy.totp.verify({
-      secret: otpSecret,
+      secret: registrationValues.otpSecret,
       encoding: 'base32',
-      token: otp
+      token: registrationValues.otp
     });
     if (!isVerified) {resolve({"code":601,"message":"invalid OTP code"})}
     if (isVerified) {
@@ -89,16 +89,16 @@ const register = (fname, lname, email, password, otp, otpSecret) => {
           users_enabled
         )
         VALUES (
-          '${fname}',
-          '${lname}',
-          '${email.toLowerCase()}',
-          crypt('${password}', gen_salt('bf')),
+          '${registrationValues.fname}',
+          '${registrationValues.lname}',
+          '${registrationValues.email.toLowerCase()}',
+          crypt('${registrationValues.password}', gen_salt('bf')),
           (SELECT NOW()),
           2,
           4,
-          encrypt('${otpSecret}', '${encryptionKey}', 'aes'),
+          encrypt('${registrationValues.otpSecret}', '${process.env.DATABASE_PASSWORD_ENCRYPTION_KEY}', 'aes'),
           'true'
-        );`, (error, results) => {
+        );`, (error) => {
           if (error) {reject(error)}
           resolve({"code":200})
       })

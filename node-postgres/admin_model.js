@@ -1,17 +1,19 @@
+//allows access to .env file for environment variable declaration
+require('dotenv').config();
 const path = require('path');
 const fs = require("fs");
 const jwt = require("jsonwebtoken");
 const Pool = require('pg').Pool
 const pool = new Pool({
-  user: 'superuser',
-  host: 'localhost',
-  database: 'erva',
-  password: 'root',
-  port: 5432,
+  user: process.env.API_BASE_USER_ACCOUNT,
+  host: process.env.API_BASE_HOST_URL,
+  database: process.env.API_BASE_DATABASE_NAME,
+  password: process.env.API_BASE_DATABASE_PASSWORD,
+  port: process.env.API_BASE_PORT_NUMBER,
 });
 
 const getUsers = () => {
-  return new Promise(function(resolve, reject) {
+  return new Promise((resolve, reject) => {
     pool.query(`
       SELECT
         u.users_id,

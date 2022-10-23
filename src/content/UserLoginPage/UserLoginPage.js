@@ -86,7 +86,7 @@ const UserLoginPage = () => {
           />
         </Form>
       </Modal>
-      <GlobalHeader searchEnabled={false}/>
+      <GlobalHeader/>
       {loginSuccess ? <Navigate to="/userpage"/>:null}
       <div id='loginForm'>
         <Form

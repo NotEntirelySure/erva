@@ -7,6 +7,10 @@ import {
   Drawer
 } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
+import entPortal from '../../assets/images/ERVA_Ent_Portal.jpg';
+import govPortal from '../../assets/images/ERVA_Gov_Portal.png';
+import genPortal from '../../assets/images/ERVA_Portal.jpg';
+import eyeLogo from '../../assets/images/eye_logo.jpg';
 
 const { Search } = Input;
 
@@ -14,30 +18,55 @@ const GlobalHeader = (props) => {
 
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  return <>
-    <div className="globalHeader">
-      <div className='logoContainer'>
-        {props.isAuth ? null:<Link to='/'><img style={{width:"72%", height:"auto"}} src={`${process.env.PUBLIC_URL}/eye_logo.jpg`}></img></Link>}
-        {
-          props.isAuth && props.userInfo.type === "enterprise" ? 
+  const PortalLogo = () => {
+    if (props.isAuth) {
+      switch (props.userInfo.type) {
+        case "enterprise":
+          return <>
             <Link to='/'>
-              <img className='logoImage' src={`${process.env.PUBLIC_URL}/ERVA_Ent_Portal.jpg`}></img>
-            </Link>:null
-        }
-        {
-          props.isAuth && props.userInfo.type === "government" ? 
+              <img className='logoImage' src={entPortal}></img>
+            </Link>
+          </>
+        case "government":
+          return <>
             <Link to='/'>
-              <img className='logoImage' src={`${process.env.PUBLIC_URL}/ERVA_Gov_Portal.png`}></img>
-            </Link>:null
-        }
-      </div>
-      {
-        props.isAuth ? <>
-        <div className='searchBar'>
-          <Search placeholder="Search by district" enterButton="Search" allowClear size="large"/>
-        </div>
+              <img className='logoImage' src={govPortal}></img>
+            </Link>
+          </>
+        case "generic":
+          return <>
+            <Link to='/'>
+              <img className='logoImage' src={genPortal}></img>
+            </Link>
+          </>
+      }
+    }
+    if (!props.isAuth) {
+      return <>
+        <Link to='/'>
+          <img style={{maxWidth:"10vw", height:"auto"}} src={eyeLogo}></img>
+        </Link>
+      </>
+    }
+  }
+
+  const UserPanel = () => {
+    if (props.isAuth) {
+      return <>
         <div className='userAvatar'>
-          <Avatar onClick={() => setDrawerOpen(true)} icon={<UserOutlined />} size="large" gap={1}>
+          <Avatar 
+            onClick={() => setDrawerOpen(true)}
+            icon={<UserOutlined />}
+            size={{
+              xs: 24,
+              sm: 32,
+              md: 40,
+              lg: 54,
+              xl: 64,
+              xxl:64
+            }}
+            gap={1}
+          >
             {props.userInfo.email}
           </Avatar>
         </div>
@@ -46,8 +75,18 @@ const GlobalHeader = (props) => {
           <p>Account Type: {props.userInfo.type}</p>
           <Link to='/' onClick={() => sessionStorage.removeItem("jwt")}><Button type="primary">logout</Button></Link>
           <Button>settings</Button>
-        </Drawer></>:null
-      }
+        </Drawer>
+      </>
+    }
+  }
+  return <>
+    <div className="globalHeader">
+      <div className='logoContainer'>
+        <PortalLogo/>
+      </div>
+      
+        <UserPanel/>
+      
     </div>
   </>
 };

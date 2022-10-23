@@ -1,36 +1,37 @@
+//allows access to .env file for environment variable declaration
+require('dotenv').config();
 const images_model = require("./images_model");
 const jwt = require("jsonwebtoken");
 const Pool = require('pg').Pool
 const pool = new Pool({
-  user: 'superuser',
-  host: 'localhost',
-  database: 'erva',
-  password: 'root',
-  port: 5432,
+  user: process.env.API_BASE_USER_ACCOUNT,
+  host: process.env.API_BASE_HOST_URL,
+  database: process.env.API_BASE_DATABASE_NAME,
+  password: process.env.API_BASE_DATABASE_PASSWORD,
+  port: process.env.API_BASE_PORT_NUMBER,
 });
 
-const getOffices = (token, secret) => {
+const getOffices = (token) => {
   return new Promise(function(resolve, reject) {
     if(!token) {reject({"errorCode":401, "error":"No JWT provided"})}
     if (token) {
-      jwt.verify(token, secret, async(err, result) => {
+      jwt.verify(token, process.env.JWT_SECRET_KEY, async(err, result) => {
         if(err) {reject({"errorCode":401, "error":err});}
         if(result) {
           const userOffices = await pool.query(`
-            SELECT DISTINCT
-              o.offices_id,
-              o.offices_name,
-              o.offices_address,
-              o.offices_city,
-              o.offices_state,
-              o.offices_zip 
-            FROM offices AS o
-            INNER JOIN facilitypermissions AS fp
-            ON fp.fp_fk_office=o.offices_id 
-            WHERE fp.fp_fk_user=${result.id};
+          SELECT DISTINCT
+            o.offices_id,
+            o.offices_name,
+            o.offices_address,
+            o.offices_city,
+            o.offices_state,
+            o.offices_zip 
+          FROM facilitypermissions as fp
+          INNER JOIN facilities AS f ON f.facilities_id=fp.fp_fk_facility
+          INNER JOIN offices AS o ON o.offices_id=f.facilities_fk_offices
+          WHERE fp.fp_fk_user=${result.id};
           `);
           let officesArray = []
-          console.log(userOffices.rows.length)
           if (userOffices.rows.length > 0) {
             for (let i=0;i<userOffices.rows.length;i++) {
               officesArray.push({
@@ -50,11 +51,11 @@ const getOffices = (token, secret) => {
   }) 
 }
 
-const getFacilities = (token, secret, officeId) => {
+const getFacilities = (token, officeId) => {
   return new Promise(function(resolve, reject) {
     if(!token) {reject({"errorCode":401, "error":"No JWT provided"})}
     if (token) {
-      jwt.verify(token, secret, async(err, result) => {
+      jwt.verify(token, process.env.JWT_SECRET_KEY, async(err, result) => {
         if(err) {reject({"errorCode":401, "error":err});}
         if(result) {
           const userFacilities = await pool.query(`
@@ -67,10 +68,9 @@ const getFacilities = (token, secret, officeId) => {
               f.facilities_zip,
               f.facilities_image
             FROM facilities AS f
-            INNER JOIN facilitypermissions AS fp
-            ON fp.fp_fk_facility=f.facilities_id
+            INNER JOIN facilitypermissions AS fp ON fp.fp_fk_facility=f.facilities_id
             WHERE fp.fp_fk_user=${result.id}
-            AND fp.fp_fk_office=${officeId};
+            AND f.facilities_fk_offices=${officeId};
           `);
           let facilitiesArray = [];
           if (userFacilities.rows.length > 0) {
@@ -94,12 +94,12 @@ const getFacilities = (token, secret, officeId) => {
   });
 };
 
-const getFacilityMaps = (token, secret, facilityId) => {
+const getFacilityMaps = (token, facilityId) => {
   
   return new Promise(function(resolve, reject) {
     if(!token) {reject({"errorCode":401, "error":"No JWT provided"})}
     if (token) {
-      jwt.verify(token, secret, async(err, result) => {
+      jwt.verify(token, process.env.JWT_SECRET_KEY, async(err, result) => {
         if(err) {reject({"errorCode":401, "error":err});}
         if(result) {
           const userMaps = await pool.query(`
@@ -108,8 +108,7 @@ const getFacilityMaps = (token, secret, facilityId) => {
               maps_code,
               maps_image
             FROM maps
-            INNER JOIN facilitypermissions AS fp
-            ON fp.fp_fk_facility=maps.maps_fk_facility_id
+            INNER JOIN facilitypermissions AS fp ON fp.fp_fk_facility=maps.maps_fk_facility_id
             WHERE fp.fp_fk_user=${result.id}
             AND maps_fk_facility_id=${facilityId};
           `);

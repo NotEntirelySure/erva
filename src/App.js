@@ -12,6 +12,7 @@ import RegistrationPage from './content/RegistrationPage';
 import './App.scss';
 import './index.scss';
 import { Layout } from 'antd';
+import AboutUsPage from './content/AboutUsPage/AboutUsPage';
 const { Content } = Layout;
 
 function loadScript () {
@@ -29,6 +30,7 @@ function App() {
         <Routes>
           <Route exact path="/" element={<LandingPage />} />
           <Route path="/login" element={<UserLoginPage />} />
+          <Route path="/aboutus" element={<AboutUsPage/>}/>
           <Route path="/adminlogin" element={<AdminLoginPage />} />
           <Route path="/userpage" element={<UserPage />} />
           <Route path="/adminpage" element={<AdminPage/>}/>
