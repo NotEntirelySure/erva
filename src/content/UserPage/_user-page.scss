@@ -8,17 +8,30 @@
 //   font-weight: bold;
 // }
 
+.content {
+  margin-left: 3rem;
+}
+
 .cardContainer {
-  padding-left: 2%;}
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+}
 .locationCard {
-  width: 350px;
-  
+  max-width: 350px;
 }
 
 .cardImage {
   width: 100%;
   height: auto;
   cursor: pointer;
+}
+
+.facilityAddressHeader {
+  margin: 2rem 0rem 2rem 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5rem;
 }
 
 .facilityAddress {

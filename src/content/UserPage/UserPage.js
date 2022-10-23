@@ -6,6 +6,7 @@ import {
   Button,
   Card,
   Col,
+  Image,
   PageHeader,
   Result, 
   Row,
@@ -35,8 +36,8 @@ class UserPage extends Component {
       contentLoading:false,
       alertMessage:'',
       alertType:'',
-      facilityCards:'block',
-      mapCards:'none',
+      showFacilityCards:true,
+      showMapCards:false,
       backButtonOffice:'',
       redirect:false
     }
@@ -114,8 +115,8 @@ class UserPage extends Component {
     this.setState({
       facilityInfo:facilitiesResponse,
       contentLoading:false,
-      mapCards:'none',
-      facilityCards:'block',
+      showMapCards:false,
+      showFacilityCards:true,
       backButtonOffice:officeId
     })
   }
@@ -123,7 +124,7 @@ class UserPage extends Component {
   RenderFacilities = () => {
     return this.state.facilityInfo.map((facility) => {
       return (<>
-        <Col span={4}>
+        <div>
           <Card key={facility.id} title={facility.name} className='locationCard'>
             <img 
               className='cardImage'
@@ -135,14 +136,14 @@ class UserPage extends Component {
                   "city":facility.city,
                   "state":facility.state,
                   "zip":facility.zip
-                }},()=>console.log(this.state.selectedFacility))
+                }})
               }}
               src={`data:image/png;base64,${facility.image}`}
               alt=""
               />
           </Card>
-        </Col>
-        </>
+        </div>
+      </>
       )
     })
   }
@@ -165,8 +166,8 @@ class UserPage extends Component {
     this.setState({
       mapsInfo:mapsResponse,
       contentLoading:false,
-      mapCards:'block',
-      facilityCards:'none',
+      showMapCards:true,
+      showFacilityCards:false,
       backButton:'block'
     })
   }
@@ -179,13 +180,13 @@ class UserPage extends Component {
         onBack={() => this.GetFacilities(this.state.backButtonOffice)}
         title="Back"
       />
-      <div style={{display:'flex'}}>
+      <div className="facilityAddressHeader">
         <div>
-        <p style={{color:'#1A95CC'}} className="facilityAddress">{this.state.selectedFacility.name}</p>
-        <p className="facilityAddress">{this.state.selectedFacility.address}</p>
-        <p className="facilityAddress">{this.state.selectedFacility.city}, {this.state.selectedFacility.state} {this.state.selectedFacility.zip}</p>
+          <p style={{color:'#1A95CC'}} className="facilityAddress">{this.state.selectedFacility.name}</p>
+          <p className="facilityAddress">{this.state.selectedFacility.address}</p>
+          <p className="facilityAddress">{this.state.selectedFacility.city}, {this.state.selectedFacility.state} {this.state.selectedFacility.zip}</p>
         </div>
-        <div style={{marginLeft:'5%'}}>
+        <div>
           <Button 
             type='primary'
             onClick={() => {this.setState({redirect:true})}}
@@ -194,24 +195,23 @@ class UserPage extends Component {
            Wayfind
           </Button>
         </div>
-        <br/>
       </div>
-      <Row>
-      {this.state.mapsInfo.map((map) => {
-        return (
-          <Col span={4}>
-            <Card key={map.id} title={map.name} className='locationCard'>
-              <img 
-                onClick={() => {}}
-                className='cardImage'
-                src={`data:image/png;base64,${map.image}`}
-                alt=""
-              />
-            </Card>
-          </Col>
-        )
-      })}
-      </Row>
+      <div className='cardContainer'>
+        {
+          this.state.mapsInfo.map((map) => {
+            return (
+                <Card key={map.id} title={map.name} className='locationCard'>
+                  <Image 
+                    onClick={() => {}}
+                    className='cardImage'
+                    src={`data:image/png;base64,${map.image}`}
+                    alt=""
+                    />
+                </Card>
+            )
+          })
+        }
+      </div>
     </>
   }
 
@@ -219,60 +219,65 @@ class UserPage extends Component {
     return (
       <>
         <GlobalHeader isAuth={this.state.isAuth} userInfo={this.state.userInfo}/>
-        <div style={{padding:'0 50px'}}>
-        <Alert message={this.state.alertMessage} type={this.state.alertType}/>
-        {
-          this.state.tabsLoading ? <>
-            <Spin tip="Loading...">
-              <Alert
-                message={this.state.loadingMessage}
-                description={this.state.loadingDescription}
-                type="info"
-              />
-            </Spin>
-          </>:<Tabs defaultActiveKey="0" onChange={(tabId) =>{console.log(tabId);this.GetFacilities(tabId)}}>
+        <div className='content'>
+          <div className='officeTabs'>
+            <Alert message={this.state.alertMessage} type={this.state.alertType}/>
             {
-              this.state.officeInfo.map((office) => {
-                return <>
-                  <TabPane tab={office.name} key={`${office.id}`}>
-                  <br/>
-                  </TabPane>
-                </>
-              })
+              this.state.tabsLoading ? <>
+                <Spin tip="Loading...">
+                  <Alert
+                    message={this.state.loadingMessage}
+                    description={this.state.loadingDescription}
+                    type="info"
+                  />
+                </Spin>
+              </>:<Tabs defaultActiveKey="0" onChange={(tabId) =>{this.GetFacilities(tabId)}}>
+                {
+                  this.state.officeInfo.map((office) => {
+                    return <>
+                      <TabPane tab={office.name} key={`${office.id}`}>
+                      <br/>
+                      </TabPane>
+                    </>
+                  })
+                }
+              </Tabs>
             }
-          </Tabs>
-        }
-        </div>
-        <div className='cardContainer'>
-        {
-          this.state.contentLoading ? 
-            <>
-              <Spin tip="Loading...">
-                <Alert
-                  message={this.state.loadingMessage}
-                  description={this.state.loadingDescription}
-                  type="info"
+          </div>
+          <div>
+            {
+              this.state.contentLoading ? 
+                <>
+                  <Spin tip="Loading...">
+                    <Alert
+                      message={this.state.loadingMessage}
+                      description={this.state.loadingDescription}
+                      type="info"
+                    />
+                  </Spin>
+                </>:<>
+                  <div>
+                    {this.state.showFacilityCards ? <div className='cardContainer'><this.RenderFacilities/></div>:null}
+                    {this.state.showMapCards ? <div><this.RenderMaps/></div>:null}
+                  </div>
+                </>
+            }
+            
+          </div>
+          <div>
+            {
+              this.state.isAuth ? <><div></div></>:<>
+                {this.state.loginRedirect ? <Navigate to="/login"/>:null}
+                <Result
+                  status="403"
+                  title="403"
+                  subTitle="Sorry, you are not authorized to access this page."
+                  extra={<Button onClick={() => this.setState({loginRedirect:true})} type="primary">Login</Button>}
                 />
-              </Spin>
-            </>:<>
-            <div style={{display:this.state.facilityCards}}><Row><this.RenderFacilities/></Row></div>
-            <div style={{display:this.state.mapCards}}><this.RenderMaps/></div>
-            </>
-        }
-        </div>
-        <div>
-          {
-            this.state.isAuth ? null:<>
-              {this.state.loginRedirect ? <Navigate to="/login"/>:null}
-              <Result
-                status="403"
-                title="403"
-                subTitle="Sorry, you are not authorized to access this page."
-                extra={<Button onClick={() => this.setState({loginRedirect:true})} type="primary">Login</Button>}
-              />
-            </>
-          }
-        </div>
+              </>
+            }
+          </div>
+          </div>
       </>
     );
   };
