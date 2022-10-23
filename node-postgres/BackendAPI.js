@@ -1,10 +1,11 @@
 //allows access to .env file for environment variable declaration
 require('dotenv').config();
 //load boilerplate dependencies
+const https = require('https');
 const express = require('express');
 const cors = require('cors');
 const app = express().use('*', cors());
-const port = 3001;
+const port = process.env.API_BASE_LISTENING_PORT;
 
 const account_model = require('./account_model');
 const admin_model = require('./admin_model');
@@ -88,3 +89,11 @@ app.post('/getfacilitymaps', (req, res) => {
 app.listen(port, () => {
   console.log(`App running on port ${port}.`)
 })
+
+// https.createServer(
+//   {
+//     pfx:fs.readFileSync('C:/ErvaAPI/APICert.pfx'),
+//     passphrase:'14ug5YO@vb_=7iXr'
+//   },
+//   app
+// ).listen(port, () => {console.log(`API running on port ${port}.`)})
