@@ -1,60 +1,98 @@
-# erva
-### ERVA Development &amp; Project Management
-
-Welcome to the ERVA development GitHub Respository.
-
-Click on the Projects page for both code-related Issues and business-level Issues.
-The "Project Type View" will help you see the various "Issues" (or to-dos) organized by Category (such as Marketing, Coding, etc.), while the "Status View" will help you understand the current level of completion (or lack thereof) for each Issue.
-
-## Let's make this happen!
-
-"Database Schema.txt" contains the database tables and the column attributes of the database. Using this document, the database can be reconstructed from scratch, but any data that was once in the database will be lost.
-
-## How to get this working locally
-
-Clone via Git
-
-Install https://nodejs.org/en/download/
-
-Install https://www.postgresql.org/download/
-
-Open up PostgreSQL Shell
+#Enter the following command into the postgres SQL shell prompt:
 
 CREATE DATABASE erva;
 CREATE USER superuser WITH ENCRYPTED PASSWORD 'root';
 GRANT ALL PRIVILEGES ON DATABASE erva TO superuser;
+GRANT ALL ON SCHEMA public TO superuser;
 
-#Log into the newly-created erva database with the following command
-\connect erva
+#Log into the newly-created erva database with the following command:
+
+\CONNECT erva
 
 #Now that you are connected to the erva database, you need to enter this data in. You can copy and paste all of the database schema in one go
 
-Copy data from https://github.com/zekeuribe/erva/blob/main/database%20schema.txt into SQL Shell Console, by block
+CREATE EXTENSION pgcrypto;
 
-#Check this by using this command:
+CREATE TABLE roles (
+	roles_id SERIAL PRIMARY KEY,
+	roles_name VARCHAR
+);
+
+CREATE TABLE accounttypes (
+	at_id SERIAL PRIMARY KEY,
+	at_name VARCHAR
+);
+
+CREATE TABLE users (
+	users_id SERIAL PRIMARY KEY,
+	users_fk_role INT REFERENCES roles(roles_id),
+	users_fk_type INT REFERENCES accounttypes(at_id),
+	users_first_name VARCHAR,
+	users_last_name VARCHAR,
+	users_email TEXT NOT NULL UNIQUE,
+	users_password TEXT NOT NULL,
+	users_otp_key TEXT NOT NULL,
+	users_created_at TIMESTAMP,
+	users_enabled BOOLEAN
+);
+
+CREATE TABLE offices (
+	offices_id SERIAL PRIMARY KEY,
+	offices_image BYTEA,
+	offices_name VARCHAR,
+	offices_address VARCHAR,
+	offices_city VARCHAR,
+	offices_state VARCHAR,
+	offices_zip INT
+);
+
+CREATE TABLE facilities (
+	facilities_id SERIAL PRIMARY KEY,
+	facilities_fk_offices INT REFERENCES offices(offices_id),
+	facilities_name VARCHAR,
+	facilities_address VARCHAR,
+	facilities_city VARCHAR,
+	facilities_state VARCHAR,
+	facilities_zip INT,
+	facilities_image VARCHAR
+);
+
+CREATE TABLE facilitypermissions (
+	fp_id SERIAL PRIMARY KEY,
+	fp_fk_user INT REFERENCES users(users_id),
+	fp_fk_facility INT REFERENCES facilities(facilities_id)
+);
+
+CREATE TABLE maps (
+	maps_id SERIAL PRIMARY KEY,
+	maps_fk_facility_id INT REFERENCES facilities(facilities_id),
+	maps_name VARCHAR,
+	maps_code VARCHAR,
+	maps_image VARCHAR
+);
+
+CREATE TABLE access_log (
+	access_log_id SERIAL PRIMARY KEY,
+	access_log_user_id INT,
+	access_log_map_id INT,
+	access_log_timestamp TIMESTAMP
+);
+
+#Check that the tables were successfully created by using this command: 
+
 \dt tables;
 
 #You should see 8 rows listed
 
 #Copy and paste all of the following lines as well
 
-Copy data from https://github.com/zekeuribe/erva/blob/main/database%20schema.txt into SQL Shell Console
+INSERT INTO accounttypes (at_name) values ('government');
+INSERT INTO accounttypes (at_name) values ('enterprise');
+INSERT INTO accounttypes (at_name) values ('administrator');
+INSERT INTO accounttypes (at_name) values ('generic');
+INSERT INTO roles (roles_name) values ('manager');
+INSERT INTO roles (roles_name) values ('user');
 
-Add the following into SQL Shell, one by one:
-
-insert into accounttypes (at_name) values ('government');
-
-insert into accounttypes (at_name) values ('enterprise');
-
-insert into accounttypes (at_name) values ('administrator');
-
-insert into accounttypes (at_name) values ('generic');
-
-insert into roles (roles_name) values ('manager');
-
-insert into roles (roles_name) values ('user');
-
-#Check to see if this worked by using the command
-SELECT * from accounttypes;
+#Check to see if this worked by using the command SELECT * from accounttypes;
 
 #You should see 4 rows listed
