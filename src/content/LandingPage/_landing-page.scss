@@ -1,16 +1,20 @@
+body{max-height: 75vh;}
 @keyframes fadeIn {
   0% {opacity:0;}
   100% {opacity:1;}
 }
 #LandingPageContent {position: relative;}
 
+#imageContainer{
+  display: flex;
+  justify-content: center;
+  margin-top: 25vh;
+}
 #landingPageImage {
   animation: fadeIn 1s;
-  display: block;
-  margin-top: 25vh;
-  margin-left: auto;
-  margin-right: auto;
-  width: 20%;
+  max-width: 500px;
+  min-width: 250px;
+  height: auto;
 }
 
 .buttondiv {

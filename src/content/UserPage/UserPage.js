@@ -29,7 +29,7 @@ class UserPage extends Component {
       facilityInfo:[],
       mapsInfo:[],
       selectedFacility:{},
-      isAuth:false,
+      isAuth:null,
       tabsLoading:false,
       loadingMessage:'',
       loadingDescription:'',
@@ -45,11 +45,28 @@ class UserPage extends Component {
 
   componentDidMount = async() => {
     
-    if (sessionStorage.getItem("jwt")){
-      this.setState({jwtToken: sessionStorage.getItem("jwt")}, () => {this.VerifyJwt();});
-    }
+    if (sessionStorage.getItem("jwt")) this.setState({jwtToken: sessionStorage.getItem("jwt")}, () => {this.VerifyJwt();})
+    if (!sessionStorage.getItem("jwt")) this.setState({isAuth:false})
+
   }
   
+  ReturnNotAuth = () => {
+    if (!this.state.isAuth) {
+      return <>
+        <div>
+          {this.state.loginRedirect ? <Navigate to="/login"/>:null}
+          <Result
+            status="403"
+            title="403"
+            subTitle="Sorry, you are not authorized to access this page."
+            extra={<Button onClick={() => this.setState({loginRedirect:true})} type="primary">Login</Button>}
+          />
+        </div>
+      </>
+    }
+    else return <><div></div></>
+  }
+
   VerifyJwt = async() => {
     this.setState({
       tabsLoading:true,
@@ -200,14 +217,14 @@ class UserPage extends Component {
         {
           this.state.mapsInfo.map((map) => {
             return (
-                <Card key={map.id} title={map.name} className='locationCard'>
-                  <Image 
-                    onClick={() => {}}
-                    className='cardImage'
-                    src={`data:image/png;base64,${map.image}`}
-                    alt=""
-                    />
-                </Card>
+              <Card key={map.id} title={map.name} className='locationCard'>
+                <Image 
+                  onClick={() => {}}
+                  className='cardImage'
+                  src={`data:image/png;base64,${map.image}`}
+                  alt=""
+                />
+              </Card>
             )
           })
         }
@@ -219,35 +236,13 @@ class UserPage extends Component {
     return (
       <>
         <GlobalHeader isAuth={this.state.isAuth} userInfo={this.state.userInfo}/>
-        <div className='content'>
-          <div className='officeTabs'>
-            <Alert message={this.state.alertMessage} type={this.state.alertType}/>
-            {
-              this.state.tabsLoading ? <>
-                <Spin tip="Loading...">
-                  <Alert
-                    message={this.state.loadingMessage}
-                    description={this.state.loadingDescription}
-                    type="info"
-                  />
-                </Spin>
-              </>:<Tabs defaultActiveKey="0" onChange={(tabId) =>{this.GetFacilities(tabId)}}>
-                {
-                  this.state.officeInfo.map((office) => {
-                    return <>
-                      <TabPane tab={office.name} key={`${office.id}`}>
-                      <br/>
-                      </TabPane>
-                    </>
-                  })
-                }
-              </Tabs>
-            }
-          </div>
-          <div>
-            {
-              this.state.contentLoading ? 
-                <>
+        {
+          this.state.isAuth ? 
+          <div className='content'>
+            <div className='officeTabs'>
+              <Alert message={this.state.alertMessage} type={this.state.alertType}/>
+              {
+                this.state.tabsLoading ? <>
                   <Spin tip="Loading...">
                     <Alert
                       message={this.state.loadingMessage}
@@ -255,29 +250,42 @@ class UserPage extends Component {
                       type="info"
                     />
                   </Spin>
-                </>:<>
-                  <div>
-                    {this.state.showFacilityCards ? <div className='cardContainer'><this.RenderFacilities/></div>:null}
-                    {this.state.showMapCards ? <div><this.RenderMaps/></div>:null}
-                  </div>
-                </>
-            }
-            
-          </div>
-          <div>
-            {
-              this.state.isAuth ? <><div></div></>:<>
-                {this.state.loginRedirect ? <Navigate to="/login"/>:null}
-                <Result
-                  status="403"
-                  title="403"
-                  subTitle="Sorry, you are not authorized to access this page."
-                  extra={<Button onClick={() => this.setState({loginRedirect:true})} type="primary">Login</Button>}
-                />
-              </>
-            }
-          </div>
-          </div>
+                </>:<Tabs defaultActiveKey="0" onChange={(tabId) =>{this.GetFacilities(tabId)}}>
+                  {
+                    this.state.officeInfo.map((office) => {
+                      return <>
+                        <TabPane tab={office.name} key={`${office.id}`}>
+                        <br/>
+                        </TabPane>
+                      </>
+                    })
+                  }
+                </Tabs>
+              }
+            </div>
+            <div>
+              {
+                this.state.contentLoading ? 
+                  <>
+                    <Spin tip="Loading...">
+                      <Alert
+                        message={this.state.loadingMessage}
+                        description={this.state.loadingDescription}
+                        type="info"
+                      />
+                    </Spin>
+                  </>:<>
+                    <div>
+                      {this.state.showFacilityCards ? <div className='cardContainer'><this.RenderFacilities/></div>:null}
+                      {this.state.showMapCards ? <div><this.RenderMaps/></div>:null}
+                    </div>
+                  </>
+              }
+              
+            </div>
+          </div>:<this.ReturnNotAuth/>
+        }
+        
       </>
     );
   };

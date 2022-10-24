@@ -44,7 +44,7 @@ const GlobalHeader = (props) => {
     if (!props.isAuth) {
       return <>
         <Link to='/'>
-          <img style={{maxWidth:"10vw", height:"auto"}} src={eyeLogo}></img>
+          <img id="genericLogo" src={eyeLogo}></img>
         </Link>
       </>
     }
@@ -84,9 +84,7 @@ const GlobalHeader = (props) => {
       <div className='logoContainer'>
         <PortalLogo/>
       </div>
-      
         <UserPanel/>
-      
     </div>
   </>
 };

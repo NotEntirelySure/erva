@@ -8,7 +8,7 @@ const LandingPage = () => {
   return (
     <>
       <div id="LandingPageContent">
-        <div><img id='landingPageImage' src={logo}></img></div>
+      <div id="imageContainer"><img id='landingPageImage' src={logo}></img></div>
         <div className='buttondiv'>
           <Link to='/login'>
             <Button className='landingPageButton' type="default">Login</Button>

@@ -3,6 +3,7 @@ import {
   Button,
   Form,
   Input,
+  message,
   Modal
 } from 'antd';
 import { Link, Navigate } from 'react-router-dom';
@@ -25,30 +26,44 @@ const UserLoginPage = () => {
   };
 
   const login = async() => {
-    
     setOtpModalOpen(false);
+    message ? message.destroy("loginMessage"):<></>;
+    message.loading({content:'Logging in...',key:'loginMessage',duration:0});
+    
     const payload = {
       "user":userCredentials.username,
       "pass":userCredentials.pass,
       "otp":otpValue
     }
     setOtpValue("");
-    const authRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/login`, {
-      method:'POST',
-      mode:'cors',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(payload)
-    });
-    const authResponse = await authRequest.json();
-    
-    if (authResponse.jwt) {
-      sessionStorage.setItem("jwt",authResponse.jwt);
-      setLoginSuccess(true);
+    try {
+      const authRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/login`, {
+        method:'POST',
+        mode:'cors',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(payload)
+      });
+      console.info(authRequest);
+      const authResponse = await authRequest.json();
+      
+      if (authResponse.jwt) {
+        sessionStorage.setItem("jwt",authResponse.jwt);
+        setLoginSuccess(true);
+        message.destroy('loginMessage');
+      }
+      if (authResponse.error) {userError(authResponse.error);}
     }
-    if (authResponse.error) {userError(authResponse.error);}
+    catch {
+      message ? message.destroy("loginMessage"):<></>;
+      Modal.error({
+        title: 'Authentication Error',
+        content: 'An error occured when attempting to log you in. Please try again. If the problem persists, please contact your system administrator.',
+      });
+    }
   }
-  function userError(errorCode) {
 
+  const userError = (errorCode) => {
+    message.destroy('loginMessage');
     if (errorCode === 401) {
       return Modal.error({
         title: 'Authentication Error',
@@ -59,7 +74,9 @@ const UserLoginPage = () => {
 
   return (
     <>
-      <Modal 
+      <Modal
+        centered
+        width={300}
         title="Enter One Time Password"
         visible={otpModalOpen}
         onOk={() => login()}
@@ -68,23 +85,24 @@ const UserLoginPage = () => {
           setOtpValue("");
         }}
       >
-        
+        <div style={{width:'100px', margin:'auto'}}>
+
         <Form
           form={form}
           name="register"
-          onFinish={onFinish}
           scrollToFirstError
-        >
+          >
           <Input 
             id="otpInput" 
             allowClear
             maxLength={6}
             size='small'
-            defaultValue=""
             value={otpValue}
             onChange={(event) => {setOtpValue(event.target.value)}}
-          />
+            onPressEnter={() => login()}
+            />
         </Form>
+            </div>
       </Modal>
       <GlobalHeader/>
       {loginSuccess ? <Navigate to="/userpage"/>:null}
