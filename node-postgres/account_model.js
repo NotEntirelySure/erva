@@ -15,10 +15,13 @@ const pool = new Pool({
 const login = (loginValues) => {
   return new Promise(async(resolve, reject) => { 
     try {
-      const secretRequest = await pool.query(`SELECT convert_from(decrypt(users_otp_key::bytea, '${process.env.DATABASE_PASSWORD_ENCRYPTION_KEY}', 'aes'), 'SQL_ASCII') from users where users_email='${loginValues.user.toLowerCase()}';`);
+      const secretQuery = `
+        SELECT convert_from(decrypt(users_otp_key::bytea, '${process.env.DATABASE_PASSWORD_ENCRYPTION_KEY}', 'aes'), 'SQL_ASCII')
+        FROM users
+        WHERE users_email=$1;`;
+      const secretRequest = await pool.query(secretQuery,[loginValues.user.toLowerCase()]);
       if (secretRequest.rows.length === 0) {resolve({"error":401,"message":"authentication error"})}
       if (secretRequest.rows.length > 0) {
-        
         const isVerified = speakeasy.totp.verify({
           secret:secretRequest.rows[0].convert_from,
           encoding: 'base32',
@@ -27,7 +30,7 @@ const login = (loginValues) => {
         
         if (isVerified) {
           try {
-            const userInfo = await pool.query(`
+            const userQuery = `
               SELECT
                 users_id,
                 users_first_name,
@@ -38,8 +41,9 @@ const login = (loginValues) => {
               FROM users
               INNER JOIN accounttypes AS at
               ON users.users_fk_type=at.at_id
-              WHERE users_email='${loginValues.user}' AND users_password=crypt('${loginValues.pass}', users_password);`
-            )
+              WHERE users_email=$1 AND users_password=crypt($2, users_password);`;
+            const userValues = [loginValues.user,loginValues.pass]
+            const userInfo = await pool.query(userQuery,userValues);
             if (userInfo.rowCount > 0) {
               if (userInfo.rows[0].users_enabled) {
                 const payload = {
@@ -63,20 +67,26 @@ const login = (loginValues) => {
       }
     }
     catch (err) {resolve({"error":401,"message":"authentication error 66"})}
-
    }) 
 }
 
 const register = (registrationValues) => {
-  return new Promise(function(resolve, reject) {
+  return new Promise((resolve, reject) => {
     const isVerified = speakeasy.totp.verify({
-      secret: registrationValues.otpSecret,
+      secret: registrationValues.otpsecret,
       encoding: 'base32',
       token: registrationValues.otp
     });
     if (!isVerified) {resolve({"code":601,"message":"invalid OTP code"})}
     if (isVerified) {
-      pool.query(`
+      const userValues = [
+        registrationValues.fname,
+        registrationValues.lname,
+        registrationValues.email.toLowerCase(),
+        registrationValues.password,
+        registrationValues.otpsecret
+      ];
+      const userQuery = `
         INSERT INTO users (
           users_first_name,
           users_last_name,
@@ -89,18 +99,19 @@ const register = (registrationValues) => {
           users_enabled
         )
         VALUES (
-          '${registrationValues.fname}',
-          '${registrationValues.lname}',
-          '${registrationValues.email.toLowerCase()}',
-          crypt('${registrationValues.password}', gen_salt('bf')),
+          $1,
+          $2,
+          $3,
+          crypt($4, gen_salt('bf')),
           (SELECT NOW()),
           2,
           4,
-          encrypt('${registrationValues.otpSecret}', '${process.env.DATABASE_PASSWORD_ENCRYPTION_KEY}', 'aes'),
+          encrypt($5, '${process.env.DATABASE_PASSWORD_ENCRYPTION_KEY}', 'aes'),
           'true'
-        );`, (error) => {
-          if (error) {reject(error)}
-          resolve({"code":200})
+        );`
+      pool.query(userQuery, userValues, (error) => {
+        if (error) {reject(error)}
+        resolve({"code":200})
       })
     }
   })

@@ -5,11 +5,9 @@ import {
   Alert,
   Button,
   Card,
-  Col,
   Image,
   PageHeader,
   Result, 
-  Row,
   Spin,
   Tabs
 } from 'antd';
@@ -236,11 +234,11 @@ class UserPage extends Component {
     return (
       <>
         <GlobalHeader isAuth={this.state.isAuth} userInfo={this.state.userInfo}/>
+        <Alert message={this.state.alertMessage} type={this.state.alertType}/>
         {
           this.state.isAuth ? 
           <div className='content'>
             <div className='officeTabs'>
-              <Alert message={this.state.alertMessage} type={this.state.alertType}/>
               {
                 this.state.tabsLoading ? <>
                   <Spin tip="Loading...">
