@@ -8,6 +8,7 @@ import AdminPage from './content/AdminPage';
 import UserPage from './content/UserPage';
 import MapPage from './content/MapPage';
 import RegistrationPage from './content/RegistrationPage';
+import AccountVerificationPage from './content/AccountVerification';
 
 import './App.scss';
 import './index.scss';
@@ -22,25 +23,23 @@ function loadScript () {
   document.body.appendChild(script);
 }
 
-function App() {
+export default function App() {
   loadScript()
   return (
     <>
       <Content>
         <Routes>
-          <Route exact path="/" element={<LandingPage />} />
-          <Route path="/login" element={<UserLoginPage />} />
+          <Route exact path="/" element={<LandingPage/>}/>
+          <Route path="/login" element={<UserLoginPage/>}/>
           <Route path="/aboutus" element={<AboutUsPage/>}/>
-          <Route path="/adminlogin" element={<AdminLoginPage />} />
-          <Route path="/userpage" element={<UserPage />} />
+          <Route path="/adminlogin" element={<AdminLoginPage/>}/>
+          <Route path="/userpage" element={<UserPage/>}/>
           <Route path="/adminpage" element={<AdminPage/>}/>
-          <Route path="/mappage" element={<MapPage />} />
+          <Route path="/mappage" element={<MapPage/>}/>
           <Route path="/register" element={<RegistrationPage/>}/>
+          <Route path="/verifyaccount" element={<AccountVerificationPage/>}/>
         </Routes>
       </Content>
-    
     </>
   );
 }
-
-export default App;

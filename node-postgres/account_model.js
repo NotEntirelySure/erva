@@ -3,6 +3,9 @@ require('dotenv').config();
 const jwt = require("jsonwebtoken");
 const speakeasy = require("speakeasy");
 const QRCode = require('qrcode');
+const verifyJwt_model = require('./verifyJwt_model');
+const email_model = require('./email_model');
+//const { resolve } = require('path');
 const Pool = require('pg').Pool
 const pool = new Pool({
   user: process.env.API_BASE_USER_ACCOUNT,
@@ -27,7 +30,6 @@ const login = (loginValues) => {
           encoding: 'base32',
           token:loginValues.otp
         });
-        
         if (isVerified) {
           try {
             const userQuery = `
@@ -37,6 +39,7 @@ const login = (loginValues) => {
                 users_last_name,
                 users_email,
                 users_enabled,
+                users_verified,
                 at.at_name
               FROM users
               INNER JOIN accounttypes AS at
@@ -45,7 +48,8 @@ const login = (loginValues) => {
             const userValues = [loginValues.user,loginValues.pass]
             const userInfo = await pool.query(userQuery,userValues);
             if (userInfo.rowCount > 0) {
-              if (userInfo.rows[0].users_enabled) {
+              if (!userInfo.rows[0].users_verified) resolve({"error":601,"message":"account not verified"})
+              if (userInfo.rows[0].users_enabled && userInfo.rows[0].users_verified) {
                 const payload = {
                   "id":userInfo.rows[0].users_id,
                   "type":userInfo.rows[0].users_type,
@@ -57,13 +61,13 @@ const login = (loginValues) => {
                 const token = jwt.sign(payload, process.env.JWT_SECRET_KEY, {expiresIn: "1d"});
                 resolve({"jwt":token});
               }
-              if (userInfo.rows[0].users_enabled) {resolve({"error":401,"message":"account disabled"})}
+              if (!userInfo.rows[0].users_enabled && userInfo.rows[0].users_verified) resolve({"error":402,"message":"account disabled"})
             }
-            if (userInfo.rowCount === 0) {resolve({"error":401,"message":"authentication error"})}
+            if (userInfo.rowCount === 0) resolve({"error":401,"message":"authentication error"})
           }
           catch (err) {resolve({"error":401,"message":"authentication error"})}
         }
-        if (!isVerified) {resolve({"error":401,"message":"otp authentication error"})}
+        if (!isVerified) resolve({"error":401,"message":"otp authentication error"})
       }
     }
     catch (err) {resolve({"error":401,"message":"authentication error 66"})}
@@ -71,65 +75,107 @@ const login = (loginValues) => {
 }
 
 const register = (registrationValues) => {
-  return new Promise((resolve, reject) => {
+  console.log(registrationValues)
+  return new Promise(async(resolve, reject) => {
     const isVerified = speakeasy.totp.verify({
       secret: registrationValues.otpsecret,
       encoding: 'base32',
       token: registrationValues.otp
     });
+    console.log("verified: ",isVerified);
     if (!isVerified) {resolve({"code":601,"message":"invalid OTP code"})}
     if (isVerified) {
-      const userValues = [
-        registrationValues.fname,
-        registrationValues.lname,
-        registrationValues.email.toLowerCase(),
-        registrationValues.password,
-        registrationValues.otpsecret
-      ];
-      const userQuery = `
-        INSERT INTO users (
-          users_first_name,
-          users_last_name,
-          users_email,
-          users_password,
-          users_created_at,
-          users_fk_role,
-          users_fk_type,
-          users_otp_key,
-          users_enabled
-        )
-        VALUES (
-          $1,
-          $2,
-          $3,
-          crypt($4, gen_salt('bf')),
-          (SELECT NOW()),
-          2,
-          4,
-          encrypt($5, '${process.env.DATABASE_PASSWORD_ENCRYPTION_KEY}', 'aes'),
-          'true'
-        );`
-      pool.query(userQuery, userValues, (error) => {
-        if (error) {reject(error)}
-        resolve({"code":200})
-      })
+      const userExists = await pool.query(`SELECT(EXISTS(SELECT FROM users WHERE users_email=$1))`,[registrationValues.email.toLowerCase()]);
+      if (userExists.rows[0].exists) resolve({"code":200})
+      if (!userExists.rows[0].exists) {
+        const userValues = [
+          registrationValues.fname,
+          registrationValues.lname,
+          registrationValues.email.toLowerCase(),
+          registrationValues.password,
+          registrationValues.otpsecret
+        ];
+        const userQuery = `
+          INSERT INTO users (
+            users_first_name,
+            users_last_name,
+            users_email,
+            users_password,
+            users_created_at,
+            users_fk_role,
+            users_fk_type,
+            users_otp_key,
+            users_enabled,
+            users_verified
+          )
+          VALUES (
+            $1,
+            $2,
+            $3,
+            crypt($4, gen_salt('bf')),
+            (SELECT NOW()),
+            2,
+            4,
+            encrypt($5, '${process.env.DATABASE_PASSWORD_ENCRYPTION_KEY}', 'aes'),
+            'true',
+            'false'
+          );`
+        pool.query(userQuery, userValues, (error) => {
+          if (error) reject(error)
+          const payload = {
+            type:"emailVerification",
+            email:registrationValues.email.toLowerCase()
+          }
+          const verificationToken = jwt.sign(payload, process.env.JWT_SECRET_KEY, {expiresIn: "2d"});
+          email_model.sendEmail(registrationValues.email.toLowerCase(), verificationToken)
+          resolve({"code":200})
+        })
+      }
     }
   })
 }
 
 const generateQr = () => {
   const secret = speakeasy.generateSecret();
-  const otpAuthUrl = speakeasy.otpauthURL({ secret: secret.ascii, label: 'Erva', algorithm: 'sha512' });
+  const otpAuthUrl = speakeasy.otpauthURL({ secret: secret.ascii, label: 'E.R.V.A.', algorithm: 'sha512' });
   return new Promise((resolve, reject) => {
     QRCode.toDataURL(otpAuthUrl, (err, data_url) => {
-      if(err) {reject(err)}
+      if(err) reject(err)
       resolve({"qrcode":data_url,"secret":secret});
     });
-  })
-}
+  });
+};
+
+const verifyAccount = (token) => {
+  return new Promise(async(resolve,reject) => {
+    if (!token) reject({"code":500,"error":"No verification token presented to the server."});
+    if (token) {
+      const tokenIsValid = await verifyJwt_model.verifyJwtInternal(token);
+      if (!tokenIsValid.verified) {
+        switch (tokenIsValid.error) {
+          case "jwt expired":
+            reject({"code":403,"error":"Verification token has expired."})
+            break;
+          case "jwt malformed":
+            reject({"code":498,"error":"The server was presented with an invalid token"});
+            break;
+          default: reject({"code":498,"error":"An error occured while attempting to verify the account."})
+        } 
+      }
+      if (tokenIsValid.verified && tokenIsValid.result.type !== "emailVerification") reject({"code":498,"error":"The server was presented with an invalid token"})
+      if (tokenIsValid.verified && tokenIsValid.result.type === "emailVerification"){
+        pool.query(`UPDATE users SET users_verified='true' WHERE users_email=$1`,[tokenIsValid.result.email], (error) => {
+          if (error) reject({"code":500,"message":"an error occured verifying account."})
+          resolve({"code":200});
+        });
+      };
+    }
+  });
+};
 
 module.exports = {
   generateQr,
   login,
-  register
+  register,
+  verifyAccount
 }

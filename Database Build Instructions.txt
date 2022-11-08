@@ -33,7 +33,8 @@ CREATE TABLE users (
 	users_password TEXT NOT NULL,
 	users_otp_key TEXT NOT NULL,
 	users_created_at TIMESTAMP,
-	users_enabled BOOLEAN
+	users_enabled BOOLEAN,
+	users_verified BOOLEAN
 );
 
 CREATE TABLE offices (

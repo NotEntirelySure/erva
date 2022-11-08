@@ -43,8 +43,8 @@ const UserLoginPage = () => {
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify(payload)
       });
-      console.info(authRequest);
       const authResponse = await authRequest.json();
+    
       
       if (authResponse.jwt) {
         sessionStorage.setItem("jwt",authResponse.jwt);
@@ -64,11 +64,22 @@ const UserLoginPage = () => {
 
   const userError = (errorCode) => {
     message.destroy('loginMessage');
-    if (errorCode === 401) {
-      return Modal.error({
-        title: 'Authentication Error',
-        content: 'The username, password, or one time password provided is incorrect. Please check the information and try again.',
-      });
+    switch (errorCode) {
+      case 401:
+        return Modal.error({
+          title: 'Authentication Error',
+          content: 'The username, password, or one time password provided is incorrect. Please check the information and try again.',
+        });
+      case 402:
+        return Modal.error({
+          title: 'Account Disabled',
+          content: 'Your account has been disabled. Please contact your system adminstrator for assistance',
+        });
+      case 601:
+        return Modal.error({
+          title: 'Not Verified',
+          content: 'Your account has not been verified yet. Please verify your account thourgh the email sent to your email address.',
+        });
     }
   }
 

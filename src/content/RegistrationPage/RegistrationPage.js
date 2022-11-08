@@ -17,21 +17,13 @@ const { Option } = Select;
 
 const formItemLayout = {
   labelCol: {
-    xs: {
-      span: 24,
-    },
-    sm: {
-      span: 8,
-    },
+    xs: {span: 24},
+    sm: {span: 8}
   },
   wrapperCol: {
-    xs: {
-      span: 24,
-    },
-    sm: {
-      span: 16,
-    },
-  },
+    xs: {span: 24},
+    sm: {span: 16}
+  }
 };
 const tailFormItemLayout = {
   wrapperCol: {
@@ -42,8 +34,8 @@ const tailFormItemLayout = {
     sm: {
       span: 16,
       offset: 8,
-    },
-  },
+    }
+  }
 };
 
 const RegistrationPage = () => {
@@ -72,25 +64,28 @@ const RegistrationPage = () => {
     })
     const registerResponse = await registerRequest.json();
 
-    if (registerResponse.code === 601) {
-      Modal.error({
-        title: 'One Time Password Invalid',
-        content: 'The one time password supplied does not match the current QR code. Please check that the one time password is correct and try again.',
-      });
-      setOtpStatus("error")
-    }
-    if (registerResponse.code === 200) {
-      setDisplayForm("none");
-      setDisplaySuccess("block");
+    switch (registerResponse.code) {
+      case 200:
+        setDisplayForm("none");
+        setDisplaySuccess("block");
+        break;
+      case 601:
+        Modal.error({
+          title: 'One Time Password Invalid',
+          content: 'The one time password supplied does not match the current QR code. Please check that the one time password is correct and try again.',
+        });
+        setOtpStatus("error")
+        break;
     }
   };
 
   const getQr = async() => {
     const qrRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/getqr`, {mode:'cors'})
     const qrResponse = await qrRequest.json();
+    console.log(qrResponse);
     setQrCode(qrResponse)
   }
-  
+    
   const showAgreement = async() => {
     const agreementRequest = await fetch(`${process.env.PUBLIC_URL}/UserAgreement.txt`)
     const agreementResponse = await agreementRequest.text()
@@ -248,9 +243,9 @@ const RegistrationPage = () => {
         <Result
           status="success"
           title="Account Created!"
-          subTitle="Your account has been successfully created. Please login to your newly created account."
+          subTitle="An email has been sent to the email address you registered with. Please follow the link in the email to verify your email address."
           extra={[
-            <Button 
+            <Button
               type="primary" 
               onClick={() => setRedirect(true)}
               key="loginButton"

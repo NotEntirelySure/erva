@@ -1,9 +1,11 @@
 //allows access to .env file for environment variable declaration
 require('dotenv').config();
-const jwt = require("jsonwebtoken");
 
-const verifyJwt = (token, secret) => {
-  return new Promise(function(resolve, reject) {
+const jwt = require("jsonwebtoken");
+const { resolve } = require('path');
+
+const verifyJwt = (token) => {
+  return new Promise((resolve, reject) => {
     if (token) {
       jwt.verify(token, process.env.JWT_SECRET_KEY, (err, result) => {
         if(err) {reject({"errorCode":401, "error":err});}
@@ -12,4 +14,14 @@ const verifyJwt = (token, secret) => {
     }
   })
 }
-module.exports = {verifyJwt}
+
+const verifyJwtInternal = (token) => {
+  return new Promise((resolve) => {
+    jwt.verify(token, process.env.JWT_SECRET_KEY, (err, result) => {
+      if(err) resolve({"verified":false,"error":err.message})
+      if(result) resolve({"verified":true,"result":result})
+    });
+  })
+}
+
+module.exports = {verifyJwt, verifyJwtInternal}
