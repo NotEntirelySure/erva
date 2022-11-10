@@ -75,14 +75,12 @@ const login = (loginValues) => {
 }
 
 const register = (registrationValues) => {
-  console.log(registrationValues)
   return new Promise(async(resolve, reject) => {
     const isVerified = speakeasy.totp.verify({
       secret: registrationValues.otpsecret,
       encoding: 'base32',
       token: registrationValues.otp
     });
-    console.log("verified: ",isVerified);
     if (!isVerified) {resolve({"code":601,"message":"invalid OTP code"})}
     if (isVerified) {
       const userExists = await pool.query(`SELECT(EXISTS(SELECT FROM users WHERE users_email=$1))`,[registrationValues.email.toLowerCase()]);
@@ -127,7 +125,7 @@ const register = (registrationValues) => {
             email:registrationValues.email.toLowerCase()
           }
           const verificationToken = jwt.sign(payload, process.env.JWT_SECRET_KEY, {expiresIn: "2d"});
-          email_model.sendEmail(registrationValues.email.toLowerCase(), verificationToken)
+          email_model.sendVerifyEmail(registrationValues.email.toLowerCase(), verificationToken)
           resolve({"code":200})
         })
       }
@@ -173,9 +171,44 @@ const verifyAccount = (token) => {
   });
 };
 
+const forgotPassword = (email) => {
+  return new Promise(async(resolve) => {
+    const userExists = await pool.query(`SELECT(EXISTS(SELECT FROM users WHERE users_email=$1))`,[email.toLowerCase()]);
+    if (!userExists.rows[0].exists) resolve();
+    if (userExists.rows[0].exists) {
+      //sign JWT with user's encrypted password to create one time use JWT. If the password is reset, the encrypted password value will be different, and the JWT verify will fail.
+      const userValues = await pool.query('SELECT users_id, users_password FROM users WHERE users_email=$1',[email.toLowerCase()])
+      const resetToken = jwt.sign({userId:userValues.rows[0].users_id}, userValues.rows[0].users_password, {expiresIn: "1h"});
+      email_model.sendForgotEmail(email.toLowerCase(),resetToken)
+      resolve();
+    }
+  })
+}
+
+const resetPassword = (resetToken, newPassword) => {
+  return new Promise(async(resolve) => {
+    const userId = jwt.decode(resetToken).userId
+    if (userId === null) resolve({"code":498,"error":"The server was presented with an invalid token"})
+    if (userId !== null) {
+      const jwtSignature = await pool.query('SELECT users_password FROM users WHERE users_id=$1',[userId]);
+      jwt.verify(resetToken, jwtSignature.rows[0].users_password, (err, result) => {
+        if (err) {console.log(err);resolve({"code":498,"error":"The server was presented with an invalid token"})}
+        if (result) {
+          pool.query("UPDATE users SET users_password=crypt($1, gen_salt('bf'))",[newPassword],(error,result) => {
+            if (error) resolve({"code":500,"message":"an error occured while attemting to change password."})
+            resolve({"code":200})
+          })
+        }
+      })
+    }
+  })
+}
+
 module.exports = {
   generateQr,
   login,
   register,
-  verifyAccount
+  verifyAccount,
+  forgotPassword,
+  resetPassword
 }

@@ -1,18 +1,11 @@
 //allows access to .env file for environment variable declaration
 require('dotenv').config();
-//load boilerplate dependencies
+
 const https = require('https');
 const fs = require('fs');
 const express = require('express');
 const cors = require('cors');
 const app = express().use('*', cors());
-
-const speakeasy = require('speakeasy');
-console.log(speakeasy.totp.verify({
-  secret: "NU6FUMDZKFMCSYREEVLVISJ7HFOUMJJGMNPFIZDUEVXFQVDCIJYA",
-  encoding: 'base32',
-  token: "055520"
-}));
 
 const account_model = require('./account_model');
 const admin_model = require('./admin_model');
@@ -54,6 +47,18 @@ app.post('/register', (req, res) => {
 
 app.post('/login', (req, res) => {
   account_model.login(req.body)
+    .then(response => res.status(200).send(response))
+    .catch(error => res.status(500).send(error))
+})
+
+app.post('/forgotpassword', (req, res) => {
+  account_model.forgotPassword(req.body.email)
+    .then(response => res.status(200).send(response))
+    .catch(error => res.status(500).send(error))
+})
+
+app.post('/resetpassword', (req, res) => {
+  account_model.resetPassword(req.body.resetToken,req.body.newPassword)
     .then(response => res.status(200).send(response))
     .catch(error => res.status(500).send(error))
 })

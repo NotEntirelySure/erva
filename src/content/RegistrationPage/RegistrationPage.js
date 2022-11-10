@@ -82,7 +82,6 @@ const RegistrationPage = () => {
   const getQr = async() => {
     const qrRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/getqr`, {mode:'cors'})
     const qrResponse = await qrRequest.json();
-    console.log(qrResponse);
     setQrCode(qrResponse)
   }
     
@@ -114,7 +113,7 @@ const RegistrationPage = () => {
         scrollToFirstError
         >
         <Form.Item
-          label="First Name"
+          label="First Name "
           name="fname"
           rules={[{
             required: true,
@@ -124,7 +123,7 @@ const RegistrationPage = () => {
           <Input />
         </Form.Item>
         <Form.Item
-          label="Last Name"
+          label="Last Name "
           name="lname"
           rules={[{
             required: true,
@@ -134,8 +133,8 @@ const RegistrationPage = () => {
           <Input />
         </Form.Item>
         <Form.Item
+          label="E-mail "
           name="email"
-          label="E-mail"
           rules={[
             {
               type: 'email',
@@ -151,8 +150,8 @@ const RegistrationPage = () => {
         </Form.Item>
 
         <Form.Item
+          label="Password "
           name="password"
-          label="Password"
           rules={[
             {
               required: true,
@@ -165,8 +164,8 @@ const RegistrationPage = () => {
         </Form.Item>
 
         <Form.Item
+          label="Confirm Password "
           name="confirm"
-          label="Confirm Password"
           dependencies={['password']}
           hasFeedback
           rules={[
@@ -188,7 +187,7 @@ const RegistrationPage = () => {
           <Input.Password />
         </Form.Item>
 
-        <Form.Item label="2FA" extra="Setup two-factor authentication.">
+        <Form.Item label="2FA " extra="Setup two-factor authentication.">
           <Row gutter={8}>
             <Col span={12}>
               <Form.Item

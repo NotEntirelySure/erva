@@ -4,7 +4,8 @@ import {
   Form,
   Input,
   message,
-  Modal
+  Modal,
+  PageHeader
 } from 'antd';
 import { Link, Navigate } from 'react-router-dom';
 import GlobalHeader from '../../components/GlobalHeader'
@@ -117,24 +118,24 @@ const UserLoginPage = () => {
       </Modal>
       <GlobalHeader/>
       {loginSuccess ? <Navigate to="/userpage"/>:null}
+      <div>
+      <PageHeader
+        className="loginHeader"
+        title="User Login"
+      />
+      </div>
       <div id='loginForm'>
         <Form
           name="login form"
-          labelCol={{
-            span: 8,
-          }}
-          wrapperCol={{
-            span: 16,
-          }}
-          initialValues={{
-            remember: true,
-          }}
+          labelCol={{span:8}}
+          wrapperCol={{span:16}}
+          initialValues={{remember:true}}
           onFinish={onFinish}
           onFinishFailed={onFinishFailed}
           autoComplete="off"
         >
           <Form.Item
-            label="Username"
+            label="Username "
             name="username"
             rules={[{
               required: true,
@@ -145,7 +146,7 @@ const UserLoginPage = () => {
           </Form.Item>
 
           <Form.Item
-            label="Password"
+            label="Password "
             name="password"
             rules={[{
               required: true,
@@ -153,22 +154,23 @@ const UserLoginPage = () => {
             }]}
           >
             <Input.Password />
+            
           </Form.Item>
-          
           <Form.Item
             wrapperCol={{
               offset: 8,
-              span: 16,
+              span: 16
             }}
           >
             <Button type="primary" htmlType="submit">
               Login
             </Button>
           </Form.Item>
-          <Form.Item>
-            <Link to={'/register'}>Create Account</Link>
-          </Form.Item>
         </Form>
+      </div>
+      <div style={{display:'flex',justifyContent:"center",gap:'5rem'}}>
+      <Link to={'/forgotpassword'}>Forgot password</Link>
+        <Link to={'/register'}>Create Account</Link>
       </div>
     </>
   );

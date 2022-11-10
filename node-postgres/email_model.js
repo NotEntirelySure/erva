@@ -6,13 +6,13 @@ const OAuth2 = google.auth.OAuth2;
 
 const createTransporter = async () => {
   const oauth2Client = new OAuth2(
-    process.env.CLIENT_ID,
-    process.env.CLIENT_SECRET,
+    process.env.EMAIL_CLIENT_ID,
+    process.env.EMAIL_CLIENT_SECRET,
     "smtp.gmail.com"
   );
 
   oauth2Client.setCredentials({
-    refresh_token: process.env.REFRESH_TOKEN
+    refresh_token: process.env.EMAIL_REFRESH_TOKEN
   });
 
   const accessToken = await new Promise((resolve, reject) => {
@@ -28,26 +28,26 @@ const createTransporter = async () => {
     service: "gmail",
     auth: {
       type: "OAuth2",
-      user: process.env.FROM_EMAIL,
+      user: process.env.EMAIL_FROM_ADDRESS,
       accessToken,
-      clientId: process.env.CLIENT_ID,
-      clientSecret: process.env.CLIENT_SECRET,
-      refreshToken: process.env.REFRESH_TOKEN
+      clientId: process.env.EMAIL_CLIENT_ID,
+      clientSecret: process.env.EMAIL_CLIENT_SECRET,
+      refreshToken: process.env.EMAIL_REFRESH_TOKEN
     }
   });
 
   return transporter;
 };
 
-const sendEmail = async(toAddress, verificationToken) => {
+const sendVerifyEmail = async(toAddress, verificationToken) => {
   const options = {
     subject: "ERVA Account Verification",
-    from: process.env.FROM_EMAIL,
+    from: process.env.EMAIL_FROM_ADDRESS,
     to: toAddress,
     html: `
       <div>
         <p>Thank you for registering an account with ERVA. Before you can use your account you need to verify your email address</p>
-        <p>Click <a href="http://localhost:3000/verifyaccount?verificationToken=${verificationToken}">here</a> to verify your account.<p>
+        <p>Click <a href="http://${process.env.API_BASE_HOST_URL}:3000/verifyaccount?verificationToken=${verificationToken}">here</a> to verify your account.<p>
       </div>
     `
   }
@@ -55,4 +55,20 @@ const sendEmail = async(toAddress, verificationToken) => {
   await emailTransporter.sendMail(options);
 };
 
-module.exports = {sendEmail}
+const sendForgotEmail = async(toAddress, resetToken) => {
+  const options = {
+    subject: "ERVA Password Reset",
+    from: process.env.EMAIL_FROM_ADDRESS,
+    to: toAddress,
+    html: `
+      <div>
+        <p>You are receiving this email because a request to reset your password was received by our system. If you did not initiate this request, contact your system administrator.</p>
+        <p>Click <a href="http://${process.env.API_BASE_HOST_URL}:3000/passwordreset?resetToken=${resetToken}">here</a> to reset your account password.<p>
+      </div>
+    `
+  }
+  let emailTransporter = await createTransporter();
+  await emailTransporter.sendMail(options);
+};
+
+module.exports = {sendVerifyEmail,sendForgotEmail}
