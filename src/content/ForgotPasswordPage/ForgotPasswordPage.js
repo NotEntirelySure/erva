@@ -29,55 +29,57 @@ export default function ForgotPasswordPage() {
 
   const onFinishFailed = (errorInfo) => {console.log('Failed:', errorInfo);};
 
-  return (<>
-    <GlobalHeader/>
-    <div className="formPositioner">
-      <div className="formContainer">
-        <div className="formHeader">
-          <Avatar
-            style={{backgroundColor:'#2A90FA'}}
-            size={64}
-            icon={<QuestionCircleOutlined />}
-            />
-        </div>
-        <div className="formHeader"><Title>Forgot Password</Title></div>
-        <div className='formBody'>
-        <div>
-          <Form
-            name="forgot password form"
-            labelCol={{span:8}}
-            wrapperCol={{span:16}}
-            initialValues={{remember:false}}
-            onFinish={onFinish}
-            onFinishFailed={onFinishFailed}
-            autoComplete="off"
-            >
-            <Form.Item
-              label="Email "
-              name="email"
-              rules={[{
-                required: true,
-                message: 'This is a required field'
-              }]}
-              extra="Enter the email address associated with your account."
+  return (
+    <>
+      <GlobalHeader/>
+      <div className="formPositioner">
+        <div className="formContainer">
+          <div className="formHeader">
+            <Avatar
+              style={{backgroundColor:'#2A90FA'}}
+              size={64}
+              icon={<QuestionCircleOutlined />}
+              />
+          </div>
+          <div className="formHeader"><Title>Forgot Password</Title></div>
+          <div className='formBody'>
+          <div>
+            <Form
+              name="forgot password form"
+              labelCol={{span:8}}
+              wrapperCol={{span:16}}
+              initialValues={{remember:false}}
+              onFinish={onFinish}
+              onFinishFailed={onFinishFailed}
+              autoComplete="off"
               >
-              <Input onPressEnter={onFinish}/>
-            </Form.Item>
-            <Form.Item
-              wrapperCol={{
-                offset: 8,
-                span: 16
-              }}
-              >
-              <Button type="primary" htmlType="submit">
-                Submit <SendOutlined />
-              </Button>
-            </Form.Item>
-          </Form>
-        </div>
+              <Form.Item
+                label="Email "
+                name="email"
+                rules={[{
+                  required: true,
+                  message: 'This is a required field'
+                }]}
+                extra="Enter the email address associated with your account."
+                >
+                <Input onPressEnter={onFinish}/>
+              </Form.Item>
+              <Form.Item
+                wrapperCol={{
+                  offset: 8,
+                  span: 16
+                }}
+                >
+                <Button type="primary" htmlType="submit">
+                  Submit <SendOutlined />
+                </Button>
+              </Form.Item>
+            </Form>
+          </div>
+          </div>
         </div>
       </div>
-    </div>
-  </>)
+    </>
+  )
 
 }

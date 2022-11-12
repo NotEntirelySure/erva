@@ -15,7 +15,8 @@ import {
   Select,
   Divider,
   PageHeader,
-  Carousel
+  Carousel,
+  Spin
 } from 'antd';
 import {ArrowRightOutlined, UserAddOutlined} from '@ant-design/icons';
 const { Option } = Select;
@@ -40,6 +41,7 @@ const tailFormItemLayout = {
 const RegistrationPage = () => {
   const [form] = Form.useForm();
   const [qrCode, setQrCode] = useState([]);
+  const [generatingQr, setGeneratingQr] = useState(false);
   const [redirect, setRedirect] = useState(false);
   const [otpStatus, setOtpStatus] = useState();
   const [displaySuccess, setDisplaySuccess] = useState("none");
@@ -91,10 +93,21 @@ const RegistrationPage = () => {
   }
 
   const getQr = async() => {
-    const qrRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/getqr`, {mode:'cors'})
-    const qrResponse = await qrRequest.json();
-    setQrCode(qrResponse)
-    setShowNextSteps('block');
+    setGeneratingQr(true);
+    try{
+      const qrRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/getqr`, {mode:'cors'})
+      const qrResponse = await qrRequest.json();
+      setQrCode(qrResponse)
+      setShowNextSteps('block');
+      setGeneratingQr(false);
+    }
+    catch (error){
+      setGeneratingQr(false);
+      Modal.error({
+        title: `Error: ${error.message}`,
+        content: 'An error occured while generating QR code. Please contact your system administrator.',
+      });
+    }
   }
     
   const showAgreement = async() => {
@@ -196,6 +209,7 @@ const RegistrationPage = () => {
           <Input.Password />
         </Form.Item>
         <Form.Item
+          id='userAgreement'
           name="agreement"
           valuePropName="checked"
           rules={[
@@ -210,10 +224,13 @@ const RegistrationPage = () => {
             I have read the <a onClick={() => {showAgreement()}}>agreement</a>
           </Checkbox>
         </Form.Item>
-        <Form.Item {...tailFormItemLayout}>
+        <Form.Item>
+          <div style={{marginLeft:'100%'}}>
           <Button onClick={()=>carouselRef.current.next()} type="primary" >
             Next <ArrowRightOutlined />
           </Button>
+
+          </div>
         </Form.Item>   
       </>
     )
@@ -229,7 +246,9 @@ const RegistrationPage = () => {
               <p><strong>Step 1:</strong> Generate 2FA QR code</p>
             </Col>
             <Col span={6}>
-              <Button onClick={() => getQr()}>Generate</Button>
+              <Button onClick={() => getQr()}>
+                { generatingQr ? <Spin tip="Generating..."/>:"Generate" }
+              </Button>
             </Col>
           </Row>
         </Form.Item>
@@ -265,14 +284,10 @@ const RegistrationPage = () => {
               </Col>
             </Row>
           </div>
-            
-        <Form.Item>
-          <div style={{marginLeft:'50%'}}>
-
+        <Form.Item {...tailFormItemLayout}>
           <Button type="primary" htmlType="submit">
             Register
           </Button>
-          </div>
         </Form.Item>
       </>
     )
