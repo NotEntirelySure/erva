@@ -1,18 +1,23 @@
 import React, {useEffect, useState} from "react";
+import {Buffer} from 'buffer/';
 import { Navigate, useSearchParams } from "react-router-dom";
-import { 
+import {
+  Avatar,
   Button,
   Form,
   Input,
-  PageHeader,
-  Result
+  Result,
+  Typography
 } from "antd";
+import {LockOutlined} from '@ant-design/icons';
 import GlobalHeader from "../../components/GlobalHeader";
 
 export default function PasswordResetPage() {
 
+  const {Title} = Typography;
   const [tokenParam, setTokenPeram] = useSearchParams();
   const [resetToken, setResetToken] = useState("");
+  const [userEmail, setUserEmail] = useState("")
   const [redirect, setRedirect] = useState(false);
   const [showRestForm, setShowResetForm] = useState(true);
   const [showResults, setShowResults] = useState(false);
@@ -23,7 +28,27 @@ export default function PasswordResetPage() {
     "extra":[]
   });
   
-  useEffect(() => setResetToken(tokenParam.get("resetToken")),[]);
+  useEffect(() => {setResetToken(tokenParam.get("resetToken"))},[]);
+  useEffect(() => { 
+    if (resetToken){
+      const base64Payload = resetToken.split('.')[1];
+      if (!base64Payload) {
+        setResetResult({
+          "status":"error",
+          "title":"500: Reset Token Error",
+          "subtitle":"An error occured while processing your password reset token.",
+          "extra":[]
+        })
+        setShowResetForm(false)
+        setShowResults(true)
+      }
+      if (base64Payload) {
+        const jsonPayload = JSON.parse(Buffer.from(base64Payload, 'base64').toString());
+        if (jsonPayload.userEmail) setUserEmail(jsonPayload.userEmail);
+        if (!jsonPayload.userEmail) setUserEmail("email undefined");
+      }
+    }
+  },[resetToken])
   useEffect(() => {
     if (resetResult.status !== null) {
       setShowResetForm(false)
@@ -75,71 +100,79 @@ export default function PasswordResetPage() {
       <GlobalHeader/>
       {
         showRestForm ? 
-      <>
-      <div>
-        <PageHeader
-          className="resetHeader"
-          title="Password Reset"
-          />
-      </div>
-      <div id='resetForm'>
-        <Form
-          name="reset form"
-          labelCol={{span:8}}
-          wrapperCol={{span:16}}
-          initialValues={{remember:false}}
-          onFinish={onFinish}
-          onFinishFailed={onFinishFailed}
-          autoComplete="off"
-          >
-          <Form.Item
-          label="New Password "
-          name="password"
-          rules={[
-            {
-              required: true,
-              message: 'Please input your password!',
-            },
-          ]}
-          hasFeedback
-          >
-          <Input.Password />
-        </Form.Item>
-        <Form.Item
-          label="Confirm Password "
-          name="confirm"
-          dependencies={['password']}
-          hasFeedback
-          rules={[
-            {
-              required: true,
-              message: 'Please confirm your password!',
-            },
-            ({ getFieldValue }) => ({
-              validator(_, value) {
-                if (!value || getFieldValue('password') === value) {
-                  return Promise.resolve();
-                }
-                
-                return Promise.reject(new Error('The two passwords that you entered do not match!'));
-              },
-            }),
-          ]}
-          >
-          <Input.Password />
-        </Form.Item>
-          <Form.Item
-            wrapperCol={{
-              offset: 8,
-              span: 16
-            }}
-            >
-            <Button type="primary" htmlType="submit">
-              Reset Password
-            </Button>
-          </Form.Item>
-        </Form>
-      </div></>:null
+          <>
+            <div className="formPositioner">
+              <div className="formContainer">
+                <div className='formHeader'>
+                  <Avatar
+                    style={{backgroundColor:'#2A90FA'}}
+                    size={64}
+                    icon={<LockOutlined />}
+                  />
+                </div>
+                <div className="formHeader"><Title>Password Reset</Title></div>
+                <div className="formHeader"><p>{userEmail}</p></div>
+                <div className='formBody'>
+                  <Form
+                    name="reset form"
+                    labelCol={{span:8}}
+                    wrapperCol={{span:16}}
+                    initialValues={{remember:false}}
+                    onFinish={onFinish}
+                    onFinishFailed={onFinishFailed}
+                    autoComplete="off"
+                    >
+                    <Form.Item
+                    label="New Password "
+                    name="password"
+                    rules={[
+                      {
+                        required: true,
+                        message: 'Please input your password!',
+                      },
+                    ]}
+                    hasFeedback
+                    >
+                    <Input.Password />
+                  </Form.Item>
+                  <Form.Item
+                    label="Confirm Password "
+                    name="confirm"
+                    dependencies={['password']}
+                    hasFeedback
+                    rules={[
+                      {
+                        required: true,
+                        message: 'Please confirm your password!',
+                      },
+                      ({ getFieldValue }) => ({
+                        validator(_, value) {
+                          if (!value || getFieldValue('password') === value) {
+                            return Promise.resolve();
+                          }
+                          
+                          return Promise.reject(new Error('The two passwords that you entered do not match!'));
+                        },
+                      }),
+                    ]}
+                    >
+                    <Input.Password />
+                  </Form.Item>
+                    <Form.Item
+                      wrapperCol={{
+                        offset: 8,
+                        span: 16
+                      }}
+                      >
+                      <Button type="primary" htmlType="submit">
+                        Reset Password
+                      </Button>
+                    </Form.Item>
+                  </Form>
+                </div>
+              </div>
+            </div>
+          </> :null
       }
       {
         showResults ? <div>

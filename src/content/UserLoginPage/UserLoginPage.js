@@ -1,16 +1,22 @@
 import React, { useState } from 'react';
-import { 
+import {
+  Avatar, 
   Button,
+  Divider,
   Form,
   Input,
   message,
   Modal,
-  PageHeader
+  Typography
 } from 'antd';
+import { LockOutlined, LoginOutlined, UserOutlined } from '@ant-design/icons';
 import { Link, Navigate } from 'react-router-dom';
 import GlobalHeader from '../../components/GlobalHeader'
+import SiteFooter from '../../components/SiteFooter/SiteFooter';
 
 const UserLoginPage = () => {
+
+  const {Title} = Typography;
   const [form] = Form.useForm();
   const [loginSuccess, setLoginSuccess] = useState(false);
   const [otpModalOpen, setOtpModalOpen] = useState(false);
@@ -97,7 +103,7 @@ const UserLoginPage = () => {
           setOtpValue("");
         }}
       >
-        <div style={{width:'100px', margin:'auto'}}>
+        <div style={{maxWidth:'200px', margin:'auto'}}>
 
         <Form
           form={form}
@@ -118,60 +124,66 @@ const UserLoginPage = () => {
       </Modal>
       <GlobalHeader/>
       {loginSuccess ? <Navigate to="/userpage"/>:null}
-      <div>
-      <PageHeader
-        className="loginHeader"
-        title="User Login"
-      />
-      </div>
-      <div id='loginForm'>
-        <Form
-          name="login form"
-          labelCol={{span:8}}
-          wrapperCol={{span:16}}
-          initialValues={{remember:true}}
-          onFinish={onFinish}
-          onFinishFailed={onFinishFailed}
-          autoComplete="off"
-        >
-          <Form.Item
-            label="Username "
-            name="username"
-            rules={[{
-              required: true,
-              message: 'Username is a required field',
-            }]}
-          >
-            <Input />
-          </Form.Item>
+      <div className='formPositioner'>
+        <div className='formContainer'>
+          <div className='formHeader'>
+            <Avatar
+              style={{backgroundColor:'#2A90FA'}}
+              size={64}
+              icon={<UserOutlined />}
+              />
+          </div>
+          <div className='formHeader'><Title>Login</Title></div>
+          <Divider/>
+          <div className='formBody'>
+            <Form
+              name="login form"
+              initialValues={{remember:true}}
+              onFinish={onFinish}
+              onFinishFailed={onFinishFailed}
+              autoComplete="off"
+              >
+              <Form.Item
+                rules={[{
+                  required: true,
+                  message: 'Username is a required field',
+                }]}
+              >
+                <Input prefix={<UserOutlined className="site-form-item-icon" />} placeholder="Username" />
+              </Form.Item>
 
-          <Form.Item
-            label="Password "
-            name="password"
-            rules={[{
-              required: true,
-              message: 'Password is a required field',
-            }]}
-          >
-            <Input.Password />
-            
-          </Form.Item>
-          <Form.Item
-            wrapperCol={{
-              offset: 8,
-              span: 16
-            }}
-          >
-            <Button type="primary" htmlType="submit">
-              Login
-            </Button>
-          </Form.Item>
-        </Form>
+              <Form.Item
+                rules={[{
+                  required: true,
+                  message: 'Password is a required field',
+                }]}
+                >
+                <Input
+                  prefix={<LockOutlined className="site-form-item-icon" />}
+                  type='password'
+                  placeholder='Password'
+                />
+                
+              </Form.Item>
+              <Form.Item
+                wrapperCol={{
+                  offset: 8,
+                  span: 16
+                }}
+                >
+                <Button type="primary" htmlType="submit">
+                  Login <LoginOutlined />
+                </Button>
+              </Form.Item>
+            </Form>
+          </div>
+          <div style={{display:'flex',justifyContent:"center",gap:'5rem'}}>
+            <Link to={'/forgotpassword'}>Forgot password</Link>
+            <Link to={'/register'}>Create Account</Link>
+          </div>
+        </div>
       </div>
-      <div style={{display:'flex',justifyContent:"center",gap:'5rem'}}>
-      <Link to={'/forgotpassword'}>Forgot password</Link>
-        <Link to={'/register'}>Create Account</Link>
-      </div>
+      <SiteFooter/>
     </>
   );
 };

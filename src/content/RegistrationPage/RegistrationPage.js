@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import GlobalHeader from '../../components/GlobalHeader';
+import SiteFooter from '../../components/SiteFooter/SiteFooter';
 import {
+  Avatar,
   Button,
   Checkbox,
   Col,
@@ -10,9 +12,12 @@ import {
   Modal,
   Result,
   Row,
-  Typography,
-  Select
+  Select,
+  Divider,
+  PageHeader,
+  Carousel
 } from 'antd';
+import {ArrowRightOutlined, UserAddOutlined} from '@ant-design/icons';
 const { Option } = Select;
 
 const formItemLayout = {
@@ -27,25 +32,21 @@ const formItemLayout = {
 };
 const tailFormItemLayout = {
   wrapperCol: {
-    xs: {
-      span: 24,
-      offset: 0,
-    },
-    sm: {
-      span: 16,
-      offset: 8,
-    }
+    xs: {span:24, offset:0},
+    sm: {span: 16, offset: 8}
   }
 };
 
 const RegistrationPage = () => {
   const [form] = Form.useForm();
-  const {Title} = Typography;
   const [qrCode, setQrCode] = useState([]);
   const [redirect, setRedirect] = useState(false);
   const [otpStatus, setOtpStatus] = useState();
   const [displaySuccess, setDisplaySuccess] = useState("none");
-  const [displayForm, setDisplayForm] = useState("flex");
+  const [displayForm, setDisplayForm] = useState("block");
+  const [showNextSteps, setShowNextSteps] = useState('none');
+
+  const carouselRef = useRef();
 
   const onFinish = async(values) => {
     
@@ -79,10 +80,21 @@ const RegistrationPage = () => {
     }
   };
 
+  const onFinishFailed = (errorInfo) => {
+    for (let i=0;i<errorInfo.errorFields.length;i++){
+      //the only error value on tile 2 is "otp". If any of the error names are not otp then we know it's on the first tile, so snap back to that tile.
+      if (errorInfo.errorFields[i].name[0] !== "otp") {
+        carouselRef.current.goTo(0)
+        break;
+      }
+    }
+  }
+
   const getQr = async() => {
     const qrRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/getqr`, {mode:'cors'})
     const qrResponse = await qrRequest.json();
     setQrCode(qrResponse)
+    setShowNextSteps('block');
   }
     
   const showAgreement = async() => {
@@ -100,20 +112,20 @@ const RegistrationPage = () => {
     });
   }
 
-  return (
-    <>
-      <GlobalHeader searchEnabled={false}/>
-      <div className="registrationForm" ><Title>Account Registration</Title></div>
-      <div className="registrationForm" style={{display: displayForm}}>
-        <Form
-        {...formItemLayout}
-        form={form}
-        name="register"
-        onFinish={onFinish}
-        scrollToFirstError
-        >
+  const TileOne = () => {
+    return (
+      <>
+        <div className='tileContent'>
+          <Avatar
+            style={{backgroundColor:'#2A90FA'}}
+            size={56}
+            icon={<UserAddOutlined />}
+          />
+        </div>
+        <PageHeader className='tileContent' title="Account Registration"/>
+        <Divider/>
         <Form.Item
-          label="First Name "
+          label="First Name"
           name="fname"
           rules={[{
             required: true,
@@ -123,7 +135,7 @@ const RegistrationPage = () => {
           <Input />
         </Form.Item>
         <Form.Item
-          label="Last Name "
+          label="Last Name"
           name="lname"
           rules={[{
             required: true,
@@ -133,7 +145,7 @@ const RegistrationPage = () => {
           <Input />
         </Form.Item>
         <Form.Item
-          label="E-mail "
+          label="E-mail"
           name="email"
           rules={[
             {
@@ -148,9 +160,8 @@ const RegistrationPage = () => {
         >
           <Input />
         </Form.Item>
-
         <Form.Item
-          label="Password "
+          label="Password"
           name="password"
           rules={[
             {
@@ -162,59 +173,28 @@ const RegistrationPage = () => {
         >
           <Input.Password />
         </Form.Item>
-
         <Form.Item
-          label="Confirm Password "
+          label="Confirm Password"
           name="confirm"
           dependencies={['password']}
           hasFeedback
           rules={[
             {
               required: true,
-              message: 'Please confirm your password!',
+              message: 'Please confirm your password!'
             },
             ({ getFieldValue }) => ({
               validator(_, value) {
                 if (!value || getFieldValue('password') === value) {
                   return Promise.resolve();
                 }
-
-                return Promise.reject(new Error('The two passwords that you entered do not match!'));
+                return Promise.reject(new Error('Passwords do not match!'));
               },
             }),
           ]}
         >
           <Input.Password />
         </Form.Item>
-
-        <Form.Item label="2FA " extra="Setup two-factor authentication.">
-          <Row gutter={8}>
-            <Col span={12}>
-              <Form.Item
-                name="otp"
-                noStyle
-                rules={[
-                  {
-                    required: true,
-                    message: 'Please input your 2FA code',
-                  },
-                ]}
-              >
-                <Input 
-                  status={otpStatus}
-                  onChange={() => {if (otpStatus === "error") {setOtpStatus("")}}}
-                />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Button onClick={() => getQr()}>Get QR Code</Button>
-            </Col>
-          </Row>
-          <Row>
-          <img src={qrCode.qrcode} alt=""/>
-          </Row>
-        </Form.Item>
-
         <Form.Item
           name="agreement"
           valuePropName="checked"
@@ -231,11 +211,105 @@ const RegistrationPage = () => {
           </Checkbox>
         </Form.Item>
         <Form.Item {...tailFormItemLayout}>
+          <Button onClick={()=>carouselRef.current.next()} type="primary" >
+            Next <ArrowRightOutlined />
+          </Button>
+        </Form.Item>   
+      </>
+    )
+  }
+  const TileTwo = () => {
+    return (
+      <>
+        <PageHeader onBack={()=>carouselRef.current.prev()} title={"Setup Two-Factor Authentication"}/>
+        <Divider/>
+        <Form.Item>
+          <Row>
+            <Col span={15}>
+              <p><strong>Step 1:</strong> Generate 2FA QR code</p>
+            </Col>
+            <Col span={6}>
+              <Button onClick={() => getQr()}>Generate</Button>
+            </Col>
+          </Row>
+        </Form.Item>
+        <Form.Item>
+          <div style={{display:showNextSteps}}>
+            <p><strong>Step 2:</strong> Scan QR code</p>
+            <div style={{marginLeft:'50%'}}>
+
+            <img src={qrCode.qrcode} alt=""/>
+            </div>
+          </div>
+        </Form.Item>
+          <div style={{display:showNextSteps}}>
+            <Row>
+              <Col span={8}>
+                <p><strong>Step 3:</strong> Enter 2FA code</p>
+              </Col>
+              <Col span={6}>
+                <Form.Item 
+                  name="otp"
+                  rules={[
+                    {
+                      required: true,
+                      message: 'Please input your 2FA code'
+                    }
+                  ]}
+                >
+                  <Input
+                    status={otpStatus}
+                    onChange={() => {if (otpStatus === "error") {setOtpStatus("")}}}
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
+          </div>
+            
+        <Form.Item>
+          <div style={{marginLeft:'50%'}}>
+
           <Button type="primary" htmlType="submit">
             Register
           </Button>
+          </div>
         </Form.Item>
-      </Form>
+      </>
+    )
+  }
+
+  return (
+    <>
+      <GlobalHeader searchEnabled={false}/>
+      <div style={{display: displayForm}}>
+            <Form
+            {...formItemLayout}
+            form={form}
+            name="register"
+            labelCol={{flex: '140px'}}
+            labelAlign="right"
+            onFinish={onFinish}
+            onFinishFailed={(error)=>onFinishFailed(error)}
+            scrollToFirstError
+            >
+              <Carousel 
+                ref={carouselRef}
+                draggable={false}
+                swipe={false}
+                dots={false}
+              >
+                <div>
+                  <div className='tileContainer'>
+                    <TileOne/>
+                  </div>
+                </div>
+                <div>
+                  <div className='tileContainer'>
+                    <TileTwo/>
+                  </div>
+                </div>
+              </Carousel>
+          </Form>
       </div>
       <div style={{display:displaySuccess}}>
         {redirect ? <Navigate to="/login"/>:null}

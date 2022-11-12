@@ -13,6 +13,7 @@ import {
   Tabs
 } from 'antd';
 import { ArrowLeftOutlined, EyeFilled } from '@ant-design/icons';
+import SiteFooter from '../../components/SiteFooter/SiteFooter';
 const { TabPane } = Tabs;
 
 class UserPage extends Component {
@@ -272,6 +273,7 @@ class UserPage extends Component {
             </>
           }
         </div>
+        <SiteFooter/>
       </>
     );
   };

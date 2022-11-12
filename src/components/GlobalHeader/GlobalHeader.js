@@ -44,7 +44,9 @@ const GlobalHeader = (props) => {
     if (!props.isAuth) {
       return <>
         <Link to='/'>
+          <div style={{maxWidth:'75%'}}>
           <img id="genericLogo" src={eyeLogo}></img>
+          </div>
         </Link>
       </>
     }

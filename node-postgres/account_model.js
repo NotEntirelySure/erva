@@ -177,8 +177,14 @@ const forgotPassword = (email) => {
     if (!userExists.rows[0].exists) resolve();
     if (userExists.rows[0].exists) {
       //sign JWT with user's encrypted password to create one time use JWT. If the password is reset, the encrypted password value will be different, and the JWT verify will fail.
-      const userValues = await pool.query('SELECT users_id, users_password FROM users WHERE users_email=$1',[email.toLowerCase()])
-      const resetToken = jwt.sign({userId:userValues.rows[0].users_id}, userValues.rows[0].users_password, {expiresIn: "1h"});
+      const userValues = await pool.query('SELECT users_id, users_email, users_password FROM users WHERE users_email=$1',[email.toLowerCase()])
+      const payload = {
+        userId:userValues.rows[0].users_id,
+        userEmail:userValues.rows[0].users_email
+      }
+      const resetToken = jwt.sign(payload, userValues.rows[0].users_password, {expiresIn: "1h"});
+      console.log("p: ",payload )
+      console.log(resetToken)
       email_model.sendForgotEmail(email.toLowerCase(),resetToken)
       resolve();
     }

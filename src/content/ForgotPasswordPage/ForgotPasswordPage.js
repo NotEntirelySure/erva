@@ -1,14 +1,18 @@
 import React, {useState} from "react";
 import {
+  Avatar,
   Button,
   Form,
   Input,
   Modal,
-  PageHeader 
+  Typography
 } from "antd";
+import { QuestionCircleOutlined, SendOutlined } from '@ant-design/icons';
 import GlobalHeader from "../../components/GlobalHeader";
 
 export default function ForgotPasswordPage() {
+
+  const {Title} = Typography;
 
   const onFinish = (values) => {
     fetch(`${process.env.REACT_APP_API_BASE_URL}/forgotpassword`, {
@@ -27,46 +31,52 @@ export default function ForgotPasswordPage() {
 
   return (<>
     <GlobalHeader/>
-    <div>
-      <PageHeader
-        className="forgotHeader"
-        title="Forgot Password"
-      />
-    </div>
-    <div id='forgotForm'>
-    <div>
-      <Form
-        name="forgot password form"
-        labelCol={{span:8}}
-        wrapperCol={{span:16}}
-        initialValues={{remember:false}}
-        onFinish={onFinish}
-        onFinishFailed={onFinishFailed}
-        autoComplete="off"
-        >
-        <Form.Item
-          label="Email "
-          name="email"
-          rules={[{
-            required: true,
-            message: 'This is a required field'
-          }]}
-          extra="Enter the email address associated with your account."
-        >
-          <Input onPressEnter={onFinish}/>
-        </Form.Item>
-        <Form.Item
-          wrapperCol={{
-            offset: 8,
-            span: 16
-          }}
-          >
-          <Button type="primary" htmlType="submit">
-            Submit
-          </Button>
-        </Form.Item>
-      </Form>
-    </div>
+    <div className="formPositioner">
+      <div className="formContainer">
+        <div className="formHeader">
+          <Avatar
+            style={{backgroundColor:'#2A90FA'}}
+            size={64}
+            icon={<QuestionCircleOutlined />}
+            />
+        </div>
+        <div className="formHeader"><Title>Forgot Password</Title></div>
+        <div className='formBody'>
+        <div>
+          <Form
+            name="forgot password form"
+            labelCol={{span:8}}
+            wrapperCol={{span:16}}
+            initialValues={{remember:false}}
+            onFinish={onFinish}
+            onFinishFailed={onFinishFailed}
+            autoComplete="off"
+            >
+            <Form.Item
+              label="Email "
+              name="email"
+              rules={[{
+                required: true,
+                message: 'This is a required field'
+              }]}
+              extra="Enter the email address associated with your account."
+              >
+              <Input onPressEnter={onFinish}/>
+            </Form.Item>
+            <Form.Item
+              wrapperCol={{
+                offset: 8,
+                span: 16
+              }}
+              >
+              <Button type="primary" htmlType="submit">
+                Submit <SendOutlined />
+              </Button>
+            </Form.Item>
+          </Form>
+        </div>
+        </div>
+      </div>
     </div>
   </>)
 

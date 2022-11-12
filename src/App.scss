@@ -10,3 +10,29 @@
 @import './content/AccountVerification/account-verification-page.scss';
 @import './content/ForgotPasswordPage/forgot-password-page.scss';
 @import './content/PasswordResetPage/password-reset-page.scss';
+
+.formPositioner {
+  display: flex;
+  justify-content: center;
+  margin-top: 15vh;
+}
+.formContainer {
+  padding: 2rem;
+  max-width: 600px;
+  border-color: darkgray;
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 0.5rem;
+  box-shadow:  5px 5px 5px 5px lightgray;
+}
+
+.formHeader {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+.formBody {
+  margin-top: 3rem;
+  display: flex;
+  justify-content: center;
+}

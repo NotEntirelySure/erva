@@ -1,5 +1,16 @@
-.registrationForm {
-  margin-top: 5%;
+
+.tileContainer {
+  margin: 5vh auto 2vh auto;
+  padding: 2rem;
+  max-width: 600px;
+  border-color: darkgray;
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 0.5rem;
+  box-shadow:  5px 5px 5px 5px lightgray;
+}
+
+.tileContent {
   display: flex;
   justify-content: center;
 }
