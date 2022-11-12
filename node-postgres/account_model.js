@@ -183,8 +183,6 @@ const forgotPassword = (email) => {
         userEmail:userValues.rows[0].users_email
       }
       const resetToken = jwt.sign(payload, userValues.rows[0].users_password, {expiresIn: "1h"});
-      console.log("p: ",payload )
-      console.log(resetToken)
       email_model.sendForgotEmail(email.toLowerCase(),resetToken)
       resolve();
     }
@@ -198,7 +196,7 @@ const resetPassword = (resetToken, newPassword) => {
     if (userId !== null) {
       const jwtSignature = await pool.query('SELECT users_password FROM users WHERE users_id=$1',[userId]);
       jwt.verify(resetToken, jwtSignature.rows[0].users_password, (err, result) => {
-        if (err) {console.log(err);resolve({"code":498,"error":"The server was presented with an invalid token"})}
+        if (err) resolve({"code":498,"error":"The server was presented with an invalid token"})
         if (result) {
           pool.query("UPDATE users SET users_password=crypt($1, gen_salt('bf'))",[newPassword],(error,result) => {
             if (error) resolve({"code":500,"message":"an error occured while attemting to change password."})
