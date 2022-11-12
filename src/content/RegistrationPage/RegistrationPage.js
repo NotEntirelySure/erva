@@ -18,7 +18,7 @@ import {
   Carousel,
   Spin
 } from 'antd';
-import {ArrowRightOutlined, UserAddOutlined} from '@ant-design/icons';
+import {ArrowRightOutlined, LoadingOutlined, UserAddOutlined} from '@ant-design/icons';
 const { Option } = Select;
 
 const formItemLayout = {
@@ -247,7 +247,7 @@ const RegistrationPage = () => {
             </Col>
             <Col span={6}>
               <Button onClick={() => getQr()}>
-                { generatingQr ? <Spin tip="Generating..."/>:"Generate" }
+                { generatingQr ? <Spin indicator={<LoadingOutlined style={{fontSize: 24}} spin/>} tip="Generating..."/>:"Generate" }
               </Button>
             </Col>
           </Row>
