@@ -247,7 +247,19 @@ const RegistrationPage = () => {
             </Col>
             <Col span={6}>
               <Button onClick={() => getQr()}>
-                { generatingQr ? <Spin indicator={<LoadingOutlined style={{fontSize: 24}} spin/>} tip="Generating..."/>:"Generate" }
+                { 
+                  generatingQr ? 
+                    <Spin 
+                      indicator={
+                        <LoadingOutlined 
+                          style={{fontSize:20}}
+                          spin
+                        />
+                      }
+                      tip="Generating..."
+                    />:
+                    "Generate" 
+                }
               </Button>
             </Col>
           </Row>

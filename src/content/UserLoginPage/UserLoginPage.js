@@ -7,7 +7,7 @@ import {
   Input,
   message,
   Modal,
-  Typography
+  PageHeader
 } from 'antd';
 import { LockOutlined, LoginOutlined, UserOutlined } from '@ant-design/icons';
 import { Link, Navigate } from 'react-router-dom';
@@ -16,7 +16,6 @@ import SiteFooter from '../../components/SiteFooter/SiteFooter';
 
 const UserLoginPage = () => {
 
-  const {Title} = Typography;
   const [form] = Form.useForm();
   const [loginSuccess, setLoginSuccess] = useState(false);
   const [otpModalOpen, setOtpModalOpen] = useState(false);
@@ -133,7 +132,7 @@ const UserLoginPage = () => {
               icon={<UserOutlined />}
               />
           </div>
-          <div className='formHeader'><Title>Login</Title></div>
+          <div className='formHeader'><PageHeader title={"Login"}/></div>
           <Divider/>
           <div className='formBody'>
             <Form

@@ -103,4 +103,4 @@ app.listen(process.env.API_BASE_LISTENING_PORT, () => {
 //     passphrase:'14ug5YO@vb_=7iXr'
 //   },
 //   app
-// ).listen(port, () => {console.log(`API running on port ${port}.`)})
+// ).listen(process.env.API_BASE_LISTENING_PORT, () => {console.log(`Secure API running on port ${process.env.API_BASE_LISTENING_PORT}.`)})

@@ -2,17 +2,16 @@ import React, {useState} from "react";
 import {
   Avatar,
   Button,
+  Divider,
   Form,
   Input,
   Modal,
-  Typography
+  PageHeader
 } from "antd";
 import { QuestionCircleOutlined, SendOutlined } from '@ant-design/icons';
 import GlobalHeader from "../../components/GlobalHeader";
 
 export default function ForgotPasswordPage() {
-
-  const {Title} = Typography;
 
   const onFinish = (values) => {
     fetch(`${process.env.REACT_APP_API_BASE_URL}/forgotpassword`, {
@@ -41,7 +40,8 @@ export default function ForgotPasswordPage() {
               icon={<QuestionCircleOutlined />}
               />
           </div>
-          <div className="formHeader"><Title>Forgot Password</Title></div>
+          <div className="formHeader"><PageHeader title={"Forgot Password"}/></div>
+          <Divider/>
           <div className='formBody'>
           <div>
             <Form
