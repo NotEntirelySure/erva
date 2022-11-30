@@ -18,15 +18,7 @@ import './App.scss';
 import './index.scss';
 const { Content } = Layout;
 
-function loadScript () {
-  const script = document.createElement("script");
-  script.src = "https://d1p5cqqchvbqmy.cloudfront.net/websdk/v1.71.12/mappedin.js";
-  script.async = true;
-  document.body.appendChild(script);
-}
-
 export default function App() {
-  loadScript()
   return (
     <>
       <Content>

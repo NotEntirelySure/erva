@@ -23,6 +23,7 @@ const UserLoginPage = () => {
   const [otpValue, setOtpValue] = useState();
 
   const onFinish = async(values) => {
+    console.log("onfinish: ",values)
     setUserCredientials({"username":values.username, "pass":values.password});
     setOtpModalOpen(true);
   };
@@ -41,6 +42,7 @@ const UserLoginPage = () => {
       "pass":userCredentials.pass,
       "otp":otpValue
     }
+    console.log("login payload: ",payload);
     setOtpValue("");
     try {
       const authRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/login`, {
@@ -136,28 +138,34 @@ const UserLoginPage = () => {
           <Divider/>
           <div className='formBody'>
             <Form
-              name="login form"
+              name="loginForm"
               initialValues={{remember:true}}
               onFinish={onFinish}
               onFinishFailed={onFinishFailed}
-              autoComplete="off"
               >
               <Form.Item
+                name="username"
                 rules={[{
                   required: true,
                   message: 'Username is a required field',
                 }]}
               >
-                <Input prefix={<UserOutlined className="site-form-item-icon" />} placeholder="Username" />
+                <Input
+                  id="userName"
+                  prefix={<UserOutlined className="site-form-item-icon" />} 
+                  placeholder="Username"
+                />
               </Form.Item>
 
               <Form.Item
+                name="password"
                 rules={[{
                   required: true,
                   message: 'Password is a required field',
                 }]}
                 >
                 <Input
+                  id="userPassword"
                   prefix={<LockOutlined className="site-form-item-icon" />}
                   type='password'
                   placeholder='Password'

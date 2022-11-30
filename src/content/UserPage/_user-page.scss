@@ -13,6 +13,7 @@
 }
 
 .cardContainer {
+  width: 100%;
   display: flex;
   flex-wrap: wrap;
   gap: 2rem;
@@ -22,7 +23,7 @@
 }
 
 .cardImage {
-  width: 100%;
+  max-width: 250px;
   height: auto;
   cursor: pointer;
 }

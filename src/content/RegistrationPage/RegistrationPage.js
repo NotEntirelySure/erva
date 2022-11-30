@@ -355,6 +355,7 @@ const RegistrationPage = () => {
           ]}
         />
       </div>
+      <SiteFooter/>
     </>
   );
 };

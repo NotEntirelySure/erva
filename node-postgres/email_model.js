@@ -35,7 +35,6 @@ const createTransporter = async () => {
       refreshToken: process.env.EMAIL_REFRESH_TOKEN
     }
   });
-
   return transporter;
 };
 
@@ -47,12 +46,14 @@ const sendVerifyEmail = async(toAddress, verificationToken) => {
     html: `
       <div>
         <p>Thank you for registering an account with ERVA. Before you can use your account you need to verify your email address</p>
-        <p>Click <a href="http://${process.env.API_BASE_HOST_URL}:3000/verifyaccount?verificationToken=${verificationToken}">here</a> to verify your account.<p>
+        <p>Click <a href="${process.env.EMAIL_BASE_URL}/verifyaccount?verificationToken=${verificationToken}">here</a> to verify your account.<p>
       </div>
     `
   }
+  console.log("sending email...")
   let emailTransporter = await createTransporter();
   await emailTransporter.sendMail(options);
+  console.log("email sent.")
 };
 
 const sendForgotEmail = async(toAddress, resetToken) => {
@@ -63,7 +64,7 @@ const sendForgotEmail = async(toAddress, resetToken) => {
     html: `
       <div>
         <p>You are receiving this email because a request to reset your password was received by our system. If you did not initiate this request, contact your system administrator.</p>
-        <p>Click <a href="http://${process.env.API_BASE_HOST_URL}:3000/passwordreset?resetToken=${resetToken}">here</a> to reset your account password.<p>
+        <p>Click <a href="${process.env.API_BASE_HOST_URL}/passwordreset?resetToken=${resetToken}">here</a> to reset your account password.<p>
       </div>
     `
   }
