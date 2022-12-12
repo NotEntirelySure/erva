@@ -32,6 +32,7 @@ CREATE TABLE users (
 	users_email TEXT NOT NULL UNIQUE,
 	users_password TEXT NOT NULL,
 	users_otp_key TEXT NOT NULL,
+	users_api_key TEXT,
 	users_created_at TIMESTAMP,
 	users_enabled BOOLEAN,
 	users_verified BOOLEAN
@@ -55,7 +56,8 @@ CREATE TABLE facilities (
 	facilities_city VARCHAR,
 	facilities_state VARCHAR,
 	facilities_zip INT,
-	facilities_image VARCHAR
+	facilities_image VARCHAR,
+	facilities_code VARCHAR
 );
 
 CREATE TABLE facilitypermissions (
@@ -68,7 +70,6 @@ CREATE TABLE maps (
 	maps_id SERIAL PRIMARY KEY,
 	maps_fk_facility_id INT REFERENCES facilities(facilities_id),
 	maps_name VARCHAR,
-	maps_code VARCHAR,
 	maps_image VARCHAR
 );
 

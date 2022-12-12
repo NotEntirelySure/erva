@@ -1,4 +1,4 @@
-import React, {useState, useEffect, Component } from 'react'
+import React, {useState, useEffect, useId } from 'react'
 import {Navigate, useNavigate } from 'react-router-dom';
 import GlobalHeader from '../../components/GlobalHeader'
 import {
@@ -17,11 +17,9 @@ const { TabPane } = Tabs;
 export default function UserPage () {
   
   const navigate = useNavigate();
-  const [loginRedirect, setLoginRedirect] = useState(false);
-  const [redirect, setRedirect] = useState(false);
-
   const [jwtToken, setJtwToken] = useState("");
-  const [isAuth, setIsAuth] = useState(false);
+  const [isAuth, setIsAuth] = useState(null);
+  const [authErrorStatus, setAuthErrorStatus] = useState({status:"info",title:"",subTitle:""})
   const [locationList, setLocationList] = useState([]);
   const [userInfo, setUserInfo] = useState([]);
   const [officeInfo, setOfficeInfo] = useState([]);
@@ -39,7 +37,17 @@ export default function UserPage () {
   const [showWarning, setShowWarning] = useState(false);
 
 
-  useEffect(() => {if (sessionStorage.getItem("jwt")) setJtwToken(sessionStorage.getItem("jwt"));},[])
+  useEffect(() => {
+    if (!sessionStorage.getItem("jwt")) {
+      setIsAuth(false);
+      setAuthErrorStatus({
+        status:403,
+        title:"Error 401",
+        subTitle:"Sorry, you are not authorized to access this page. Please login to access this page."
+      })
+    }
+    if (sessionStorage.getItem("jwt")) setJtwToken(sessionStorage.getItem("jwt"));
+  },[])
 
   useEffect(() => {verifyJwt()},[jwtToken])
 
@@ -54,7 +62,30 @@ export default function UserPage () {
       body:`{"token":"${jwtToken}"}`
     });
     const verifyResponse = await verifyRequest.json();
-    if (verifyResponse.error) {console.log("error",verifyResponse.error)}
+    if (verifyResponse.error) {
+      switch (verifyResponse.errorCode){
+        case 498:
+          setAuthErrorStatus({
+            status:403,
+            title:"Error 498",
+            subTitle:"Your session has expired. Please login again to access this page."
+          })
+          break;
+        case 401:
+          setAuthErrorStatus({
+            status:403,
+            title:"Error 498",
+            subTitle:"Sorry, you are not authorized to access this page. Please login to access this page."
+          })
+          break;
+        default: setAuthErrorStatus({
+          status:403,
+          title:"Error 498",
+          subTitle:"Sorry, you are not authorized to access this page. Please login to access this page."
+        }) 
+      }
+      setIsAuth(false);
+    }
     if (verifyResponse.result) {
       setUserInfo(
         {
@@ -84,7 +115,28 @@ export default function UserPage () {
           message:"No facilities to show"
         })
       }
-        
+    }
+  }
+
+  const getApiKey = async() => {
+
+    const apiKeyRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/getapikey`, {
+      method:'POST',
+      mode:'cors',
+      headers:{'Content-Type':'application/json'},
+      body:`{"token":"${jwtToken}"}`
+    });
+    const apiKeyResponse = await apiKeyRequest.json()
+    if (apiKeyResponse.code === 200) {
+      navigate(
+        '/mappage',
+        {
+          state:{
+            "map":selectedFacility.code,
+            "apiKey":apiKeyResponse.apiKey
+          }
+        }
+      )
     }
   }
 
@@ -100,8 +152,7 @@ export default function UserPage () {
     });
     const facilitiesResponse = await facilitiesRequest.json();
     if (facilitiesResponse.length <= 0) {}
-    if (facilitiesResponse.length > 0) {}
-    setFacilityInfo(facilitiesResponse);
+    if (facilitiesResponse.length > 0) setFacilityInfo(facilitiesResponse);
     setContentLoading(false);
     setFacilityCards('block');
     setMapCards('none');
@@ -123,7 +174,8 @@ export default function UserPage () {
                     "address":facility.address,
                     "city":facility.city,
                     "state":facility.state,
-                    "zip":facility.zip
+                    "zip":facility.zip,
+                    "code":facility.code
                   })
                   getFacilityMaps(facility.id)
                 }}
@@ -168,16 +220,12 @@ export default function UserPage () {
         <p style={{color:'#1A95CC'}} className="facilityAddress">{selectedFacility.name}</p>
         <p className="facilityAddress">{selectedFacility.address}</p>
         <p className="facilityAddress">{selectedFacility.city}, {selectedFacility.state} {selectedFacility.zip}</p>
+        <p>{selectedFacility.code}</p>
         </div>
         <div style={{marginLeft:'5%'}}>
           <Button 
             type='primary'
-            onClick={() => {
-              navigate(
-                '/mappage',
-                {state:{map:"mappedin-demo-mall"}}
-              )
-            }}
+            onClick={() => getApiKey()}
             icon={<EyeFilled style={{width:'1em', height:'1em'}}/>}
           > 
            Wayfind
@@ -210,75 +258,79 @@ export default function UserPage () {
   return (
     <>
       <GlobalHeader isAuth={isAuth} userInfo={userInfo}/>
-          {
-          showWarning ? 
-            <div style={{marginTop:'2rem'}}>
-              <Alert 
-                message={alertMessage.message}
-                description={alertMessage.description}
-                type={alertMessage.type}
-                icon={<ExclamationCircleOutlined />}
-                showIcon
-              />
-            </div>:null
-          }
+        
       <div className='content'>
-        <div style={{marginTop:'2rem'}}>
-          {
-            tabsLoading ? <>
-              <Spin tip="Loading...">
-                <Alert
-                  message={loadingMessage}
-                  description={loadingDescription}
-                  type="info"
+        {
+          isAuth === true ? <>
+            {
+            showWarning ? 
+              <div style={{marginTop:'2rem'}}>
+                <Alert 
+                  message={alertMessage.message}
+                  description={alertMessage.description}
+                  type={alertMessage.type}
+                  icon={<ExclamationCircleOutlined />}
+                  showIcon
                 />
-              </Spin>
-            </>:<Tabs defaultActiveKey="0" onChange={(tabId) =>{console.log(tabId);getFacilities(tabId)}}>
+              </div>:null
+            }
+            <div style={{marginTop:'2rem'}}>
               {
-                officeInfo.map((office) => {
-                  return <>
-                    <TabPane tab={office.name} key={`${office.id}`}>
-                    <br/>
-                    </TabPane>
-                  </>
-                })
-              }
-            </Tabs>
-          }
-        </div>
-        <div className='cardContainer'>
-          {
-            contentLoading ? 
-              <>
-                <div style={{width:'100%'}}>
-
-                <Spin tip="Loading...">
-                  <Alert
-                    message={loadingMessage}
-                    description={loadingDescription}
-                    type="info"
+                tabsLoading ? <>
+                  <Spin tip="Loading...">
+                    <Alert
+                      message={loadingMessage}
+                      description={loadingDescription}
+                      type="info"
                     />
-                </Spin>
-                    </div>
-              </>
-              :
-              <>
-                <div style={{display:facilityCards}}><RenderFacilities/></div>
-                <div style={{display:mapCards}}><RenderMaps/></div>
-              </>
-          }
-        </div>
+                  </Spin>
+                </>:<Tabs defaultActiveKey="0" onChange={tabId => getFacilities(tabId)}>
+                  {
+                    officeInfo.map((office) => {
+                      return <>
+                        <TabPane tab={office.name} key={`${office.id}`}>
+                        <br/>
+                        </TabPane>
+                      </>
+                    })
+                  }
+                </Tabs>
+              }
+            </div>
+            <div className='cardContainer'>
+              {
+                contentLoading ? 
+                  <>
+                    <div style={{width:'100%'}}>
+
+                    <Spin tip="Loading...">
+                      <Alert
+                        message={loadingMessage}
+                        description={loadingDescription}
+                        type="info"
+                        />
+                    </Spin>
+                        </div>
+                  </>
+                  :
+                  <>
+                    <div style={{display:facilityCards}}><RenderFacilities/></div>
+                    <div style={{display:mapCards}}><RenderMaps/></div>
+                  </>
+              }
+            </div>
+          </>:<><div></div></>
+        }
         <div>
           {
-            isAuth ? null:<>
-              {loginRedirect ? <Navigate to="/login"/>:null}
+            isAuth === false ? <>
               <Result
-                status="403"
-                title="403"
-                subTitle="Sorry, you are not authorized to access this page."
-                extra={<Button onClick={() => setLoginRedirect(true)} type="primary">Login</Button>}
+                status={authErrorStatus.status}
+                title={authErrorStatus.title}
+                subTitle={authErrorStatus.subTitle}
+                extra={<Button onClick={() => navigate('/login')} type="primary">Login</Button>}
               />
-            </>
+            </>:<><div></div></>
           }
         </div>
       </div>

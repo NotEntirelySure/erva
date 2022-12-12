@@ -38,6 +38,24 @@ const createTransporter = async () => {
   return transporter;
 };
 
+const sendAccountExistsEmail = async(toAddress) => {
+  const options = {
+    subject: "ERVA Account Registration",
+    from: process.env.EMAIL_FROM_ADDRESS,
+    to: toAddress,
+    html: `
+      <div>
+        <p>You are receiving this email because someone attempted to create an account with the email address of ${toAddress}, but an account is already registered with that email address</p>
+        <p>If you did not initiate this account registration action, please contact Erva Systems customer service at account-services@ervasystems.com</p>
+        <br/>
+        <p>If you did initiate this action and forgot your account password, click <a href="${process.env.EMAIL_BASE_URL}/forgotpassword">here</a> to reset your password.
+      </div>
+    `
+  }
+  let emailTransporter = await createTransporter();
+  await emailTransporter.sendMail(options);
+};
+
 const sendVerifyEmail = async(toAddress, verificationToken) => {
   const options = {
     subject: "ERVA Account Verification",
@@ -50,10 +68,8 @@ const sendVerifyEmail = async(toAddress, verificationToken) => {
       </div>
     `
   }
-  console.log("sending email...")
   let emailTransporter = await createTransporter();
   await emailTransporter.sendMail(options);
-  console.log("email sent.")
 };
 
 const sendForgotEmail = async(toAddress, resetToken) => {
@@ -72,4 +88,7 @@ const sendForgotEmail = async(toAddress, resetToken) => {
   await emailTransporter.sendMail(options);
 };
 
-module.exports = {sendVerifyEmail,sendForgotEmail}
+module.exports = {
+  sendVerifyEmail,
+  sendAccountExistsEmail,
+  sendForgotEmail}

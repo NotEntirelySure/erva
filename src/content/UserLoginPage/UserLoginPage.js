@@ -23,7 +23,6 @@ const UserLoginPage = () => {
   const [otpValue, setOtpValue] = useState();
 
   const onFinish = async(values) => {
-    console.log("onfinish: ",values)
     setUserCredientials({"username":values.username, "pass":values.password});
     setOtpModalOpen(true);
   };
@@ -42,7 +41,6 @@ const UserLoginPage = () => {
       "pass":userCredentials.pass,
       "otp":otpValue
     }
-    console.log("login payload: ",payload);
     setOtpValue("");
     try {
       const authRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/login`, {

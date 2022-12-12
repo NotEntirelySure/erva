@@ -66,7 +66,8 @@ const getFacilities = (token, officeId) => {
               f.facilities_city,
               f.facilities_state,
               f.facilities_zip,
-              f.facilities_image
+              f.facilities_image,
+              f.facilities_code
             FROM facilities AS f
             INNER JOIN facilitypermissions AS fp ON fp.fp_fk_facility=f.facilities_id
             WHERE fp.fp_fk_user=${result.id}
@@ -83,7 +84,8 @@ const getFacilities = (token, officeId) => {
                 "city":userFacilities.rows[i].facilities_city,
                 "state":userFacilities.rows[i].facilities_state,
                 "zip":userFacilities.rows[i].facilities_zip,
-                "image":image
+                "image":image,
+                "code":userFacilities.rows[i].facilities_code
               })
             }
           }

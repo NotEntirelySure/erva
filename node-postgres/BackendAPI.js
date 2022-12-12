@@ -75,6 +75,12 @@ app.post('/verifyaccount', (req, res) => {
     .catch(error => res.status(500).send(error))
 })
 
+app.post('/getapikey', (req, res) => {
+  account_model.getApiKey(req.body.token)
+    .then(response => res.status(200).send(response))
+    .catch(error => res.status(500).send(error))
+})
+
 app.post('/getoffices', (req, res) => {
   database_model.getOffices(req.body.token)
     .then(response => res.status(200).send(response))

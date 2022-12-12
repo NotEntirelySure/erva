@@ -84,7 +84,10 @@ const register = (registrationValues) => {
     if (!isVerified) {resolve({"code":601,"message":"invalid OTP code"})}
     if (isVerified) {
       const userExists = await pool.query(`SELECT(EXISTS(SELECT FROM users WHERE users_email=$1))`,[registrationValues.email.toLowerCase()]);
-      if (userExists.rows[0].exists) resolve({"code":200})
+      if (userExists.rows[0].exists) {
+        email_model.sendAccountExistsEmail(registrationValues.email.toLowerCase())
+        resolve({"code":200})
+      }
       if (!userExists.rows[0].exists) {
         const userValues = [
           registrationValues.fname,
@@ -201,12 +204,47 @@ const resetPassword = (resetToken, newPassword) => {
           pool.query("UPDATE users SET users_password=crypt($1, gen_salt('bf'))",[newPassword],(error,result) => {
             if (error) resolve({"code":500,"message":"an error occured while attemting to change password."})
             resolve({"code":200})
-          })
-        }
-      })
-    }
-  })
-}
+          });
+        };
+      });
+    };
+  });
+};
+
+const setApiKey = (userId, apiKey) => {
+  return new Promise((resolve, reject) => {
+    pool.query(`
+      UPDATE users
+      SET users_api_key=encrypt($1, '${process.env.DATABASE_PASSWORD_ENCRYPTION_KEY}', 'aes')
+      WHERE users_id=$2;
+      `,[userId, apiKey], (result, error) => {
+        if (error) reject({"code":500})
+        resolve({"code":200})
+    });
+  });
+};
+
+const getApiKey = (token) => {
+  return new Promise(async(resolve, reject) => {
+    const isVerified = await verifyJwt_model.verifyJwtInternal(token);
+    if (isVerified.verified === false) resolve(isVerified.error);
+    if (isVerified.verified === true) {
+      try { 
+        pool.query(`
+          SELECT convert_from(decrypt(users_api_key::bytea, '${process.env.DATABASE_PASSWORD_ENCRYPTION_KEY}', 'aes'), 'SQL_ASCII')
+          FROM users
+          WHERE users_id=$1
+          `,[isVerified.result.id], (error, result) => {
+              if (error) reject({"code":500})
+              resolve({"code":200,"apiKey":result.rows[0].convert_from})
+            }
+        );
+      }
+      catch {reject({"code":500})}
+    }  
+
+  });
+};
 
 module.exports = {
   generateQr,
@@ -214,5 +252,7 @@ module.exports = {
   register,
   verifyAccount,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  setApiKey,
+  getApiKey
 }

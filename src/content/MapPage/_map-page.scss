@@ -28,22 +28,73 @@
 }
 */
 
-
-
-.container {
-  display: grid;
-  grid-template-columns: minmax(200px, 25%) 1fr;
-  height: 100vh;
+.overlay {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0,0,0,0.5);
+  z-index: 3;
 }
 
-#sidebar {
-  max-height: 100%;
-  margin: 0;
-  padding: 0 12px;
-  overflow-y: scroll;
-  border-right: 1px dashed grey;
+.loadingIcon{
+  position: absolute;
+  width:fit-content;
+  height: fit-content;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  top: 50%;
+  left: 50%;
+  background-color: white;
+  transform: translate(-50%,-50%);
+  -ms-transform: translate(-50%,-50%);
 }
 
-#mapView {
-  position: relative;
+.openSideNavArrow {
+  position: absolute;
+  padding: 0.5rem 0.5rem 0.5rem 2rem;
+  background-color: rgba(250, 250, 250);
+  border: solid black 1px;
+  border-radius: 0rem 1rem 1rem 0rem;
+  margin-top: 2rem;
+  margin-left: -10rem;
+  transition: 1s; 
+  z-index: 2;
 }
+
+.mapSidenav {
+  position: absolute;
+  max-width: 25%;
+  min-width: 350px;
+  min-height: fit-content;
+  max-height: 80vh;
+  overflow: auto;
+  margin-top: 1rem;
+  margin-left: 1rem;
+  border-radius: 1rem;
+  background-color: rgba(250, 250, 250); //#F2F2F2;
+  z-index: 2;
+  padding: 1rem;
+  transition: 1s;
+}
+
+.listItem:hover{
+  cursor: pointer;
+  background-color: lightgray;
+}
+
+.stepDistance {
+  font-size: 100%;
+  color: darkgrey;
+}
+
+.stepInstruction {
+  font-weight: bold;
+  font-size: 125%;
+}
+
+
+#mapView{position: relative;}
