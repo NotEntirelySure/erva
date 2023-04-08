@@ -63,6 +63,7 @@
   margin-left: -10rem;
   transition: 1s; 
   z-index: 2;
+  cursor: pointer;
 }
 
 .mapSidenav {
@@ -79,6 +80,13 @@
   z-index: 2;
   padding: 1rem;
   transition: 1s;
+}
+
+#closeSideNavButton{border:none;}
+
+#closeSideNavButton:hover {
+  border: solid 1px black;
+  border-radius: 25%;
 }
 
 .listItem:hover{

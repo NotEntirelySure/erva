@@ -1,5 +1,5 @@
-import React, {useState, useEffect, useId } from 'react'
-import {Navigate, useNavigate } from 'react-router-dom';
+import React, {useState, useEffect, useRef, useId } from 'react'
+import {Navigate, useNavigate, useResolvedPath } from 'react-router-dom';
 import GlobalHeader from '../../components/GlobalHeader'
 import {
   Alert,
@@ -17,7 +17,7 @@ const { TabPane } = Tabs;
 export default function UserPage () {
   
   const navigate = useNavigate();
-  const [jwtToken, setJtwToken] = useState("");
+  const jwt = useRef(null);
   const [isAuth, setIsAuth] = useState(null);
   const [authErrorStatus, setAuthErrorStatus] = useState({status:"info",title:"",subTitle:""})
   const [locationList, setLocationList] = useState([]);
@@ -46,10 +46,10 @@ export default function UserPage () {
         subTitle:"Sorry, you are not authorized to access this page. Please login to access this page."
       })
     }
-    if (sessionStorage.getItem("jwt")) setJtwToken(sessionStorage.getItem("jwt"));
+    if (sessionStorage.getItem("jwt")) jwt.current = sessionStorage.getItem("jwt");
   },[])
 
-  useEffect(() => {verifyJwt()},[jwtToken])
+  useEffect(() => {verifyJwt()},[jwt.current])
 
   const verifyJwt = async() => {
     setTabsLoading(true);
@@ -59,7 +59,7 @@ export default function UserPage () {
       method:'POST',
       mode:'cors',
       headers:{'Content-Type':'application/json'},
-      body:`{"token":"${jwtToken}"}`
+      body:`{"token":"${jwt.current}"}`
     });
     const verifyResponse = await verifyRequest.json();
     if (verifyResponse.error) {
@@ -101,7 +101,7 @@ export default function UserPage () {
         method:'POST',
         mode:'cors',
         headers:{'Content-Type':'application/json'},
-        body:`{"token":"${jwtToken}"}`
+        body:`{"token":"${jwt.current}"}`
       });
       const officeResponse = await officeRequest.json();
       setOfficeInfo(officeResponse);
@@ -124,7 +124,7 @@ export default function UserPage () {
       method:'POST',
       mode:'cors',
       headers:{'Content-Type':'application/json'},
-      body:`{"token":"${jwtToken}"}`
+      body:`{"token":"${jwt.current}"}`
     });
     const apiKeyResponse = await apiKeyRequest.json()
     if (apiKeyResponse.code === 200) {
@@ -148,7 +148,7 @@ export default function UserPage () {
       method:'POST',
       mode:'cors',
       headers:{'Content-Type':'application/json'},
-      body:`{"token":"${jwtToken}","office":"${officeId}"}`
+      body:`{"token":"${jwt.current}","office":"${officeId}"}`
     });
     const facilitiesResponse = await facilitiesRequest.json();
     if (facilitiesResponse.length <= 0) {}
@@ -197,7 +197,7 @@ export default function UserPage () {
       method:'POST',
       mode:'cors',
       headers:{'Content-Type':'application/json'},
-      body:`{"token":"${jwtToken}","facility":"${facilityId}"}`
+      body:`{"token":"${jwt.current}","facility":"${facilityId}"}`
     });
     const mapsResponse = await mapsRequest.json();
     if (mapsResponse.length <= 0) {}

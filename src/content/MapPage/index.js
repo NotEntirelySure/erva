@@ -1,2 +1,2 @@
-import MapPage from "./MapPage2";
+import MapPage from "./MapPage";
 export default MapPage;
