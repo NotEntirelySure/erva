@@ -20,7 +20,8 @@ CREATE TABLE users (
 	users_password TEXT NOT NULL,
 	users_otp_key TEXT NOT NULL,
 	users_created_at TIMESTAMP,
-	users_enabled BOOLEAN
+	users_enabled BOOLEAN,
+	users_api_key TEXT
 );
 
 CREATE TABLE offices (
@@ -41,7 +42,8 @@ CREATE TABLE facilities (
 	facilities_city VARCHAR,
 	facilities_state VARCHAR,
 	facilities_zip INT,
-	facilities_image VARCHAR
+	facilities_image VARCHAR,
+	facilities_code VARCHAR
 );
 
 CREATE TABLE facilitypermissions (

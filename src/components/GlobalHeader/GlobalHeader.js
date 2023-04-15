@@ -59,6 +59,8 @@ const GlobalHeader = (props) => {
           <Avatar 
             onClick={() => setDrawerOpen(true)}
             icon={<UserOutlined />}
+            style={{backgroundColor:'#ED2027', verticalAlign:'middle'}}
+            gap={1}
             size={{
               xs: 24,
               sm: 32,
@@ -67,10 +69,7 @@ const GlobalHeader = (props) => {
               xl: 64,
               xxl:64
             }}
-            gap={1}
-          >
-            {props.userInfo.email}
-          </Avatar>
+          />
         </div>
         <Drawer title={props.userInfo.email} placement="right" onClose={() => setDrawerOpen(false)} visible={drawerOpen}>
           <p>Name: {`${props.userInfo.fname} ${props.userInfo.lname}`}</p>

@@ -25,7 +25,7 @@ import {
 import { 
   ArrowRightOutlined,
   CloseOutlined,
-  RollbackOutlined
+  EnvironmentOutlined
 } from '@ant-design/icons';
 import { useLocation } from 'react-router-dom';
 import GlobalHeader from '../../components/GlobalHeader';
@@ -203,7 +203,7 @@ export default function MapPage() {
               <CloseOutlined id="closeSideNavButton" onClick={() => handleSideNavView("close")}/>
             </Tooltip>
           </div>
-          <div>
+          <div style={{paddingBottom:'1rem'}}>
             <Select
               defaultValue={"Select Floor"}
               style={{width:'10rem'}}
@@ -230,7 +230,7 @@ export default function MapPage() {
               />
             </div>
           </div>
-          <div>
+          <div style={{paddingBottom:'1rem'}}>
             <Search 
               id="searchEnd"
               placeholder='Search Destination'
@@ -248,8 +248,8 @@ export default function MapPage() {
               } 
             />
           </div>
-          <div>
-            <Button type="primary"><RollbackOutlined onClick={() => getDirections()}/></Button>  
+          <div style={{paddingBottom:'1rem'}}>
+            <Button type="primary" onClick={() => getDirections()}>Get Directions <EnvironmentOutlined /></Button>  
           </div> 
           <div className='searchResults' style={{display:displaySearch}}>
           <List

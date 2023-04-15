@@ -10,6 +10,7 @@
 
 .content {
   margin-left: 3rem;
+  min-height: 75vh;
 }
 
 .cardContainer {
@@ -18,12 +19,10 @@
   flex-wrap: wrap;
   gap: 2rem;
 }
-.locationCard {
-  max-width: 350px;
-}
+.locationCard {max-width: 22rem;}
 
 .cardImage {
-  max-width: 250px;
+  max-width:100%;
   height: auto;
   cursor: pointer;
 }

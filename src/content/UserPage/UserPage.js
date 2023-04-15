@@ -5,6 +5,7 @@ import {
   Alert,
   Button,
   Card,
+  Image,
   PageHeader,
   Result,
   Spin,
@@ -160,35 +161,6 @@ export default function UserPage () {
 
   }
 
-  const RenderFacilities = () => {
-    return facilityInfo.map((facility) => {
-      return (
-        <>
-          <div>
-            <Card key={facility.id} title={facility.name} className='locationCard'>
-              <img 
-                className='cardImage'
-                onClick={() => {
-                  setSelectedFacility({
-                    "name":facility.name,
-                    "address":facility.address,
-                    "city":facility.city,
-                    "state":facility.state,
-                    "zip":facility.zip,
-                    "code":facility.code
-                  })
-                  getFacilityMaps(facility.id)
-                }}
-                src={`data:image/png;base64,${facility.image}`}
-                alt=""
-                />
-            </Card>
-          </div>
-        </>
-      )
-    })
-  }
-
   const getFacilityMaps = async(facilityId) => {
     setLoadingMessage("Getting maps");
     setLoadingDescription("Getting maps associated to the selected facility.");
@@ -208,53 +180,6 @@ export default function UserPage () {
     setMapCards('block');
   }
 
-  const RenderMaps = () => {
-    return <>
-      <PageHeader
-        style={{display:backButtonOffice}}
-        onBack={() => getFacilities(backButtonOffice)}
-        title="Back"
-      />
-      <div style={{display:'flex'}}>
-        <div>
-        <p style={{color:'#1A95CC'}} className="facilityAddress">{selectedFacility.name}</p>
-        <p className="facilityAddress">{selectedFacility.address}</p>
-        <p className="facilityAddress">{selectedFacility.city}, {selectedFacility.state} {selectedFacility.zip}</p>
-        <p>{selectedFacility.code}</p>
-        </div>
-        <div style={{marginLeft:'5%'}}>
-          <Button 
-            type='primary'
-            onClick={() => getApiKey()}
-            icon={<EyeFilled style={{width:'1em', height:'1em'}}/>}
-          > 
-           Wayfind
-          </Button>
-        </div>
-        <br/>
-      </div>
-      <div>
-        {
-          mapsInfo.map((map) => {
-            return (
-              <div>
-                <Card key={map.id} title={map.name} className='locationCard'>
-                  <img 
-                    onClick={() => {}}
-                    className='cardImage'
-                    src={`data:image/png;base64,${map.image}`}
-                    alt=""
-                  />
-                </Card>
-              </div>
-            )
-          })
-        }
-      </div>
-    </>
-  }
-
-  
   return (
     <>
       <GlobalHeader isAuth={isAuth} userInfo={userInfo}/>
@@ -297,7 +222,7 @@ export default function UserPage () {
                 </Tabs>
               }
             </div>
-            <div className='cardContainer'>
+            <div>
               {
                 contentLoading ? 
                   <>
@@ -314,8 +239,78 @@ export default function UserPage () {
                   </>
                   :
                   <>
-                    <div style={{display:facilityCards}}><RenderFacilities/></div>
-                    <div style={{display:mapCards}}><RenderMaps/></div>
+                    <div style={{display:facilityCards}}>
+                      <div className='cardContainer'>
+                      {facilityInfo.map(facility => {
+                        return (
+                          <>
+                            <div>
+                              <Card key={facility.id} title={facility.name} className='locationCard'>
+                                <img 
+                                  className='cardImage'
+                                  onClick={() => {
+                                    setSelectedFacility({
+                                      "name":facility.name,
+                                      "address":facility.address,
+                                      "city":facility.city,
+                                      "state":facility.state,
+                                      "zip":facility.zip,
+                                      "code":facility.code
+                                    })
+                                    getFacilityMaps(facility.id)
+                                  }}
+                                  src={`data:image/png;base64,${facility.image}`}
+                                  alt=""
+                                  />
+                              </Card>
+                            </div>
+                          </>
+                        )
+                      })}
+                      </div>
+                    </div>
+                    <div style={{display:mapCards}}>
+                      
+                      <PageHeader
+                        style={{display:backButtonOffice}}
+                        onBack={() => getFacilities(backButtonOffice)}
+                        title="Back"
+                      />
+                      <div style={{display:'flex'}}>
+                      <div>
+                        <p style={{color:'#1A95CC'}} className="facilityAddress">{selectedFacility.name}</p>
+                        <p className="facilityAddress">{selectedFacility.address}</p>
+                        <p className="facilityAddress">{selectedFacility.city}, {selectedFacility.state} {selectedFacility.zip}</p>
+                      </div>
+                      <div style={{marginLeft:'5%'}}>
+                        <Button 
+                          type='primary'
+                          onClick={() => getApiKey()}
+                          icon={<EyeFilled style={{width:'1em', height:'1em'}}/>}
+                        > 
+                        Wayfind
+                        </Button>
+                      </div>
+                      <br/>
+                    </div>
+                    <div className='cardContainer'>
+                      {
+                        mapsInfo.map(map => {
+                          return (
+                            <div>
+                              <Card key={map.id} title={map.name} className='locationCard'>
+                                <Image
+                                  className='cardImage'
+                                  src={`data:image/png;base64,${map.image}`}
+                                  alt=""
+                                />
+                              </Card>
+                            </div>
+                          )
+                        })
+                      }
+                    </div>
+                    </div>
                   </>
               }
             </div>
