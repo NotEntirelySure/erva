@@ -15,6 +15,7 @@ import {
 import "@mappedin/mappedin-js/lib/mappedin.css";
 import {
   Button,
+  Checkbox,
   Divider,
   Input,
   List,
@@ -22,10 +23,11 @@ import {
   Spin,
   Tooltip
 } from 'antd';
-import { 
+import {
   ArrowRightOutlined,
   CloseOutlined,
-  EnvironmentOutlined
+  EnvironmentOutlined,
+  ProfileOutlined
 } from '@ant-design/icons';
 import { useLocation } from 'react-router-dom';
 import GlobalHeader from '../../components/GlobalHeader';
@@ -41,9 +43,11 @@ export default function MapPage() {
   const [venue, setVenue] = useState();
   const [mapView, setMapView] = useState();
   const [levels, setLevels] = useState([]);
-  const [sideNavPosition, setSideNavPosition] = useState('')
-  const [sideNavArrowPosition, setSideNavArrowPosition] = useState('')
-  const [contentLoading, setContentLoading] = useState('none')
+  const [sideNavPosition, setSideNavPosition] = useState('');
+  const [sideNavArrowPosition, setSideNavArrowPosition] = useState('');
+  const [mapOptionsPosition, setMapOptionsPosition] = useState('');
+  const [mapOptionsArrowPosition, setMapOptionsArrowPosition] = useState('');
+  const [contentLoading, setContentLoading] = useState('none');
   const [venueDirectory, setVenueDirectory] = useState();
   const [searchResults, setSearchResults] = useState([{source:'',name:'',id:''}]);
   const [displaySearch, setDisplaySearch] = useState('none');
@@ -128,6 +132,18 @@ export default function MapPage() {
 
   }
 
+  const handleMapOptionsView = (state) => {
+
+    if (state === "open") {
+      setMapOptionsPosition('translate(0rem,0rem)');
+      setMapOptionsArrowPosition('translate(10rem,0rem)');
+    };
+    if (state === "close") {
+      setMapOptionsPosition('translate(25rem,0rem)');
+      setMapOptionsArrowPosition('translate(-9rem,0rem)');
+    };
+  }
+
   const searchDirectory = async(source, searchValue) => {
     if (searchValue === "") {
       setSearchResults([{source:'',name:'',id:''}])
@@ -176,6 +192,42 @@ export default function MapPage() {
       if (displaySearch === 'block') setDisplaySearch('none');
       setDisplayTbtDirections('block')
       mapView.Journey.draw(directions);
+    }
+  }
+
+  function handleCheckboxChange(value) {
+    console.log(value);
+    if (value.includes("safe")) {
+      mapView.setPolygonColor("62042759e325474a3000002b", "#03730B");
+      mapView.setPolygonColor("62042759e325474a3000001d", "#03730B");
+      mapView.setPolygonColor("62042759e325474a3000008c", "#03730B");
+      mapView.setPolygonColor("62051551e325474a30001088", "#03730B");
+
+    }
+    if (!value.includes("safe")) {
+      mapView.clearPolygonColor("62042759e325474a3000002b");
+      mapView.clearPolygonColor("62042759e325474a3000001d");
+      mapView.clearPolygonColor("62042759e325474a3000008c");
+      mapView.clearPolygonColor("62051551e325474a30001088");
+
+    }
+    if (value.includes("defense")) {
+      mapView.setPolygonColor("62042759e325474a30000092", "#A10808");
+      mapView.setPolygonColor("62042759e325474a3000008d", "#A10808");
+      mapView.setPolygonColor("62042759e325474a30000018", "#A10808");
+      mapView.setPolygonColor("62042759e325474a3000002f", "#A10808");
+      mapView.setPolygonColor("62051551e325474a30001106", "#A10808");
+      mapView.setPolygonColor("62051551e325474a300010ad", "#A10808");
+      mapView.setPolygonColor("62051551e325474a30001087", "#A10808");
+    }
+    if (!value.includes("defense")) {
+      mapView.clearPolygonColor("62042759e325474a30000092");
+      mapView.clearPolygonColor("62042759e325474a3000008d");
+      mapView.clearPolygonColor("62042759e325474a30000018");
+      mapView.clearPolygonColor("62042759e325474a3000002f");
+      mapView.clearPolygonColor("62051551e325474a30001106");
+      mapView.clearPolygonColor("62051551e325474a300010ad");
+      mapView.clearPolygonColor("62051551e325474a30001087");
     }
   }
 
@@ -288,9 +340,46 @@ export default function MapPage() {
             />
           </div>
         </div>
+
+
+
+        <div 
+          className='openOptionsArrow'
+          style={{transform: mapOptionsArrowPosition, display:'flex',alignItems:'center'}}
+          onClick={() => handleMapOptionsView("open")}
+        >
+          <Tooltip title="Show Map Options" placement="topRight">
+            <ProfileOutlined style={{ fontSize: '30px'}}/>
+          </Tooltip>
+        </div>
+        <div className='mapOptions' style={{transform: mapOptionsPosition}}>
+          <div style={{display:'flex',gap:'2rem'}}>
+            <div>
+
+            <Tooltip title="Hide Map Options">
+              <CloseOutlined id="closeMapOptionsButton" onClick={() => handleMapOptionsView("close")}/>
+            </Tooltip>
+            </div>
+            <div>
+
+            <p><strong>Map Options</strong></p>
+            </div>
+          </div>
+          <div style={{paddingBottom:'1rem'}}>
+            <Checkbox.Group onChange={event => handleCheckboxChange(event)}>
+              <div style={{display:'grid',marginLeft:'1rem'}}>
+                <div>
+                  <Checkbox value="safe">Safe Room Locations</Checkbox>
+                </div>
+                <div>
+                  <Checkbox value="defense">ERVA Defense</Checkbox>
+                </div>
+              </div>
+            </Checkbox.Group>
+          </div>
+        </div>
       </div>
       <div id="mapView" ref={mapRef} />
     </>
   );
 }
-
