@@ -39,6 +39,7 @@ export default function MapPage() {
   const location = useLocation();
   const mapRef = useRef(null);
   const jwt = useRef(null);
+  
   const [authStatus, setAuthStatus] = useState({});
   const [venue, setVenue] = useState();
   const [mapView, setMapView] = useState();
