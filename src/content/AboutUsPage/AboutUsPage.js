@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Carousel, Col, Divider, Row, Typography} from 'antd';
+import { Col, Divider, Row, Typography} from 'antd';
 import GlobalHeader from '../../components/GlobalHeader';
 import emt from '../../assets/images/aboutus/emt.jpg';
 import swat from '../../assets/images/aboutus/swat.jpg';
-import cliff from '../../assets/images/aboutus/cliff_2.jpg';
-import zeke from '../../assets/images/aboutus/zeke.jpg';
-import jeff from '../../assets/images/aboutus/jeff.jpg';
+import jennifer from '../../assets/images/aboutus/cliff_2.jpg';
 
 const { Paragraph, Text } = Typography;
 
@@ -29,7 +27,7 @@ const AboutUsPage = () => {
           transition:'0.5s',
           transform:aboutPosition}}
         >
-          <p className='aboutHeaderText'>About</p>
+          <p className='aboutHeaderText'>E.R.V.A.</p>
         </div>
         <div 
           style={{
@@ -39,7 +37,7 @@ const AboutUsPage = () => {
             transform:ervaPosition
           }}
         >
-        <p className='aboutHeaderText'>E.R.V.A. Defense Systems</p>
+        <p className='aboutHeaderText'>Defense Systems</p>
         </div>
         <div 
           style={{
@@ -50,7 +48,7 @@ const AboutUsPage = () => {
             transform:quotePosition
           }}
         >
-          <p style={{color:'#E6E6E6', fontSize:'1rem'}}>"Because a safer environment is a prosperous one."</p></div>
+          <p style={{color:'#5E5E5E', fontSize:'1rem'}}>"Because a safer environment is a prosperous one."</p></div>
       </div>
       <div className='aboutBody'>
       <div style={{padding:'2rem'}}>
@@ -114,48 +112,48 @@ const AboutUsPage = () => {
           <div><img className="swatImage" src={swat} alt=''></img></div>
         </div>
       </div>
-          <div className='theTeam'>
-              <Divider orientation="left">Meet the Founders</Divider>
-            <Row>
-              <Col span={6}></Col>
-              <Col span={6}>
-                <img className='headshots' src={cliff} alt=''></img>
-                <Paragraph>
+      <div className='theTeam'>
+        <Divider orientation="left">Meet the Founders</Divider>
+        <Row>
+          <Col span={9}>
+              <img className='headshots' src={'Omar'} alt=''></img>
+              <Paragraph>
                   <Text>
-                    <blockquote>
-                      Clifford Rosenberg
-                      <br/>
-                      Senior Development Manager
-                    </blockquote>
+                      <blockquote>
+                          Omar Richards
+                          <br/>
+                          Chief Executive Officer
+                      </blockquote>
                   </Text>
-                </Paragraph>
-              </Col>
-              <Col span={6}>
-                  <img className='headshots' src={zeke} alt=''></img>
-                  <Paragraph>
-                      <Text>
-                          <blockquote>
-                              Esiquo Uribe
-                              <br/>
-                              Chief Operations Officer
-                          </blockquote>
-                      </Text>
-                  </Paragraph>
-              </Col>
-              <Col span={6}>
-                  <img className='headshots' src={jeff} alt=''></img>
-                  <Paragraph>
-                      <Text>
-                          <blockquote>
-                              Jeffery Rosenberg
-                              <br/>
-                              Chief Solutions Archetect
-                          </blockquote>
-                      </Text>
-                  </Paragraph>
-              </Col>
-          </Row>
-          </div>
+              </Paragraph>
+          </Col>
+          <Col span={9}>
+            <img className='headshots' src={jennifer} alt=''></img>
+            <Paragraph>
+              <Text>
+                <blockquote style={{fontWeight:'bold'}}>
+                  Jennifer Rosenberg
+                  <br/>
+                  Human Resources Director
+                </blockquote>
+              </Text>
+            </Paragraph>
+          </Col>
+          
+          <Col span={9}>
+              <img className='headshots' src={'Daniel'} alt=''></img>
+              <Paragraph>
+                  <Text>
+                      <blockquote style={{fontWeight:'bold'}}>
+                          Daniel Hilaire
+                          <br/>
+                          Information Technology Manager
+                      </blockquote>
+                  </Text>
+              </Paragraph>
+          </Col>
+      </Row>
+      </div>
       </div>
       <div style={{padding:'5%'}}>
           <Divider orientation="left">

@@ -1,7 +1,7 @@
 body{overflow-x: hidden;}
 .aboutUsHeaderImage {
   margin-top: 0rem;
-  background-image: url('/assets/images/aboutus/city_network_org.jpg');
+  background-image: url('/assets/images/aboutus/city_shield.jpg');
   min-width: 100vw;
   min-height: 50vh;
   background-position: center;
@@ -14,12 +14,16 @@ body{overflow-x: hidden;}
   margin-top: 0.5rem;
   height:25rem;
   width:100vw;
-  background-image: linear-gradient(to right,#DB6B5F,#A997E3);
+  background-repeat: no-repeat;
+  background-position: right;
+  background-size: cover;
+  background-image: url('/assets/images/aboutus/shield3.jpg');
+  //background-image: linear-gradient(to right,#DB6B5F,#A997E3);
 }
 .aboutHeaderText {
   font-family: Arial, Helvetica, sans-serif;
   font-weight: bold;
-  color: #E6E6E6;
+  color: #5E5E5E;
   font-size: 5rem;
   //-webkit-text-stroke: 1px black;
 }
@@ -44,7 +48,7 @@ body{overflow-x: hidden;}
 .theTeam{
   margin-top: 5rem;
   padding:1rem;
-  background-color: #FEB885;
+  background-color: #6d6d6d;
   //background-image:linear-gradient(white,#8283BC);
 }
 
