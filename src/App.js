@@ -2,6 +2,10 @@ import { React } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { Layout } from 'antd';
 
+import AdminUsersPage from './content/AdminUsersPage';
+import AdminOrganizationsPage from './content/AdminOrganizationsPage';
+import AdminFacilitiesPage from './content/AdminFacilitiesPage';
+import AdminBlueprintsPage from './content/AdminBlueprintsPage';
 import LandingPage from './content/LandingPage';
 import AboutUsPage from './content/AboutUsPage/AboutUsPage';
 import AdminLoginPage from './content/AdminLoginPage';
@@ -34,6 +38,12 @@ export default function App() {
           <Route path="/verifyaccount" element={<AccountVerificationPage/>}/>
           <Route path="/forgotpassword" element={<ForgotPasswordPage/>}/>
           <Route path="/passwordreset" element={<PasswordResetPage/>}/>
+
+          <Route path="/adminusers" element={<AdminUsersPage/>}/>
+          <Route path="/adminorganizations" element={<AdminOrganizationsPage/>}/>
+          <Route path="/adminfacilities" element={<AdminFacilitiesPage/>}/>
+          <Route path="/adminblueprints" element={<AdminBlueprintsPage/>}/>
+
         </Routes>
       </Content>
     </>

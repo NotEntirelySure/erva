@@ -15,7 +15,7 @@ const pool = new Pool({
   port: process.env.API_BASE_PORT_NUMBER,
 });
 
-const login = (loginValues) => {
+function login(loginValues) {
   return new Promise(async(resolve, reject) => { 
     try {
       const secretQuery = `
@@ -74,7 +74,7 @@ const login = (loginValues) => {
    }) 
 }
 
-const register = (registrationValues) => {
+function register(registrationValues) {
   return new Promise(async(resolve, reject) => {
     const isVerified = speakeasy.totp.verify({
       secret: registrationValues.otpsecret,
@@ -136,7 +136,7 @@ const register = (registrationValues) => {
   })
 }
 
-const generateQr = () => {
+function generateQr() {
   const secret = speakeasy.generateSecret();
   const otpAuthUrl = speakeasy.otpauthURL({ secret: secret.ascii, label: 'E.R.V.A.', algorithm: 'sha512' });
   return new Promise((resolve, reject) => {
@@ -147,7 +147,7 @@ const generateQr = () => {
   });
 };
 
-const verifyAccount = (token) => {
+function verifyAccount(token) {
   return new Promise(async(resolve,reject) => {
     if (!token) reject({"code":500,"error":"No verification token presented to the server."});
     if (token) {
@@ -174,7 +174,7 @@ const verifyAccount = (token) => {
   });
 };
 
-const forgotPassword = (email) => {
+function forgotPassword(email) {
   return new Promise(async(resolve) => {
     const userExists = await pool.query(`SELECT(EXISTS(SELECT FROM users WHERE users_email=$1))`,[email.toLowerCase()]);
     if (!userExists.rows[0].exists) resolve();
@@ -192,7 +192,7 @@ const forgotPassword = (email) => {
   })
 }
 
-const resetPassword = (resetToken, newPassword) => {
+function resetPassword(resetToken, newPassword) {
   return new Promise(async(resolve) => {
     const userId = jwt.decode(resetToken).userId
     if (userId === null) resolve({"code":498,"error":"The server was presented with an invalid token"})
@@ -211,7 +211,7 @@ const resetPassword = (resetToken, newPassword) => {
   });
 };
 
-const setApiKey = (userId, apiKey) => {
+function setApiKey(userId, apiKey) {
   return new Promise((resolve, reject) => {
     pool.query(`
       UPDATE users
@@ -224,7 +224,7 @@ const setApiKey = (userId, apiKey) => {
   });
 };
 
-const getApiKey = (token) => {
+function getApiKey(token) {
   return new Promise(async(resolve, reject) => {
     const isVerified = await verifyJwt_model.verifyJwtInternal(token);
     if (isVerified.verified === false) resolve(isVerified.error);

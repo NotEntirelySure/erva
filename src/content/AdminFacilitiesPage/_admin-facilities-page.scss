@@ -1,0 +1,47 @@
+@use '@carbon/motion';
+@media (min-width: 66rem) {
+  .pageContent {margin-left: 15rem;}
+};
+.rightPane {
+  //display: none;
+  background-color:#e8e8e8;
+  width: 35vw;
+  height:100vh;
+  overflow: scroll;
+  overflow-x: hidden;
+  z-index: 5;
+  right: 0;
+  top:0;
+  position:absolute;
+  transition: motion.$duration-moderate-02 motion.motion(standard, productive);;
+}
+.closeButtonContainer{
+  width: auto;
+  margin-top: 4rem;
+  padding-left: 1rem;
+  animation: rotation 0.125s linear backwards;
+}
+.closeButton:hover{
+  cursor: pointer;
+  animation: rotation 0.125s linear forwards;
+}
+@keyframes rotation {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(90deg);
+  }
+}
+.rightPaneContent{
+  margin-top: 2rem;
+  padding:1rem;
+}
+
+.tileImage{
+  max-width: 10rem;
+  max-height: auto;
+  margin-top: -1rem;
+  margin-right: -1rem;
+  margin-left: -1rem;
+}

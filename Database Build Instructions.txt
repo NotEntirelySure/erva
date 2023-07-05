@@ -2,14 +2,21 @@
 
 CREATE DATABASE erva;
 CREATE USER superuser WITH ENCRYPTED PASSWORD 'root';
-GRANT ALL PRIVILEGES ON DATABASE erva TO superuser;
-GRANT ALL ON SCHEMA public TO superuser;
 
 #Log into the newly-created erva database with the following command:
 
-\CONNECT erva
+\c erva;
 
-#Now that you are connected to the erva database, you need to enter this data in. You can copy and paste all of the database schema in one go
+#Now that you are connected to the erva database, you need assign premissions to the newly created superuser account. Enter the following commands to assign the permissions:
+
+GRANT ALL PRIVILEGES ON DATABASE erva TO superuser;
+GRANT ALL ON SCHEMA public TO superuser;
+
+Now that the superuser has been grated premission, connect to the erva database as the super user with the following command:
+
+\c erva superuser;
+
+now that you're connected to the erva as superuser, the tables need to be created. To do this, you can copy and paste all of the database schema in one go
 
 CREATE EXTENSION pgcrypto;
 
@@ -45,7 +52,9 @@ CREATE TABLE offices (
 	offices_address VARCHAR,
 	offices_city VARCHAR,
 	offices_state VARCHAR,
-	offices_zip INT
+	offices_zip INT,
+	offices_lat INT,
+	offices_long INT
 );
 
 CREATE TABLE facilities (
@@ -56,8 +65,10 @@ CREATE TABLE facilities (
 	facilities_city VARCHAR,
 	facilities_state VARCHAR,
 	facilities_zip INT,
-	facilities_image VARCHAR,
-	facilities_code VARCHAR
+	facilities_lat TEXT,
+	facilities_long TEXT,
+	facilities_image TEXT,
+	facilities_code TEXT
 );
 
 CREATE TABLE facilitypermissions (

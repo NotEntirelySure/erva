@@ -12,6 +12,7 @@ const admin_model = require('./admin_model');
 const verifyJwt_model = require('./verifyJwt_model');
 const database_model = require('./database_model');
 const email_model = require('./email_model');
+const images_model = require('./images_model')
 
 app.use(express.json())
 app.use((req, res, next) => {
@@ -95,6 +96,73 @@ app.post('/getfacilities', (req, res) => {
 
 app.post('/getfacilitymaps', (req, res) => {
   database_model.getFacilityMaps(req.body.token, req.body.facility)
+    .then(response => res.status(200).send(response))
+    .catch(error => res.status(500).send(error))
+})
+
+//admin functions
+app.get('/users/getall', (req, res) => {
+  admin_model.getUsers()
+    .then(response => res.status(200).send(response))
+    .catch(error => res.status(500).send(error))
+});
+
+app.get('/offices/getall', (req, res) => {
+  admin_model.getOffices()
+    .then(response => res.status(200).send(response))
+    .catch(error => res.status(500).send(error))
+})
+
+app.post('/offices/add', (req, res) => {
+  admin_model.addOffice(req.body)
+    .then(response => res.status(200).send(response))
+    .catch(error => res.status(500).send(error))
+})
+
+app.post('/offices/edit', (req, res) => {
+  admin_model.editOffice(req.body)
+    .then(response => res.status(200).send(response))
+    .catch(error => res.status(500).send(error))
+})
+
+app.delete('/offices/delete', (req, res) => {
+  admin_model.deleteOffice(req.body)
+    .then(response => res.status(200).send(response))
+    .catch(error => res.status(500).send(error))
+})
+
+app.get('/facilities/getall', (req, res) => {
+  admin_model.getFacilities()
+    .then(response => res.status(200).send(response))
+    .catch(error => res.status(500).send(error))
+})
+
+app.post('/facilities/add', (req, res) => {
+  admin_model.addFacility(req.body)
+    .then(response => res.status(200).send(response))
+    .catch(error => res.status(500).send(error))
+})
+
+app.post('/facilities/edit', (req, res) => {
+  admin_model.editFacility(req.body)
+    .then(response => res.status(200).send(response))
+    .catch(error => res.status(500).send(error))
+})
+
+app.delete('/facilities/delete', (req, res) => {
+  admin_model.deleteFacility(req.body)
+    .then(response => res.status(200).send(response))
+    .catch(error => res.status(500).send(error))
+})
+
+app.get('/facilities/getimagelist', (req, res) => {
+  images_model.getImageList('facilities')
+    .then(response => res.status(200).send(response))
+    .catch(error => res.status(500).send(error))
+})
+
+app.get('/facilities/getimage/:imageName', (req, res) => {
+  images_model.getImage({category:'facilities', imageName:req.params.imageName})
     .then(response => res.status(200).send(response))
     .catch(error => res.status(500).send(error))
 })

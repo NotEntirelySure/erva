@@ -76,7 +76,7 @@ const getFacilities = (token, officeId) => {
           let facilitiesArray = [];
           if (userFacilities.rows.length > 0) {
             for (let i=0;i<userFacilities.rows.length;i++) {
-              const image = images_model.getImage("facilities", userFacilities.rows[i].facilities_image)
+              const image = images_model._getImage("facilities", userFacilities.rows[i].facilities_image)
               facilitiesArray.push({
                 "id":userFacilities.rows[i].facilities_id,
                 "name":userFacilities.rows[i].facilities_name,
@@ -117,7 +117,7 @@ const getFacilityMaps = (token, facilityId) => {
           let mapsArray = [];
           if (userMaps.rows.length > 0) {
             for (let i=0;i<userMaps.rows.length;i++) {
-              const image = images_model.getImage("maps", userMaps.rows[i].maps_image)
+              const image = images_model._getImage("maps", userMaps.rows[i].maps_image)
               mapsArray.push({
                 "id":userMaps.rows[i].maps_id,
                 "name":userMaps.rows[i].maps_name,
