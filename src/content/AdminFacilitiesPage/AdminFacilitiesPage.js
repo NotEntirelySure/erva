@@ -36,6 +36,7 @@ import {
   CloseOutline,
   Edit,
   Image,
+  NoImage,
   TrashCan,
   Upload
 } from '@carbon/react/icons';
@@ -111,6 +112,8 @@ export default function AdminFacilitiesPage() {
   const [imagePreviewModalOpen, setImagePreviewModalOpen] = useState(false);
   const [imageUploadModalOpen, setImageUploadModalOpen] = useState(false);
   const [uploadImageData, setUploadImageData] = useState('');
+  const [fileUploadStatus, setFileUploadStatus] = useState('edit');
+  const [imageUploadButtonDisabled, setImageUploadButtonDisabled] = useState(true);
 
   useEffect(() => {GetOrganizations()},[]);
   useEffect(() => {GetFacilities();},[organizationData]);
@@ -275,6 +278,27 @@ export default function AdminFacilitiesPage() {
     alert('deleted!')
   }
 
+  function HandleFileChange(event) {
+    if (event === 'remove') {
+      setFileUploadStatus('edit');
+      setFacilityImage(null);
+      setFacilityImage(null);
+      setImageUploadButtonDisabled(true);
+      return;
+    }
+    console.log(event);
+    setFileUploadStatus('uploading');
+    const file = event.target.files[0];
+    if ("image/png" || "image/jpg" || "image/jpeg") {
+      let fileReader = new FileReader();
+      fileReader.onloadend = event => setUploadImageData(event.target.result);
+      fileReader.readAsDataURL(file);
+      setFacilityImage(file);
+      setFileUploadStatus('complete');
+      setImageUploadButtonDisabled(false);
+    };
+  }
+
   return (
     <>
       <Modal
@@ -434,32 +458,44 @@ export default function AdminFacilitiesPage() {
         modalAriaLabel="facility image upload"
         onRequestClose={() => {
           setImageUploadModalOpen(false);
+          HandleFileChange('remove');
         }}
         onRequestSubmit={() => {
           setImageUploadModalOpen(false);
         }}
         primaryButtonText='Upload'
         secondaryButtonText='Cancel'
+        primaryButtonDisabled={imageUploadButtonDisabled}
         children={
           <>
-            <div style={{display:showImage, display:'flex', justifyContent:'center'}}>
-                <img style={{maxWidth:'45vw'}} alt={'image'} src={uploadImageData}/>
+            <div style={{
+              display:showImage, 
+              display:'flex', 
+              justifyContent:'center',
+              alignItems:'center',
+              height:'15rem'}}
+            >
+              {
+                faciliityImage ?
+                  <img style={{maxWidth:'auto', maxHeight:'25vh'}} alt={'image'} src={uploadImageData}/>:
+                  <div><NoImage size={128}/></div>
+              }
             </div>
-            <div style={{display:showImageLoading}}>
-              <Loading withOverlay={true} />
-            </div>
-            <div>
+            <div className="cds--file__container">
               <FileUploader
-                //accept={['.jpg','.png']}
-                buttonLabel="Add file"
-                iconDescription="Delete file"
-                labelDescription="Max file size is 2mb. Only .jpg files are supported."
-                labelTitle="Upload files"
-                name=""
-                //onChange={function noRefCheck(){}}
-                //onClick={function noRefCheck(){}}
-                //onDelete={event => console.log(event)}
+                labelTitle="Upload Image"
+                labelDescription="Max file size is 2mb. Only .jpg and .png files are supported."
+                buttonLabel="Add image file"
+                buttonKind="primary"
                 size="md"
+                filenameStatus={fileUploadStatus}
+                accept={['.jpg', '.png']}
+                multiple={false}
+                disabled={false}
+                iconDescription="Delete file"
+                name=""
+                onChange={event => HandleFileChange(event)}
+                onDelete={() => HandleFileChange('remove')}
               />
             </div>
           </>
