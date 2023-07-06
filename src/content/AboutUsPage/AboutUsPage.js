@@ -53,7 +53,7 @@ const AboutUsPage = () => {
       <div className='aboutBody'>
       <div style={{padding:'2rem'}}>
           <div>
-            <Divider orientation="center">Mission Statment</Divider>
+            <Divider orientation="center">Mission Statement</Divider>
           </div>
               <div >
                 <Paragraph>
@@ -93,7 +93,7 @@ const AboutUsPage = () => {
           <div><img className="emtImage" src={emt} alt=''></img></div>
           <div>
             <Divider orientation="left">EMT Response</Divider>
-            <p style={{fontSize:'1.5rem'}}>
+            <p style={{fontSize:'1rem'}}>
               ERVA assists Emergency Medical Teams in rapid response and location identification of persons
               experiencing medical emergencies; saving lives and improving the emergency response capabilities
               of local municipalities.
@@ -103,7 +103,7 @@ const AboutUsPage = () => {
         <div className='imageContainer'>
           <div>
             <Divider orientation="left">Police Response</Divider>
-              <p style={{fontSize:'1.5rem'}}>
+              <p style={{fontSize:'1rem'}}>
                 ERVA services augment law enforment activities by providing real-time, relevant data to assist responding officers
                 with critical information for decesion-making processes. ERVA enables law enforcement to better protect the community
                 and nutralize threats.
