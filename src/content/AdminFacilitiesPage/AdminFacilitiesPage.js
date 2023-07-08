@@ -93,10 +93,10 @@ export default function AdminFacilitiesPage() {
 
   const facilityToDelete = useRef({id:'',name:''});
   const imageToDelete = useRef({name:''});
-  
+
   const [organizationData, setOrganizationData] = useState([{organizationId:0,name:''}]);
   const [facilityData, setFacilityData] = useState([emptyFacilityData]);
-  const [faciliityImage, setFacilityImage] = useState();
+  const [faciliityImage, setFacilityImage] = useState({imageData:'',fileName:''});
   const [addEditModalOpen, setAddEditModalOpen] = useState(false);
   const [addEditData, setAddEditData] = useState(emptyFacilityData);
   const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = useState(false);
@@ -111,9 +111,11 @@ export default function AdminFacilitiesPage() {
   const [confirmDeleteImageModalOpen, setConfirmDeleteImageModalOpen] = useState(false);
   const [imagePreviewModalOpen, setImagePreviewModalOpen] = useState(false);
   const [imageUploadModalOpen, setImageUploadModalOpen] = useState(false);
-  const [uploadImageData, setUploadImageData] = useState('');
+  const [uploadImageData, setUploadImageData] = useState({imageData:'',fileName:''});
   const [fileUploadStatus, setFileUploadStatus] = useState('edit');
   const [imageUploadButtonDisabled, setImageUploadButtonDisabled] = useState(true);
+  const [errorModalOpen, setErrorModalOpen] = useState(false);
+  const [errorInfo, setErrorInfo] = useState({heading:'',message:''});
 
   useEffect(() => {GetOrganizations()},[]);
   useEffect(() => {GetFacilities();},[organizationData]);
@@ -196,8 +198,6 @@ export default function AdminFacilitiesPage() {
   }
 
   async function AddEditFacility() {
-    console.log(showRightPane);
-
     if (addEditModalOpen) setAddEditModalOpen(false);
     if (showRightPane === 'translateX(0rem)') setShowRightPane('translateX(35rem)');
     const addRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/facilities/${addEditData.action}`, {
@@ -209,6 +209,10 @@ export default function AdminFacilitiesPage() {
     const addResponse = await addRequest.json();
     setAddEditData(emptyFacilityData);
     if (addResponse.code === 200) GetFacilities();
+    if (addResponse.code !== 200) {
+      setErrorInfo({heading:addResponse.code,message:addResponse.message})
+      setErrorModalOpen(true);
+    }
   }
 
   async function DeleteFacility() {
@@ -221,14 +225,22 @@ export default function AdminFacilitiesPage() {
     })
     const deleteResponse = await deleteRequest.json();
     if (deleteResponse.code === 200) GetFacilities();
+    if (deleteResponse.code !== 200) {
+      setErrorInfo({heading:deleteResponse.code,message:deleteResponse.message})
+      setErrorModalOpen(true);
+    }
   } 
 
   async function GetImage(imageName) {
     if (showImage === 'block') setShowImage('none');
     if (showImageLoading === 'none') setShowImageLoading('block');
-    const imageRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/facilities/getimage/${imageName ? imageName:'default.jpg'}`,{mode:'cors'});
+    const imageRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/facilities/getimage/${imageName ? imageName:null}`,{mode:'cors'});
     const imageResponse = await imageRequest.json();
-    setFacilityImage(imageResponse.imageData);
+    if (imageResponse.code !== 200) {
+      setErrorInfo({heading:imageResponse.code,message:imageResponse.message})
+      setErrorModalOpen(true);
+    };
+    setFacilityImage({imageData:imageResponse.imageData,fileName:imageName});
     setShowImageLoading('none');
     setShowImage('block');
   }
@@ -275,32 +287,79 @@ export default function AdminFacilitiesPage() {
   }
 
   async function DeleteImage() {
-    alert('deleted!')
-  }
+    setConfirmDeleteImageModalOpen(false);
+    const deleteRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/facilities/deleteimage`, {
+      method:'DELETE',
+      mode:'cors',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(imageToDelete.current)
+    })
+    const deleteResponse = await deleteRequest.json();
+    if (deleteResponse.code === 200) GetImageList();
+    if (deleteResponse.code !== 200) {
+      setErrorInfo({heading:deleteResponse.code,message:deleteResponse.message})
+      setErrorModalOpen(true);
+    }
+  };
 
   function HandleFileChange(event) {
     if (event === 'remove') {
       setFileUploadStatus('edit');
-      setFacilityImage(null);
-      setFacilityImage(null);
+      setFacilityImage({imageData:'',fileName:''});
+      setUploadImageData({imageData:'',type:''})
       setImageUploadButtonDisabled(true);
       return;
     }
-    console.log(event);
     setFileUploadStatus('uploading');
     const file = event.target.files[0];
-    if ("image/png" || "image/jpg" || "image/jpeg") {
+    const fileName = event.target.value.split('\\')[2];
+    if (fileName.split('.')[1] === "png" || fileName.split('.')[1] === "jpg" || fileName.split('.')[1] === "jpeg") {
       let fileReader = new FileReader();
-      fileReader.onloadend = event => setUploadImageData(event.target.result);
+      fileReader.onloadend = event => setUploadImageData({
+        imageData:event.target.result,
+        fileName:fileName
+      });
       fileReader.readAsDataURL(file);
-      setFacilityImage(file);
-      setFileUploadStatus('complete');
+      setFileUploadStatus('edit');
       setImageUploadButtonDisabled(false);
     };
+  };
+
+  async function UploadImage() {
+    setImageUploadModalOpen(false);
+    const uploadRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/facilities/uploadimage`,{
+      method:'POST',
+      mode:'cors',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(uploadImageData)
+    });
+    const uploadResponse = await uploadRequest.json();
+    setUploadImageData({imageData:'',fileName:''})
+    if (uploadResponse.code === 200) GetImageList();
+    if (uploadResponse.code !== 200) {
+      setErrorInfo({heading:uploadResponse.code,message:uploadResponse.message})
+      setErrorModalOpen(true);
+    }
   }
 
   return (
     <>
+      <Modal
+        id='ErrorModal'
+        open={errorModalOpen}
+        modalHeading={errorInfo.heading}
+        modalAriaLabel='error modal'
+        primaryButtonText='Ok'
+        onRequestClose={() => {
+          setErrorModalOpen(false);
+          setTimeout(() => setErrorInfo({heading:'',message:''}),750)
+        }}
+        onRequestSubmit={() => {
+          setErrorModalOpen(false);
+          setTimeout(() => setErrorInfo({heading:'',message:''}),750)
+        }}
+        children={<><p>{errorInfo.message}</p></>}
+      />
       <Modal
         id="ConfirmDeleteModal"
         danger
@@ -429,21 +488,23 @@ export default function AdminFacilitiesPage() {
       <Modal
         id="imagePreviewModal"
         open={imagePreviewModalOpen}
-        modalHeading=""
+        modalHeading={faciliityImage.fileName}
         modalAriaLabel="image preview"
         onRequestClose={() => {
           setImagePreviewModalOpen(false);
-          setFacilityImage("");
+          //delay clearing the image data so the modal displays correctly until not visible.
+          setTimeout(() => setFacilityImage({imageData:'',fileName:''}),750);
         }}
         onRequestSubmit={() => {
           setImagePreviewModalOpen(false);
-          setFacilityImage('');
+          //delay clearing the image data so the modal displays correctly until not visible.
+          setTimeout(() => setFacilityImage({imageData:'',fileName:''}),750);
         }}
         primaryButtonText='Close'
         children={
           <>
             <div style={{display:showImage, display:'flex', justifyContent:'center'}}>
-                <img style={{maxWidth:'45vw'}} alt={'image'} src={`data:image/png;base64,${faciliityImage}`}/>
+                <img style={{maxWidth:'45vh'}} alt={'image'} src={`data:image/png;base64,${faciliityImage.imageData}`}/>
             </div>
             <div style={{display:showImageLoading}}>
               <Loading withOverlay={false}/>
@@ -460,9 +521,7 @@ export default function AdminFacilitiesPage() {
           setImageUploadModalOpen(false);
           HandleFileChange('remove');
         }}
-        onRequestSubmit={() => {
-          setImageUploadModalOpen(false);
-        }}
+        onRequestSubmit={() => UploadImage()}
         primaryButtonText='Upload'
         secondaryButtonText='Cancel'
         primaryButtonDisabled={imageUploadButtonDisabled}
@@ -476,9 +535,9 @@ export default function AdminFacilitiesPage() {
               height:'15rem'}}
             >
               {
-                faciliityImage ?
-                  <img style={{maxWidth:'auto', maxHeight:'25vh'}} alt={'image'} src={uploadImageData}/>:
-                  <div><NoImage size={128}/></div>
+                uploadImageData.imageData ?
+                  <img style={{maxWidth:'auto', maxHeight:'25vh'}} alt={'image'} src={uploadImageData.imageData}/>:
+                  <div><NoImage size={128} fill='lightgray'/></div>
               }
             </div>
             <div className="cds--file__container">
@@ -601,7 +660,7 @@ export default function AdminFacilitiesPage() {
                   <div style={{display:'flex', gap:'2rem'}}>
                     <div style={{display:showImage}}>
                       <Tile>
-                        <img className="tileImage" alt={'image'} src={`data:image/png;base64,${faciliityImage}`}></img>
+                        <img className="tileImage" alt={'image'} src={`data:image/png;base64,${faciliityImage.imageData}`}></img>
                       </Tile>
                     </div>
                     <div style={{display:showImageLoading}}>
@@ -619,6 +678,15 @@ export default function AdminFacilitiesPage() {
                         labelText="Name"
                         value={addEditData.name}
                         onChange={event => setAddEditData(previousState => ({...previousState, name:event.target.value}))}
+                      />
+                      <ComboBox
+                        id="facilityImage"
+                        titleText="Image"
+                        label="Select"
+                        items={organizationData}
+                        selectedItem={addEditData.organization}
+                        itemToString={item => (item ? item.name : '')}
+                        onChange={event => {setAddEditData(previousState => ({...previousState, organization:event.selectedItem}))}}
                         />
                       <ComboBox
                         id="organization"
