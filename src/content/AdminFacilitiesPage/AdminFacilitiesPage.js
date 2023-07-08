@@ -107,6 +107,7 @@ export default function AdminFacilitiesPage() {
   const [showImageTableSkeleton, setShowImageTableSkeleton] = useState('block')
   const [showImage, setShowImage] = useState('block');
   const [showImageLoading, setShowImageLoading] = useState('none');
+  const [imageComboBoxItems, setImageComboBoxItems] = useState([{fileName:'initialLoad'}])
   const [imageListData, setImageListData] = useState([]);
   const [confirmDeleteImageModalOpen, setConfirmDeleteImageModalOpen] = useState(false);
   const [imagePreviewModalOpen, setImagePreviewModalOpen] = useState(false);
@@ -170,12 +171,13 @@ export default function AdminFacilitiesPage() {
                   city:facility.facilities_city,
                   state:states.find(element => element.value === facility.facilities_state),
                   zip:facility.facilities_zip,
-                  image:facility.facilities_image,
+                  image:imageComboBoxItems.find(element => element.fileName === facility.facilities_image),
                   lat:facility.facilities_lat,
                   long:facility.facilities_long
                 })
                 setShowRightPane('translateX(0rem)');
                 GetImage(facility.facilities_image);
+                if(imageComboBoxItems[0].fileName === 'initialLoad') GetImageList();
               }}
             />
             <Button
@@ -281,6 +283,8 @@ export default function AdminFacilitiesPage() {
         </>
       }
     ));
+    const comboBoxItems = listResponse.map(item => ({fileName:item.fileName}))
+    setImageComboBoxItems(comboBoxItems);
     setImageListData(imageList);
     setShowImageTable('block');
     setShowImageTableSkeleton('none');
@@ -664,7 +668,7 @@ export default function AdminFacilitiesPage() {
                       </Tile>
                     </div>
                     <div style={{display:showImageLoading}}>
-                      <Loading className={'some-class'} withOverlay={false} />
+                      <Loading withOverlay={false} />
                     </div>
                     <div>
                       <p><strong>{addEditData.name}</strong></p>
@@ -683,10 +687,13 @@ export default function AdminFacilitiesPage() {
                         id="facilityImage"
                         titleText="Image"
                         label="Select"
-                        items={organizationData}
-                        selectedItem={addEditData.organization}
-                        itemToString={item => (item ? item.name : '')}
-                        onChange={event => {setAddEditData(previousState => ({...previousState, organization:event.selectedItem}))}}
+                        items={imageComboBoxItems}
+                        selectedItem={addEditData.image}
+                        itemToString={item => (item ? item.fileName : '')}
+                        onChange={event => {
+                          setAddEditData(previousState => ({...previousState, image:event.selectedItem}))
+                          GetImage(event.selectedItem.fileName);
+                        }}
                         />
                       <ComboBox
                         id="organization"
