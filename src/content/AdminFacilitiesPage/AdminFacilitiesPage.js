@@ -86,7 +86,7 @@ export default function AdminFacilitiesPage() {
     city:"",
     state:"",
     zip:"",
-    image:'',
+    image:{fileName:''},
     lat:0,
     long:0
   }
@@ -94,7 +94,7 @@ export default function AdminFacilitiesPage() {
   const facilityToDelete = useRef({id:'',name:''});
   const imageToDelete = useRef({name:''});
 
-  const [organizationData, setOrganizationData] = useState([{organizationId:0,name:''}]);
+  const [organizationData, setOrganizationData] = useState([{organizationId:-1,name:''}]);
   const [facilityData, setFacilityData] = useState([emptyFacilityData]);
   const [faciliityImage, setFacilityImage] = useState({imageData:'',fileName:''});
   const [addEditModalOpen, setAddEditModalOpen] = useState(false);
@@ -118,8 +118,13 @@ export default function AdminFacilitiesPage() {
   const [errorModalOpen, setErrorModalOpen] = useState(false);
   const [errorInfo, setErrorInfo] = useState({heading:'',message:''});
 
-  useEffect(() => {GetOrganizations()},[]);
-  useEffect(() => {GetFacilities();},[organizationData]);
+  useEffect(() => {
+    if (showDataTable === 'block') setShowDataTable('none');
+    if (showTableSkeleton === 'none') setShowTableSekeleton('block');
+    GetOrganizations();
+  },[]);
+  useEffect(() => {GetImageList('combobox');},[organizationData]);
+  useEffect(() => {GetFacilities();},[imageComboBoxItems]);
 
   async function GetOrganizations() {
     const orgRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/offices/getall`,{mode:'cors'});
@@ -135,7 +140,7 @@ export default function AdminFacilitiesPage() {
 
   async function GetFacilities() {
     if (showDataTable === 'block') setShowDataTable('none');
-    if (showTableSkeleton === 'none') setShowTableSekeleton('block'); 
+    if (showTableSkeleton === 'none') setShowTableSekeleton('block');
     const facilitiesRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/facilities/getall`,{mode:'cors'});
     const facilitiesResponse = await facilitiesRequest.json();
     const facilities = facilitiesResponse.map((facility, index) => (
@@ -247,11 +252,17 @@ export default function AdminFacilitiesPage() {
     setShowImage('block');
   }
 
-  async function GetImageList() {
+  async function GetImageList(request) {
     if (showImageTable === 'block') setShowImageTable('none');
     if (showImageTableSkeleton) setShowImageTableSkeleton('block');
     const listRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/facilities/getimagelist`,{mode:'cors'});
     const listResponse = await listRequest.json();
+    if (request === 'combobox') {
+      const comboBoxItems = listResponse.map(item => ({fileName:item.fileName}))
+      setImageComboBoxItems(comboBoxItems);
+      return;
+    }
+
     const imageList = listResponse.map((item, index) => (
       {
         id:String(index),
@@ -283,8 +294,7 @@ export default function AdminFacilitiesPage() {
         </>
       }
     ));
-    const comboBoxItems = listResponse.map(item => ({fileName:item.fileName}))
-    setImageComboBoxItems(comboBoxItems);
+    
     setImageListData(imageList);
     setShowImageTable('block');
     setShowImageTableSkeleton('none');
@@ -400,6 +410,18 @@ export default function AdminFacilitiesPage() {
                 labelText="Name"
                 value={addEditData.name}
                 onChange={event => setAddEditData(previousState => ({...previousState, name:event.target.value}))}
+              />
+              <ComboBox
+                id="facilityImage"
+                titleText="Image"
+                label="Select"
+                items={imageComboBoxItems}
+                selectedItem={addEditData.image}
+                itemToString={item => (item ? item.fileName : '')}
+                onChange={event => {
+                  setAddEditData(previousState => ({...previousState, image:event.selectedItem}))
+                  GetImage(event.selectedItem.fileName);
+                }}
               />
               <ComboBox
                 id="organization"
@@ -569,7 +591,15 @@ export default function AdminFacilitiesPage() {
         <Tabs>
           <TabList aria-label="List of tabs">
             <Tab><Building size={18}/> Facilities</Tab>
-            <Tab onClick={() => GetImageList()}><Image size={18}/> Images</Tab>
+            <Tab 
+              onClick={() => {
+                GetImageList();
+                if (showRightPane === 'translateX(0rem)') setShowRightPane('translateX(35rem)');
+                setAddEditData(emptyFacilityData);
+              }}
+            >
+              <Image size={18}/> Images
+            </Tab>
           </TabList>
           <TabPanels>
             <TabPanel>
@@ -694,7 +724,7 @@ export default function AdminFacilitiesPage() {
                           setAddEditData(previousState => ({...previousState, image:event.selectedItem}))
                           GetImage(event.selectedItem.fileName);
                         }}
-                        />
+                      />
                       <ComboBox
                         id="organization"
                         titleText="Assigned Organization"

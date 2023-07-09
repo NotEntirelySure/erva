@@ -185,6 +185,7 @@ export default function AdminOrganizationsPage() {
       <Modal
         id="addEditModal"
         open={addEditModalOpen}
+        hasScrollingContent
         modalHeading={addEditData.action === "add" ? "Add Office":`Edit ${addEditData.name}`}
         modalAriaLabel="Add/Edit modal"
         onRequestClose={() => {
@@ -192,7 +193,7 @@ export default function AdminOrganizationsPage() {
           setAddEditData(emptyOfficeData);
         }}
         onRequestSubmit={() => AddEditOffice()}
-        primaryButtonText={`${addEditData.action.charAt(0).toUpperCase()}${addEditData.action.slice(1)}`}
+        primaryButtonText={addEditData.action === 'add' ? 'Add':'Save'}
         secondaryButtonText="Cancel"
         children={
           <Form>

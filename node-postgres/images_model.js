@@ -23,7 +23,6 @@ function getImageList(directory) {
     });
 };
 function getImage(data) {
-  console.log(data);
   return new Promise((resolve,reject) => {
     let dirExists = fs.existsSync(`../${data.category}/${data.imageName}`);
     if (dirExists) {
@@ -67,7 +66,7 @@ function deleteImage(directory, data) {
   return new Promise ((resolve, reject) => {
     fs.unlink(`../${directory}/${data.name}`, (error) => {
       if (error) {
-        if (error.errno === -4058) resolve({error:500, message:`error: the file ${data.name} does not exist or cannot be found.`})
+        if (error.errno === -4058) resolve({error:500, message:`Error: the file ${data.name} does not exist or cannot be found.`})
         resolve({code:500,message:error});
       }
       resolve({code:200});

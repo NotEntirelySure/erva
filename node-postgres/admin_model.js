@@ -163,7 +163,7 @@ function addFacility(data) {
         data.zip,
         data.lat,
         data.long,
-        data.image,
+        data.image.fileName,
         data.facilityCode
       ],
       (error, results) => {
