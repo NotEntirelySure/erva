@@ -34,7 +34,7 @@ function getUsers() {
       ON at.at_id=u.users_fk_type;`,
       (error, results) => {
         if (error) {reject(error)}
-        resolve({code:200, data:results});
+        resolve({code:200, data:results.rows});
       }
     );
   });

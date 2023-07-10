@@ -161,6 +161,7 @@ export default function AdminFacilitiesPage() {
           <div>
             <Button
               hasIconOnly
+              kind='ghost'
               renderIcon={Edit}
               iconDescription='Edit Facility'
               onClick={() => {
@@ -187,7 +188,7 @@ export default function AdminFacilitiesPage() {
             />
             <Button
               hasIconOnly
-              kind='danger'
+              kind='danger--ghost'
               renderIcon={TrashCan}
               iconDescription={`Delete Facility`}
               onClick={() => {
@@ -273,6 +274,7 @@ export default function AdminFacilitiesPage() {
           <div style={{display:'flex', gap:'0.125rem'}}> 
             <Button 
               hasIconOnly
+              kind='ghost'
               iconDescription='View Image'
               renderIcon={Image}
               onClick={() => {
@@ -282,7 +284,7 @@ export default function AdminFacilitiesPage() {
             />
             <Button 
               hasIconOnly
-              kind='danger'
+              kind='danger--ghost'
               iconDescription='Delete Image'
               renderIcon={TrashCan}
               onClick={() => {
