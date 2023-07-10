@@ -21,8 +21,6 @@ const getUsers = () => {
         u.users_last_name,
         u.users_email,
         u.users_created_at,
-        u.users_fk_role,
-        u.users_fk_type,
         u.users_enabled,
         r.roles_id,
         r.roles_name,
@@ -225,7 +223,6 @@ function deleteFacility(data) {
 };
 
 module.exports = {
-  getUsers,
   getOffices,
   addOffice,
   editOffice,

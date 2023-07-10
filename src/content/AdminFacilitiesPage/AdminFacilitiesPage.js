@@ -239,8 +239,8 @@ export default function AdminFacilitiesPage() {
   } 
 
   async function GetImage(imageName) {
-    if (showImage === 'block') setShowImage('none');
-    if (showImageLoading === 'none') setShowImageLoading('block');
+    if (showImage === 'flex') setShowImage('none');
+    if (showImageLoading === 'none') setShowImageLoading('flex');
     const imageRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/facilities/getimage/${imageName ? imageName:null}`,{mode:'cors'});
     const imageResponse = await imageRequest.json();
     if (imageResponse.code !== 200) {
@@ -249,7 +249,7 @@ export default function AdminFacilitiesPage() {
     };
     setFacilityImage({imageData:imageResponse.imageData,fileName:imageName});
     setShowImageLoading('none');
-    setShowImage('block');
+    setShowImage('flex');
   }
 
   async function GetImageList(request) {
@@ -529,10 +529,10 @@ export default function AdminFacilitiesPage() {
         primaryButtonText='Close'
         children={
           <>
-            <div style={{display:showImage, display:'flex', justifyContent:'center'}}>
+            <div style={{display:showImage, justifyContent:'center'}}>
                 <img style={{maxWidth:'45vh'}} alt={'image'} src={`data:image/png;base64,${faciliityImage.imageData}`}/>
             </div>
-            <div style={{display:showImageLoading}}>
+            <div style={{display:showImageLoading, justifyContent:'center', alignItems:'center'}}>
               <Loading withOverlay={false}/>
             </div>
           </>
@@ -697,7 +697,7 @@ export default function AdminFacilitiesPage() {
                         <img className="tileImage" alt={'image'} src={`data:image/png;base64,${faciliityImage.imageData}`}></img>
                       </Tile>
                     </div>
-                    <div style={{display:showImageLoading}}>
+                    <div style={{display:showImageLoading, justifyContent:'center', alignItems:'center'}}>
                       <Loading withOverlay={false} />
                     </div>
                     <div>

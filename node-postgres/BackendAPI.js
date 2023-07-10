@@ -9,6 +9,7 @@ const app = express().use('*', cors());
 
 const account_model = require('./account_model');
 const admin_model = require('./admin_model');
+const admin_users_model = require('./admin_users_model');
 const verifyJwt_model = require('./verifyJwt_model');
 const database_model = require('./database_model');
 const email_model = require('./email_model');
@@ -102,7 +103,13 @@ app.post('/getfacilitymaps', (req, res) => {
 
 //admin functions
 app.get('/users/getall', (req, res) => {
-  admin_model.getUsers()
+  admin_users_model.getUsers()
+    .then(response => res.status(200).send(response))
+    .catch(error => res.status(500).send(error))
+});
+
+app.delete('/users/delete', (req, res) => {
+  admin_users_model.deleteUser(req.body)
     .then(response => res.status(200).send(response))
     .catch(error => res.status(500).send(error))
 });

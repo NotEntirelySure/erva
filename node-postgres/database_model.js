@@ -11,7 +11,7 @@ const pool = new Pool({
   port: process.env.API_BASE_PORT_NUMBER,
 });
 
-const getOffices = (token) => {
+function getOffices(token) {
   return new Promise(function(resolve, reject) {
     if(!token) {reject({"errorCode":401, "error":"No JWT provided"})}
     if (token) {
@@ -51,7 +51,7 @@ const getOffices = (token) => {
   }) 
 }
 
-const getFacilities = (token, officeId) => {
+function getFacilities(token, officeId) {
   return new Promise(function(resolve, reject) {
     if(!token) {reject({"errorCode":401, "error":"No JWT provided"})}
     if (token) {
@@ -96,7 +96,7 @@ const getFacilities = (token, officeId) => {
   });
 };
 
-const getFacilityMaps = (token, facilityId) => {
+function getFacilityMaps(token, facilityId) {
   
   return new Promise(function(resolve, reject) {
     if(!token) {reject({"errorCode":401, "error":"No JWT provided"})}
@@ -134,7 +134,7 @@ const getFacilityMaps = (token, facilityId) => {
 
 }
 
-const getMap = () => {}
+function getMap() {}
 
 module.exports = {
   getOffices,
