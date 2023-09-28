@@ -96,37 +96,38 @@ function getFacilities(token, officeId) {
   });
 };
 
-function getFacilityMaps(token, facilityId) {
+function getBlueprints(token, facilityId) {
   
   return new Promise(function(resolve, reject) {
     if(!token) {reject({"errorCode":401, "error":"No JWT provided"})}
     if (token) {
       jwt.verify(token, process.env.JWT_SECRET_KEY, async(err, result) => {
-        if(err) {reject({"errorCode":401, "error":err});}
-        if(result) {
-          const userMaps = await pool.query(`
-            SELECT 
-              maps_name,
-              maps_code,
-              maps_image
-            FROM maps
-            INNER JOIN facilitypermissions AS fp ON fp.fp_fk_facility=maps.maps_fk_facility_id
+        if (err) reject({"errorCode":401, "error":err});
+        if (result) {
+          const userBlueprints = await pool.query(`
+            SELECT
+              blueprint_id,
+              blueprint_fk_facility_id,
+              blueprint_name,
+              blueprint_image
+            FROM blueprints
+            INNER JOIN facilitypermissions AS fp ON fp.fp_fk_facility=blueprints.blueprint_fk_facility_id
             WHERE fp.fp_fk_user=${result.id}
-            AND maps_fk_facility_id=${facilityId};
+            AND blueprint_fk_facility_id=${facilityId};
           `);
-          let mapsArray = [];
-          if (userMaps.rows.length > 0) {
-            for (let i=0;i<userMaps.rows.length;i++) {
-              const image = images_model._getImage("maps", userMaps.rows[i].maps_image)
-              mapsArray.push({
-                "id":userMaps.rows[i].maps_id,
-                "name":userMaps.rows[i].maps_name,
-                "code":userMaps.rows[i].maps_code,
+          const blueprintsArray = [];
+          if (userBlueprints.rows.length > 0) {
+            for (let i=0;i<userBlueprints.rows.length;i++) {
+              const image = images_model._getImage("blueprints", userBlueprints.rows[i].blueprint_image)
+              blueprintsArray.push({
+                "id":userBlueprints.rows[i].blueprint_id,
+                "name":userBlueprints.rows[i].blueprint_name,
+                "code":userBlueprints.rows[i].blueprint_code,
                 "image":image
               })
             }
           }
-          resolve(mapsArray);
+          resolve(blueprintsArray);
         }
       })
     }
@@ -134,11 +135,8 @@ function getFacilityMaps(token, facilityId) {
 
 }
 
-function getMap() {}
-
 module.exports = {
   getOffices,
   getFacilities,
-  getFacilityMaps,
-  getMap
+  getBlueprints
 }

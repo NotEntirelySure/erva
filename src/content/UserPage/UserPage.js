@@ -6,13 +6,17 @@ import {
   Button,
   Card,
   Image,
+  Layout,
+  Menu,
   PageHeader,
   Result,
+  Slider,
   Spin,
   Tabs
 } from 'antd';
 import { ExclamationCircleOutlined, EyeFilled } from '@ant-design/icons';
 import SiteFooter from '../../components/SiteFooter/SiteFooter';
+const { Header, Content, Footer, Sider } = Layout;
 const { TabPane } = Tabs;
 
 export default function UserPage () {
@@ -25,7 +29,7 @@ export default function UserPage () {
   const [userInfo, setUserInfo] = useState([]);
   const [officeInfo, setOfficeInfo] = useState([]);
   const [facilityInfo, setFacilityInfo] = useState([]);
-  const [mapsInfo, setMapsInfo] = useState([]);
+  const [blueprintInfo, setBlueprintInfo] = useState([]);
   const [selectedFacility, setSelectedFacility] = useState({});
   const [tabsLoading, setTabsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
@@ -33,10 +37,9 @@ export default function UserPage () {
   const [contentLoading, setContentLoading] = useState(false);
   const [alertMessage, setAlertMessage] = useState({});
   const [facilityCards, setFacilityCards] = useState('block');
-  const [mapCards, setMapCards] = useState('none');
+  const [blueprintCards, setBlueprintCards] = useState('none');
   const [backButtonOffice, setBackButtonOffice] = useState('');
   const [showWarning, setShowWarning] = useState(false);
-
 
   useEffect(() => {
     if (!sessionStorage.getItem("jwt")) {
@@ -156,180 +159,208 @@ export default function UserPage () {
     if (facilitiesResponse.length > 0) setFacilityInfo(facilitiesResponse);
     setContentLoading(false);
     setFacilityCards('block');
-    setMapCards('none');
+    setBlueprintCards('none');
     setBackButtonOffice(officeId);
 
   }
 
-  const getFacilityMaps = async(facilityId) => {
-    setLoadingMessage("Getting maps");
-    setLoadingDescription("Getting maps associated to the selected facility.");
+  const getBlueprints = async(facilityId) => {
+    setLoadingMessage("Getting blueprints");
+    setLoadingDescription("Getting blueprints associated with the selected facility.");
     setContentLoading(true);
-    const mapsRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/getfacilitymaps`, {
+    const blueprintsRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/getblueprints`, {
       method:'POST',
       mode:'cors',
       headers:{'Content-Type':'application/json'},
       body:`{"token":"${jwt.current}","facility":"${facilityId}"}`
     });
-    const mapsResponse = await mapsRequest.json();
-    if (mapsResponse.length <= 0) {}
-    if (mapsResponse.length > 0) {}
-    setMapsInfo(mapsResponse);
+    const blueprintsResponse = await blueprintsRequest.json();
+    if (blueprintsResponse.length <= 0) {}
+    if (blueprintsResponse.length > 0) {
+      setBlueprintInfo(blueprintsResponse);
+    }
     setContentLoading(false);
     setFacilityCards('none');
-    setMapCards('block');
-  }
+    setBlueprintCards('block');
+  };
 
   return (
     <>
       <GlobalHeader isAuth={isAuth} userInfo={userInfo}/>
-        
-      <div className='content'>
-        {
-          isAuth === true ? <>
+      <Layout hasSider>
+      <Sider
+        style={{
+          overflow: 'auto',
+          position: 'fixed',
+          left: 0,
+          top:0,
+          marginTop:'9.5rem',
+          bottom: 0,
+          backgroundColor:'white'
+        }}
+      >
+        <div />
+        <Menu theme="light" mode="inline" defaultSelectedKeys={['4']} items={officeInfo.map(office => ({key:office.id,label:office.name}))}/>
+      </Sider>
+      <Layout style={{marginLeft: 200}}>
+        <Content style={{margin: '24px 16px 0', overflow: 'initial'}}>
+          <div style={{padding: 24,textAlign: 'center',background: 'white'}}>
             {
-            showWarning ? 
-              <div style={{marginTop:'2rem'}}>
-                <Alert 
-                  message={alertMessage.message}
-                  description={alertMessage.description}
-                  type={alertMessage.type}
-                  icon={<ExclamationCircleOutlined />}
-                  showIcon
-                />
-              </div>:null
-            }
-            <div style={{marginTop:'2rem'}}>
-              {
-                tabsLoading ? <>
-                  <Spin tip="Loading...">
-                    <Alert
-                      message={loadingMessage}
-                      description={loadingDescription}
-                      type="info"
+              isAuth === true ? <>
+                {
+                showWarning ? 
+                  <div style={{marginTop:'2rem'}}>
+                    <Alert 
+                      message={alertMessage.message}
+                      description={alertMessage.description}
+                      type={alertMessage.type}
+                      icon={<ExclamationCircleOutlined />}
+                      showIcon
                     />
-                  </Spin>
-                </>:<Tabs defaultActiveKey="0" onChange={tabId => getFacilities(tabId)}>
+                  </div>:null
+                }
+                <div style={{marginTop:'2rem'}}>
                   {
-                    officeInfo.map((office) => {
-                      return <>
-                        <TabPane tab={office.name} key={`${office.id}`}>
-                        <br/>
-                        </TabPane>
-                      </>
-                    })
-                  }
-                </Tabs>
-              }
-            </div>
-            <div>
-              {
-                contentLoading ? 
-                  <>
-                    <div style={{width:'100%'}}>
-
-                    <Spin tip="Loading...">
-                      <Alert
-                        message={loadingMessage}
-                        description={loadingDescription}
-                        type="info"
+                    tabsLoading ? <>
+                      <Spin tip="Loading...">
+                        <Alert
+                          message={loadingMessage}
+                          description={loadingDescription}
+                          type="info"
                         />
-                    </Spin>
-                        </div>
-                  </>
-                  :
-                  <>
-                    <div style={{display:facilityCards}}>
-                      <div className='cardContainer'>
-                      {facilityInfo.map(facility => {
-                        return (
-                          <>
-                            <div>
-                              <Card key={facility.id} title={facility.name} className='locationCard'>
-                                <img 
-                                  className='cardImage'
-                                  onClick={() => {
-                                    setSelectedFacility({
-                                      "name":facility.name,
-                                      "address":facility.address,
-                                      "city":facility.city,
-                                      "state":facility.state,
-                                      "zip":facility.zip,
-                                      "code":facility.code
-                                    })
-                                    getFacilityMaps(facility.id)
-                                  }}
-                                  src={`data:image/png;base64,${facility.image}`}
-                                  alt=""
-                                  />
-                              </Card>
-                            </div>
-                          </>
-                        )
-                      })}
-                      </div>
-                    </div>
-                    <div style={{display:mapCards}}>
-                      
-                      <PageHeader
-                        style={{display:backButtonOffice}}
-                        onBack={() => getFacilities(backButtonOffice)}
-                        title="Back"
-                      />
-                      <div style={{display:'flex'}}>
-                      <div>
-                        <p style={{color:'#1A95CC'}} className="facilityAddress">{selectedFacility.name}</p>
-                        <p className="facilityAddress">{selectedFacility.address}</p>
-                        <p className="facilityAddress">{selectedFacility.city}, {selectedFacility.state} {selectedFacility.zip}</p>
-                      </div>
-                      <div style={{marginLeft:'5%'}}>
-                        <Button 
-                          type='primary'
-                          onClick={() => getApiKey()}
-                          icon={<EyeFilled style={{width:'1em', height:'1em'}}/>}
-                        > 
-                        Wayfind
-                        </Button>
-                      </div>
-                      <br/>
-                    </div>
-                    <div className='cardContainer'>
+                      </Spin>
+                    </>:<Tabs defaultActiveKey="0" onChange={tabId => getFacilities(tabId)}>
                       {
-                        mapsInfo.map(map => {
-                          return (
-                            <div>
-                              <Card key={map.id} title={map.name} className='locationCard'>
-                                <Image
-                                  className='cardImage'
-                                  src={`data:image/png;base64,${map.image}`}
-                                  alt=""
-                                />
-                              </Card>
-                            </div>
-                          )
+                        officeInfo.map(office => {
+                          return <>
+                            <TabPane tab={office.name} key={`${office.id}`}>
+                            <br/>
+                            </TabPane>
+                          </>
                         })
                       }
-                    </div>
-                    </div>
-                  </>
-              }
-            </div>
-          </>:<><div></div></>
-        }
-        <div>
-          {
-            isAuth === false ? <>
-              <Result
-                status={authErrorStatus.status}
-                title={authErrorStatus.title}
-                subTitle={authErrorStatus.subTitle}
-                extra={<Button onClick={() => navigate('/login')} type="primary">Login</Button>}
-              />
-            </>:<><div></div></>
-          }
+                    </Tabs>
+                  }
+                </div>
+                <div>
+                  {
+                    contentLoading ? 
+                      <>
+                        <div style={{width:'100%'}}>
+
+                        <Spin tip="Loading...">
+                          <Alert
+                            message={loadingMessage}
+                            description={loadingDescription}
+                            type="info"
+                            />
+                        </Spin>
+                            </div>
+                      </>
+                      :
+                      <>
+                        <div style={{display:facilityCards}}>
+                          <div className='cardContainer'>
+                          {facilityInfo.map(facility => {
+                            const uint8Array = new Uint8Array(facility.image.data);
+                            const blob = new Blob([uint8Array], { type: 'image/png' }); // Create a Blob from the Uint8Array with the appropriate MIME type
+                            const imageUrl = URL.createObjectURL(blob); // Create a URL for the Blob
+                            return (
+                              <>
+                                <div>
+                                  <Card key={facility.id} title={facility.name} className='locationCard'>
+                                    <img
+                                      className='cardImage'
+                                      onClick={() => {
+                                        setSelectedFacility({
+                                          "name":facility.name,
+                                          "address":facility.address,
+                                          "city":facility.city,
+                                          "state":facility.state,
+                                          "zip":facility.zip,
+                                          "code":facility.code
+                                        })
+                                        getBlueprints(facility.id)
+                                      }}
+                                      src={imageUrl}
+                                      alt=""
+                                      />
+                                  </Card>
+                                </div>
+                              </>
+                            )
+                          })}
+                          </div>
+                        </div>
+                        <div style={{display:blueprintCards}}>
+                          
+                          <PageHeader
+                            style={{display:backButtonOffice}}
+                            onBack={() => getFacilities(backButtonOffice)}
+                            title="Back"
+                          />
+                          <div style={{display:'flex'}}>
+                          <div>
+                            <p style={{color:'#1A95CC'}} className="facilityAddress">{selectedFacility.name}</p>
+                            <p className="facilityAddress">{selectedFacility.address}</p>
+                            <p className="facilityAddress">{selectedFacility.city}, {selectedFacility.state} {selectedFacility.zip}</p>
+                          </div>
+                          <div style={{marginLeft:'5%'}}>
+                            <Button 
+                              type='primary'
+                              onClick={() => getApiKey()}
+                              icon={<EyeFilled style={{width:'1em', height:'1em'}}/>}
+                            > 
+                            Wayfind
+                            </Button>
+                          </div>
+                          <br/>
+                        </div>
+                        <div className='cardContainer'>
+                          {
+                            blueprintInfo.map(blueprint => {
+                              const uint8Array = new Uint8Array(blueprint.image.data);
+                              const blob = new Blob([uint8Array], { type: 'image/png' }); // Create a Blob from the Uint8Array with the appropriate MIME type
+                              const imageUrl = URL.createObjectURL(blob); // Create a URL for the Blob
+                              return (
+                                <div>
+                                  <Card key={blueprint.id} title={blueprint.name} className='locationCard'>
+                                    <Image
+                                      className='cardImage'
+                                      src={imageUrl}
+                                      alt=""
+                                    />
+                                  </Card>
+                                </div>
+                              )
+                            })
+                          }
+                        </div>
+                        </div>
+                      </>
+                  }
+                </div>
+              </>:<><div></div></>
+            }
+          <div>
+            {
+              isAuth === false ? <>
+                <Result
+                  status={authErrorStatus.status}
+                  title={authErrorStatus.title}
+                  subTitle={authErrorStatus.subTitle}
+                  extra={<Button onClick={() => navigate('/login')} type="primary">Login</Button>}
+                />
+              </>:<><div></div></>
+            }
         </div>
-      </div>
-      <SiteFooter/>
+          </div>
+        </Content>
+        <Footer style={{textAlign: 'center'}}>
+          <p>Erva Systems &#169; 2023</p>
+        </Footer>
+      </Layout>
+    </Layout>
     </>
   );
 }

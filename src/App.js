@@ -17,6 +17,7 @@ import RegistrationPage from './content/RegistrationPage';
 import AccountVerificationPage from './content/AccountVerification';
 import ForgotPasswordPage from './content/ForgotPasswordPage/ForgotPasswordPage';
 import PasswordResetPage from './content/PasswordResetPage';
+import TestPage from './content/TestPage';
 
 import './App.scss';
 import './index.scss';
@@ -44,6 +45,7 @@ export default function App() {
           <Route path="/adminfacilities" element={<AdminFacilitiesPage/>}/>
           <Route path="/adminblueprints" element={<AdminBlueprintsPage/>}/>
 
+          <Route path="/test" element={<TestPage/>}/>
         </Routes>
       </Content>
     </>

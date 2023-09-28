@@ -3,8 +3,8 @@ export default function SiteFooter() {
   return (
     <div style={
       {
-        position:'relative',
-        marginTop:'2rem',
+        position:'fixed',
+        marginBottom:'1rem',
         bottom:0,
         width:'100vw',
         zIndex:-1

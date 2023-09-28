@@ -95,8 +95,8 @@ app.post('/getfacilities', (req, res) => {
     .catch(error => res.status(500).send(error))
 });
 
-app.post('/getfacilitymaps', (req, res) => {
-  database_model.getFacilityMaps(req.body.token, req.body.facility)
+app.post('/getblueprints', (req, res) => {
+  database_model.getBlueprints(req.body.token, req.body.facility)
     .then(response => res.status(200).send(response))
     .catch(error => res.status(500).send(error))
 });

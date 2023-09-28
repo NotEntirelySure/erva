@@ -77,17 +77,17 @@ CREATE TABLE facilitypermissions (
 	fp_fk_facility INT REFERENCES facilities(facilities_id)
 );
 
-CREATE TABLE maps (
-	maps_id SERIAL PRIMARY KEY,
-	maps_fk_facility_id INT REFERENCES facilities(facilities_id),
-	maps_name VARCHAR,
-	maps_image VARCHAR
+CREATE TABLE blueprints (
+	blueprint_id SERIAL PRIMARY KEY,
+	blueprint_fk_facility_id INT REFERENCES facilities(facilities_id),
+	blueprint_name VARCHAR,
+	blueprint_image VARCHAR
 );
 
 CREATE TABLE access_log (
 	access_log_id SERIAL PRIMARY KEY,
 	access_log_user_id INT,
-	access_log_map_id INT,
+	access_log_blueprint_id INT,
 	access_log_timestamp TIMESTAMP
 );
 

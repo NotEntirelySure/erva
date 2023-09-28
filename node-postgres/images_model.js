@@ -1,14 +1,14 @@
 const fs = require("fs");
 
 function _getImage(directory, imageName) {
-  let dirExists = fs.existsSync(`../${directory}/${imageName}`);
+  const dirExists = fs.existsSync(`../${directory}/${imageName}`);
   if (dirExists) {
-    const base64 = fs.readFileSync(`../${directory}/${imageName}`, "base64");
-    return base64;
+    const imageData = fs.readFileSync(`../${directory}/${imageName}`);
+    return imageData;
   }
   if (!dirExists) {
-    const base64 = fs.readFileSync(`../${directory}/default.jpg`, "base64");
-    return base64;
+    const imageData = fs.readFileSync(`../${directory}/default.jpg`);
+    return imageData;
   }
 }
 
