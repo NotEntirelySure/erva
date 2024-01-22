@@ -10,7 +10,7 @@ function _getImage(directory, imageName) {
     const imageData = fs.readFileSync(`../${directory}/default.jpg`);
     return imageData;
   }
-}
+};
 
 function getImageList(directory) {
   return new Promise((resolve, reject) => {

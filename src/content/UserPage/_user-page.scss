@@ -8,11 +8,6 @@
 //   font-weight: bold;
 // }
 
-.content {
-  //margin-left: 3rem;
-  //min-height: 75vh;
-}
-
 .cardContainer {
   width: 100%;
   display: flex;
@@ -40,4 +35,164 @@
   font-weight: bold;
   font-size: large;
   margin-bottom: 0px;
+}
+
+// ---------------------------------------------------------------------------- //
+
+.infoRow {
+  margin-top: -1rem;
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+}
+
+.officeNameContainer {
+  margin-left: 18rem;
+}
+.logo {
+  width: clamp(10rem, 25vw, 18rem);
+  height: auto;
+}
+
+.gridContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  //min-height: 76vh;
+}
+
+// .loadingTiles {
+//   display:flex;
+//   flex-wrap:wrap;
+//   gap:1rem;
+//   min-height: 76vh;
+// }
+
+.listContainer {
+  min-height: 76vh;
+}
+
+.facilityHeader {
+  display: flex;
+  gap: 5rem;
+}
+
+.mapContainer {
+  height: 71vh;
+  overflow: hidden;
+}
+
+#mapSideNav {
+  margin-top:0px;
+  height:71vh;
+  width:18rem;
+  min-width:200px;
+  z-index:1;
+  position:absolute;
+  background-color:rgba(255,255,255,0.9);
+  transition: 1s;
+}
+
+.mapSideNavImage{
+  max-width: 18rem;
+  max-height: auto;
+}
+
+.googleMapContainer{
+  max-width: 500px;
+  max-height: 500px;
+}
+.tile{
+  max-width: 16rem;
+  min-width: 16rem;
+  min-height: 4rem;
+}
+.tileImage{
+  max-width: 16rem;
+  max-height: auto;
+  margin: -1rem;
+}
+.tabsHeader{
+  margin-left: 14rem;
+  margin-bottom: 1rem;
+}
+.backButtonHeader {
+  margin-left: 14rem;
+  margin-bottom: 1rem;
+}
+
+//Image modal
+.imageModal {
+  display: none;
+  position: fixed;
+  z-index: 1;
+  padding-top: 20vh;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgb(0,0,0);
+  background-color: rgba(0,0,0,0.7); /* Black w/ opacity */
+  -ms-overflow-style: none;  //IE and Edge
+  scrollbar-width: none;  // Firefox
+}
+//Hide scrollbar for Chrome, Safari and Opera
+.imageModal::-webkit-scrollbar {
+  display: none;
+}
+
+.imageModalContent {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 20%;
+  max-width: 85vw;
+  min-width: 500px;
+}
+
+#imageModalCaption {
+  margin: auto;
+  display: block;
+  width: 80%;
+  max-width: 700px;
+  text-align: center;
+  color: #ccc;
+  padding: 10px 0;
+  height: 150px;
+}
+
+.imageModalContent, #imageModalCaption {
+  animation-name: zoom;
+  animation-duration: 0.6s;
+}
+
+@keyframes zoom {
+  from {transform:scale(0)}
+  to {transform:scale(1)}
+}
+
+.imageModalClose {
+  position: absolute;
+  top: 15px;
+  right: 35px;
+  color: #f1f1f1;
+  font-size: 40px;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+.imageModalClose:hover,
+.imageModalClose:focus {
+  color: #bbb;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+@media only screen and (min-width:0px) and (max-width: 1055px) {
+  .officeNameContainer{margin-left: 1rem;}
+  .gridContainer {margin-left: 1rem;}
+  .tabsHeader {margin-left: 1rem;}
+  .backButtonHeader{margin-left: 1rem;}
+  .imageModalContent {padding-left: 0px;}
 }

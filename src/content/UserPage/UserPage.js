@@ -1,44 +1,124 @@
-import React, {useState, useEffect, useRef, useId } from 'react'
-import {Navigate, useNavigate, useResolvedPath } from 'react-router-dom';
-import GlobalHeader from '../../components/GlobalHeader'
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import entPortal from '../../assets/images/ERVA_Ent_Portal.jpg';
+import { GoogleMap, useLoadScript, MarkerF } from '@react-google-maps/api'
 import {
-  Alert,
   Button,
-  Card,
-  Image,
-  Layout,
-  Menu,
-  PageHeader,
-  Result,
-  Slider,
-  Spin,
-  Tabs
-} from 'antd';
-import { ExclamationCircleOutlined, EyeFilled } from '@ant-design/icons';
-import SiteFooter from '../../components/SiteFooter/SiteFooter';
-const { Header, Content, Footer, Sider } = Layout;
-const { TabPane } = Tabs;
+  ClickableTile,
+  Content,
+  DataTable,
+  Header,
+  HeaderContainer,
+  HeaderGlobalAction,
+  HeaderGlobalBar,
+  HeaderMenuButton,
+  HeaderName,
+  IconTab,
+  Loading,
+  SideNav,
+  SideNavItems,
+  SideNavLink,
+  SkipToContent,
+  Table,
+  TableHead,
+  TableHeader,
+  TableBody,
+  TableCell,
+  TableRow,
+  TableContainer,
+  TableToolbar,
+  TableToolbarContent,
+  TableToolbarSearch,
+  TableToolbarMenu,
+  TableToolbarAction,
+  Tabs,
+  TabList,
+  TabPanels,
+  TabPanel,
+  Tile
+} from '@carbon/react';
+import {
+  Notification,
+  Search,
+  UserAvatar,
+  ArrowLeft,
+  ConnectionSend,
+  Close,
+  ImageCopy,
+  List,
+  Map,
+  Switcher,
+  View
+} from '@carbon/react/icons';
 
-export default function UserPage () {
-  
+import { Image } from 'antd';
+
+import GlobalHeaderCarbon from '../../components/GlobalHeaderCarbon';
+
+const facilityTableHeader = [
+  {key:'name', header:'Name'},
+  {key:'address', header:'Address'},
+  {key:'city', header:'City'},
+  {key:'state', header:'State'},
+  {key:'zip', header:'Zip Code'},
+  {key:'lat',header:'Latitude'},
+  {key:'long',header:'Longitude'},
+  {key:'action', header:'Action'}
+]
+
+const blueprintTableHeader = [
+  {key:'imageId', header:'Image ID'},
+  {key:'facility', header:'Facility'},
+  {key:'name', header:'Image Name'},
+  {key:'action', header:'Action'}
+]
+
+export default function UserPage() {
+
   const navigate = useNavigate();
+  const { isLoaded } = useLoadScript({googleMapsApiKey:"AIzaSyB0gKIxB858FEBjRa7hq72cBaxemoQL5pQ"})
+    
+  const [officeList, setOfficeList] = useState([]);
+  const [blueprintData, setBlueprintData] = useState([]);
+  const [selectedOffice, setSelectedOffice] = useState({name:'',address:'',city:'',state:'',zip:'',lat:0,long:0});
+  const [facilityData, setFacilityData] = useState([
+    {
+      id:'',
+      facilityId:"",
+      name:"",
+      address:"",
+      city:"",
+      state:"",
+      zip:"",
+      image:'',
+      lat:0,
+      long:0,
+      action:<></>
+   }
+  ]);
+  const [selectedFacility, setSelectedFacility] = useState({name:'',address:'',city:'',state:'',zip:''});
+  const [showFacilityData, setShowFacilityData] = useState('block');
+  const [showBlueprintData, setShowBlueprintData] = useState('none');
+  const [imageModalOpen, setImageModalOpen] = useState('none');
+  const [imageModalImage, setImageModalImage] = useState();
+  const [imageModalCaption, setImageModalCaption] = useState('');
+  const [mapSideNavOpen, setMapSideNavOpen] = useState('none');
+  const [mapCenter, setMapCenter] = useState({lat:0, lng:0})
+  const [selectedTab, setSelectedTab] = useState(0);
+  const [mapSideNavFacility, setMapSideNavFacility] = useState(0);
   const jwt = useRef(null);
   const [isAuth, setIsAuth] = useState(null);
   const [authErrorStatus, setAuthErrorStatus] = useState({status:"info",title:"",subTitle:""})
   const [locationList, setLocationList] = useState([]);
   const [userInfo, setUserInfo] = useState([]);
-  const [officeInfo, setOfficeInfo] = useState([]);
-  const [facilityInfo, setFacilityInfo] = useState([]);
   const [blueprintInfo, setBlueprintInfo] = useState([]);
-  const [selectedFacility, setSelectedFacility] = useState({});
   const [tabsLoading, setTabsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
   const [loadingDescription, setLoadingDescription] = useState('');
-  const [contentLoading, setContentLoading] = useState(false);
+  const [contentLoading, setContentLoading] = useState('none');
   const [alertMessage, setAlertMessage] = useState({});
   const [facilityCards, setFacilityCards] = useState('block');
   const [blueprintCards, setBlueprintCards] = useState('none');
-  const [backButtonOffice, setBackButtonOffice] = useState('');
   const [showWarning, setShowWarning] = useState(false);
 
   useEffect(() => {
@@ -51,11 +131,14 @@ export default function UserPage () {
       })
     }
     if (sessionStorage.getItem("jwt")) jwt.current = sessionStorage.getItem("jwt");
-  },[])
+  },[]);
 
-  useEffect(() => {verifyJwt()},[jwt.current])
+  useEffect(() => {verifyJwt()},[jwt.current]);
+  useEffect(() => {
+    setMapCenter({lat:parseFloat(selectedOffice.lat), lng:parseFloat(selectedOffice.long)})
+  },[selectedOffice])
 
-  const verifyJwt = async() => {
+  async function verifyJwt() {
     setTabsLoading(true);
     setLoadingMessage("Getting Offices");
     setLoadingDescription("Getting offices assigned to you.")
@@ -108,21 +191,23 @@ export default function UserPage () {
         body:`{"token":"${jwt.current}"}`
       });
       const officeResponse = await officeRequest.json();
-      setOfficeInfo(officeResponse);
+      setOfficeList(officeResponse);
+      setSelectedOffice(officeResponse[0]);
+      console.log(selectedOffice);
       setTabsLoading(false);
-      if (officeResponse.length > 0) {getFacilities(officeResponse[0].id)}
+      if (officeResponse.length > 0) getFacilities(officeResponse[0].id);
       if (officeResponse.length === 0) {
-        setShowWarning(true)
+        setShowWarning(true);
         setAlertMessage({
           type:'warning',
           description:'There are no offices assigned to your account. Please contact your account manager to add offices.',
           message:"No facilities to show"
-        })
-      }
-    }
-  }
+        });
+      };
+    };
+  };
 
-  const getApiKey = async() => {
+  async function getApiKey() {
 
     const apiKeyRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/getapikey`, {
       method:'POST',
@@ -140,14 +225,15 @@ export default function UserPage () {
             "apiKey":apiKeyResponse.apiKey
           }
         }
-      )
-    }
-  }
+      );
+    };
+  };
 
-  const getFacilities = async(officeId) => {
+  async function getFacilities(officeId) {
     setLoadingMessage("Getting Facilities");
     setLoadingDescription("Getting facilities associated to the selected office.");
-    setContentLoading(true);
+    setFacilityCards('none');
+    setContentLoading('block');
     const facilitiesRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/getfacilities`, {
       method:'POST',
       mode:'cors',
@@ -156,18 +242,38 @@ export default function UserPage () {
     });
     const facilitiesResponse = await facilitiesRequest.json();
     if (facilitiesResponse.length <= 0) {}
-    if (facilitiesResponse.length > 0) setFacilityInfo(facilitiesResponse);
-    setContentLoading(false);
+    if (facilitiesResponse.length > 0) {
+      const facilitiesArray = facilitiesResponse.map(facility => ({
+        ...facility,
+        id:String(facility.facilityId),
+        image:URL.createObjectURL(new Blob([new Uint8Array(facility.image.data)], { type: 'image/png' })),
+        action:<>
+          <Button
+            hasIconOnly
+            kind='tertiary'
+            renderIcon={ConnectionSend}
+            iconDescription="Go to Facility"
+            onClick={() => getBlueprints(facility.facilityId)}
+          />
+        </>
+      }
+
+      ))
+      setFacilityData(facilitiesArray);
+    }
+    setContentLoading('none');
     setFacilityCards('block');
-    setBlueprintCards('none');
-    setBackButtonOffice(officeId);
+    if (blueprintCards === 'block') setBlueprintCards('none');
 
-  }
+  };
 
-  const getBlueprints = async(facilityId) => {
+  async function getBlueprints(facilityId) {
+    setBlueprintData([]);
+    setShowFacilityData('none');
+    setShowBlueprintData('block');
     setLoadingMessage("Getting blueprints");
     setLoadingDescription("Getting blueprints associated with the selected facility.");
-    setContentLoading(true);
+    setContentLoading('block');
     const blueprintsRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/getblueprints`, {
       method:'POST',
       mode:'cors',
@@ -177,190 +283,378 @@ export default function UserPage () {
     const blueprintsResponse = await blueprintsRequest.json();
     if (blueprintsResponse.length <= 0) {}
     if (blueprintsResponse.length > 0) {
-      setBlueprintInfo(blueprintsResponse);
+      setBlueprintData(blueprintsResponse);
     }
-    setContentLoading(false);
+    setContentLoading('none');
     setFacilityCards('none');
     setBlueprintCards('block');
   };
 
+  function LoadingTiles(props) {
+    const elementsArray = [];
+    for (let i=0;i<props.quantity;i++) {
+      elementsArray.push(
+        <div className='tile'>
+          <Tile
+            key={i}
+            children={
+              <>
+                <ImageCopy size={128}/>
+                <hr/>
+                <p style={{marginTop:'1rem'}}><strong>Loading...</strong></p>
+              </>
+            }
+          />
+        </div>
+      );
+    };
+    return elementsArray;
+  };
+
   return (
     <>
-      <GlobalHeader isAuth={isAuth} userInfo={userInfo}/>
-      <Layout hasSider>
-      <Sider
-        style={{
-          overflow: 'auto',
-          position: 'fixed',
-          left: 0,
-          top:0,
-          marginTop:'9.5rem',
-          bottom: 0,
-          backgroundColor:'white'
-        }}
-      >
-        <div />
-        <Menu theme="light" mode="inline" defaultSelectedKeys={['4']} items={officeInfo.map(office => ({key:office.id,label:office.name}))}/>
-      </Sider>
-      <Layout style={{marginLeft: 200}}>
-        <Content style={{margin: '24px 16px 0', overflow: 'initial'}}>
-          <div style={{padding: 24,textAlign: 'center',background: 'white'}}>
-            {
-              isAuth === true ? <>
+      <div className="imageModal" style={{display:imageModalOpen}} onClick={() => setImageModalOpen('none')}>
+        <img className="imageModalContent" alt={imageModalCaption} src={imageModalImage}/>
+        <div id="imageModalCaption" style={{paddingLeft:'20%'}}><h4>{imageModalCaption}</h4></div>
+      </div>
+      <HeaderContainer
+        render={({ isSideNavExpanded, onClickSideNavExpand }) => (
+          <>
+            <Header aria-label="ERVA">
+              <SkipToContent />
+              <HeaderMenuButton
+                aria-label="Open menu"
+                onClick={onClickSideNavExpand}
+                isActive={isSideNavExpanded}
+              />
+              <HeaderName href="/" prefix="ERVA">
+                [Emergency Response Visual Aid]
+              </HeaderName>
+              <HeaderGlobalBar>
+                <HeaderGlobalAction
+                  aria-label="Search"
+                  onClick={() => {}}>
+                  <Search size={20} />
+                </HeaderGlobalAction>
+                <HeaderGlobalAction
+                  aria-label="Notifications"
+                  onClick={() => {}}>
+                  <Notification size={20} />
+                </HeaderGlobalAction>
+                <HeaderGlobalAction
+                  aria-label="Account"
+                  onClick={() => {}}
+                  tooltipAlignment="end">
+                  <UserAvatar size={20} />
+                </HeaderGlobalAction>
+              </HeaderGlobalBar>
+              <SideNav aria-label="Side navigation" expanded={isSideNavExpanded}>
+                <SideNavItems>
                 {
-                showWarning ? 
-                  <div style={{marginTop:'2rem'}}>
-                    <Alert 
-                      message={alertMessage.message}
-                      description={alertMessage.description}
-                      type={alertMessage.type}
-                      icon={<ExclamationCircleOutlined />}
-                      showIcon
+                  officeList && (officeList.map(office => (
+                    <SideNavLink
+                      key={office.id}
+                      onClick={() => {
+                        getFacilities(office.id);
+                        setSelectedOffice(office);
+                      }}
+                      children={office.name}
+                      isActive={office.name === selectedOffice.name ? true:false}
                     />
-                  </div>:null
+                  )))
                 }
-                <div style={{marginTop:'2rem'}}>
-                  {
-                    tabsLoading ? <>
-                      <Spin tip="Loading...">
-                        <Alert
-                          message={loadingMessage}
-                          description={loadingDescription}
-                          type="info"
-                        />
-                      </Spin>
-                    </>:<Tabs defaultActiveKey="0" onChange={tabId => getFacilities(tabId)}>
-                      {
-                        officeInfo.map(office => {
-                          return <>
-                            <TabPane tab={office.name} key={`${office.id}`}>
-                            <br/>
-                            </TabPane>
-                          </>
-                        })
-                      }
-                    </Tabs>
-                  }
-                </div>
-                <div>
-                  {
-                    contentLoading ? 
-                      <>
-                        <div style={{width:'100%'}}>
-
-                        <Spin tip="Loading...">
-                          <Alert
-                            message={loadingMessage}
-                            description={loadingDescription}
-                            type="info"
-                            />
-                        </Spin>
-                            </div>
-                      </>
-                      :
-                      <>
-                        <div style={{display:facilityCards}}>
-                          <div className='cardContainer'>
-                          {facilityInfo.map(facility => {
-                            const uint8Array = new Uint8Array(facility.image.data);
-                            const blob = new Blob([uint8Array], { type: 'image/png' }); // Create a Blob from the Uint8Array with the appropriate MIME type
-                            const imageUrl = URL.createObjectURL(blob); // Create a URL for the Blob
-                            return (
+                </SideNavItems>
+              </SideNav>
+            </Header>
+          </>
+        )}
+      />
+      <Content>
+        <div className='infoRow'>
+          <div className='officeNameContainer'>
+            <p style={{fontWeight:'bold',color:'red'}}>{selectedOffice.name}</p>
+            <p>{selectedOffice.address}</p>
+            <p>{selectedOffice.city}, {selectedOffice.state} {selectedOffice.zip}</p>
+          </div>
+          <div><img className='logo' src={entPortal}></img></div>
+        </div>
+        <hr/>
+        <div id="facilityData" style={{display:showFacilityData}}>
+        <div style={{display:contentLoading}}><Loading withOverlay={false} description='Loading...'/></div>
+          <div className="tabsHeader">
+            <div id="officeHeader">
+            </div>
+            <Tabs selectedIndex={selectedTab}>
+              <TabList aria-label='office tabs'>
+                <IconTab label='Grid view' onClick={()=>setSelectedTab(0)}>
+                  <Switcher aria-label="grid view" size={20} />
+                </IconTab>
+                <IconTab label='List view' onClick={()=>setSelectedTab(1)}>
+                  <List aria-label='list view' size={20} />
+                </IconTab>
+                <IconTab label='Map view' onClick={()=>{setSelectedTab(2);console.log("selected: ",selectedTab)}}>
+                  <Map aria-label='map view' size={20}/>
+                </IconTab>
+              </TabList>
+              <TabPanels>
+                <TabPanel>
+                  <div className='gridContainer'>
+                    {/* <div className='loadingTiles'><LoadingTiles quantity={10}/></div> */}
+                    {
+                      facilityData.map(facility => (
+                        <div className='tile'>
+                          <ClickableTile
+                            key={facility.facilityId}
+                            onClick={() => {
+                              setSelectedFacility(facility);
+                              getBlueprints(facility.facilityId);
+                            }}
+                            children={
                               <>
-                                <div>
-                                  <Card key={facility.id} title={facility.name} className='locationCard'>
-                                    <img
-                                      className='cardImage'
-                                      onClick={() => {
-                                        setSelectedFacility({
-                                          "name":facility.name,
-                                          "address":facility.address,
-                                          "city":facility.city,
-                                          "state":facility.state,
-                                          "zip":facility.zip,
-                                          "code":facility.code
-                                        })
-                                        getBlueprints(facility.id)
-                                      }}
-                                      src={imageUrl}
-                                      alt=""
-                                      />
-                                  </Card>
-                                </div>
+                                <img className="tileImage" alt={facility.name} src={facility.image}></img>
+                                <p style={{marginTop:'1rem'}}><strong>{facility.name}</strong></p>
+                                <hr/>
+                                <p>{facility.address}</p>
+                                <p>{facility.city}, {facility.state} {facility.zip}</p>
                               </>
-                            )
-                          })}
-                          </div>
-                        </div>
-                        <div style={{display:blueprintCards}}>
-                          
-                          <PageHeader
-                            style={{display:backButtonOffice}}
-                            onBack={() => getFacilities(backButtonOffice)}
-                            title="Back"
+                            }
                           />
-                          <div style={{display:'flex'}}>
-                          <div>
-                            <p style={{color:'#1A95CC'}} className="facilityAddress">{selectedFacility.name}</p>
-                            <p className="facilityAddress">{selectedFacility.address}</p>
-                            <p className="facilityAddress">{selectedFacility.city}, {selectedFacility.state} {selectedFacility.zip}</p>
-                          </div>
-                          <div style={{marginLeft:'5%'}}>
-                            <Button 
-                              type='primary'
-                              onClick={() => getApiKey()}
-                              icon={<EyeFilled style={{width:'1em', height:'1em'}}/>}
-                            > 
-                            Wayfind
-                            </Button>
-                          </div>
-                          <br/>
-                        </div>
-                        <div className='cardContainer'>
+                        </div>    
+                      ))
+                    }
+                  </div>
+                </TabPanel>
+                <TabPanel>
+                  <div className='listContainer'>
+                    <DataTable rows={facilityData} headers={facilityTableHeader} isSortable>
+                      {({
+                        rows,
+                        headers,
+                        getHeaderProps,
+                        getRowProps,
+                        getTableProps,
+                        getToolbarProps,
+                        onInputChange,
+                      }) => (
+                        <TableContainer 
+                          title={`${selectedOffice.name} Facilities`}
+                          description={`Displays a list of all facilities currently registered under ${selectedOffice.name}`}
+                        >
+                          <TableToolbar {...getToolbarProps()} aria-label="data table toolbar">
+                            <TableToolbarContent>
+                              <TableToolbarSearch onChange={onInputChange} />
+                              <TableToolbarMenu light>
+                                <TableToolbarAction onClick={()=>{}}>
+                                  Action 1
+                                </TableToolbarAction>
+                                <TableToolbarAction onClick={()=>{}}>
+                                  Action 2
+                                </TableToolbarAction>
+                                <TableToolbarAction onClick={()=>{}}>
+                                  Action 3
+                                </TableToolbarAction>
+                              </TableToolbarMenu>
+                              <Button onClick={()=>{}}>Primary Button</Button>
+                            </TableToolbarContent>
+                          </TableToolbar>
+                          <Table {...getTableProps()}>
+                            <TableHead>
+                              <TableRow>
+                                {headers.map((header) => (
+                                  <TableHeader key={header.key} {...getHeaderProps({ header })}>
+                                    {header.header}
+                                  </TableHeader>
+                                ))}
+                                <TableHeader />
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              {rows.map((row) => (
+                                <TableRow key={row.id} {...getRowProps({ row })}>
+                                  {row.cells.map((cell) => (
+                                    <TableCell key={cell.id}>{cell.value}</TableCell>
+                                  ))}
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
+                      )}
+                    </DataTable>
+                  </div>
+                </TabPanel>
+                <TabPanel>
+                  <>
+                  <div className='mapContainer'>
+                    <div id='mapSideNav' style={{display:mapSideNavOpen}}>
+                    {
+                      facilityData && (<>
+                        <div style={{textAlign:'right'}}><Close style={{cursor:'pointer'}} onClick={() => setMapSideNavOpen('none')} size={24}/></div>
+                        <img className="mapSideNavImage" alt={facilityData[mapSideNavFacility].name} src={facilityData[mapSideNavFacility].image}/>
+                        <p><strong>{facilityData[mapSideNavFacility].name}</strong></p>
+                        <p>{facilityData[mapSideNavFacility].address}</p>
+                        <p>{facilityData[mapSideNavFacility].city} {facilityData[mapSideNavFacility].state} {facilityData[mapSideNavFacility].zip}</p>
+                        <div style={{textAlign:'right', paddingTop:'2rem'}}>{facilityData[mapSideNavFacility].action}</div>
+                      </>)
+                    }
+                    </div>
+                    {
+                      !isLoaded ? <div><p>loading...</p></div>:
+                      <div>
+                        <GoogleMap
+                          //options={{mapId:"d47737aa5628c2d4"}}
+                          zoom={10}
+                          center={mapCenter}
+                          mapContainerClassName={"mapContainer"}
+                          onLoad={()=>{}}
+                          >
                           {
-                            blueprintInfo.map(blueprint => {
-                              const uint8Array = new Uint8Array(blueprint.image.data);
-                              const blob = new Blob([uint8Array], { type: 'image/png' }); // Create a Blob from the Uint8Array with the appropriate MIME type
-                              const imageUrl = URL.createObjectURL(blob); // Create a URL for the Blob
+                            facilityData.map((item, index) => {
                               return (
-                                <div>
-                                  <Card key={blueprint.id} title={blueprint.name} className='locationCard'>
-                                    <Image
-                                      className='cardImage'
-                                      src={imageUrl}
-                                      alt=""
-                                    />
-                                  </Card>
-                                </div>
+                                <MarkerF 
+                                  onClick={() => {
+                                    setMapSideNavFacility(index);
+                                    setSelectedFacility(facilityData[index]);
+                                    setMapSideNavOpen('block');
+                                    setMapCenter({lat:parseFloat(item.lat), lng:parseFloat(item.long)})
+                                  }}
+                                  title={item.name}
+                                  key={item.facilityId}
+                                  position={{lat:parseFloat(item.lat), lng:parseFloat(item.long)}}
+                                >
+                                </MarkerF>
                               )
                             })
                           }
-                        </div>
-                        </div>
-                      </>
-                  }
-                </div>
-              </>:<><div></div></>
-            }
-          <div>
-            {
-              isAuth === false ? <>
-                <Result
-                  status={authErrorStatus.status}
-                  title={authErrorStatus.title}
-                  subTitle={authErrorStatus.subTitle}
-                  extra={<Button onClick={() => navigate('/login')} type="primary">Login</Button>}
-                />
-              </>:<><div></div></>
-            }
-        </div>
+                        </GoogleMap>
+                      </div>
+                    }
+                  </div>
+                    </>
+                </TabPanel>
+              </TabPanels>
+            </Tabs>
           </div>
-        </Content>
-        <Footer style={{textAlign: 'center'}}>
-          <p>Erva Systems &#169; 2023</p>
-        </Footer>
-      </Layout>
-    </Layout>
+        </div>
+        <div id="blueprintData" style={{display:showBlueprintData}}>
+          <div className='backButtonHeader'>
+            <Button
+              size='md'
+              hasIconOnly
+              renderIcon={ArrowLeft}
+              kind="tertiary"
+              tooltipPosition="bottom"
+              iconDescription="Back"
+              onClick={() => {
+                setShowFacilityData('block');
+                setShowBlueprintData('none');
+              }}
+            />
+          </div>
+          <div className="tabsHeader">
+          <div className="facilityHeader">
+            <div>
+              <p><strong>{selectedFacility.name}</strong></p>
+              <p>{selectedFacility.address}</p>
+              <p>{selectedFacility.city}, {selectedFacility.state} {selectedFacility.zip}</p>
+            </div>
+            <div>
+              <Button 
+                onClick={() => getApiKey()}
+                renderIcon={View}
+                children={"Wayfind"}
+              />
+            </div>
+          </div>
+            <Tabs>
+              <TabList aria-label='facility tabs'>
+                <IconTab label='Grid view'>
+                  <Switcher aria-label="grid view" size={20}/>
+                </IconTab>
+                <IconTab label='List view'>
+                  <List aria-label='list view' size={20}/>
+                </IconTab>
+              </TabList>
+              <TabPanels>
+                <TabPanel>
+                  <div className='gridContainer'>
+                    {
+                      blueprintData.map(blueprint => {
+                        return (
+                          <div>
+                            <Tile key={blueprint.id} title={blueprint.name} className='locationCard'>
+                            <Image src={URL.createObjectURL(new Blob([new Uint8Array(blueprint.image.data)], { type: 'image/png' }))} alt={blueprint.name}/>
+                            </Tile>
+                          </div>
+                        )
+                      })
+                    }
+                  </div>
+                </TabPanel>
+                <TabPanel>
+                  <div className='listContainer'>
+                    <DataTable rows={blueprintData} headers={blueprintTableHeader} isSortable>
+                      {({
+                        rows,
+                        headers,
+                        getHeaderProps,
+                        getRowProps,
+                        getTableProps,
+                        getToolbarProps,
+                        onInputChange,
+                      }) => (
+                        <TableContainer 
+                          title={`${selectedFacility.name} Blueprints`}
+                          description={`Displays a list of all blueprint images for ${selectedFacility.name}`}
+                        >
+                          <TableToolbar {...getToolbarProps()} aria-label="data table toolbar">
+                            <TableToolbarContent>
+                              <TableToolbarSearch onChange={onInputChange} />
+                              <TableToolbarMenu light>
+                                <TableToolbarAction onClick={()=>{}}>
+                                  Action 1
+                                </TableToolbarAction>
+                                <TableToolbarAction onClick={()=>{}}>
+                                  Action 2
+                                </TableToolbarAction>
+                                <TableToolbarAction onClick={()=>{}}>
+                                  Action 3
+                                </TableToolbarAction>
+                              </TableToolbarMenu>
+                              <Button onClick={()=>{}}>Primary Button</Button>
+                            </TableToolbarContent>
+                          </TableToolbar>
+                          <Table {...getTableProps()}>
+                            <TableHead>
+                              <TableRow>
+                                {headers.map((header) => (
+                                  <TableHeader key={header.key} {...getHeaderProps({ header })}>
+                                    {header.header}
+                                  </TableHeader>
+                                ))}
+                                <TableHeader />
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              {rows.map((row) => (
+                                <TableRow key={row.id} {...getRowProps({ row })}>
+                                  {row.cells.map((cell) => (
+                                    <TableCell key={cell.id}>{cell.value}</TableCell>
+                                  ))}
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
+                      )}
+                    </DataTable>
+                  </div>
+                </TabPanel>
+              </TabPanels>
+            </Tabs>
+          </div>
+        </div>
+      </Content>
     </>
-  );
+  )
 }

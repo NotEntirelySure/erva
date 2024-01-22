@@ -53,8 +53,8 @@ CREATE TABLE offices (
 	offices_city VARCHAR,
 	offices_state VARCHAR,
 	offices_zip INT,
-	offices_lat INT,
-	offices_long INT
+	offices_lat NUMERIC(10, 6),
+	offices_long NUMERIC(10, 6)
 );
 
 CREATE TABLE facilities (
@@ -65,8 +65,8 @@ CREATE TABLE facilities (
 	facilities_city VARCHAR,
 	facilities_state VARCHAR,
 	facilities_zip INT,
-	facilities_lat TEXT,
-	facilities_long TEXT,
+	facilities_lat NUMERIC(10, 6),
+	facilities_long NUMERIC(10, 6),
 	facilities_image TEXT,
 	facilities_code TEXT
 );

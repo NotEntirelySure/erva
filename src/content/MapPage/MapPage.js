@@ -1,9 +1,4 @@
-import React, {
-  useState, 
-  useEffect,
-  useRef,
-  useCallback
-} from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   getVenue,
   showVenue,
@@ -64,7 +59,7 @@ export default function MapPage() {
   };
   
   useEffect(() => {
-
+    
     verifyJwt()
       .then(result => {
         setAuthStatus(result);
@@ -96,7 +91,6 @@ export default function MapPage() {
         levelsArray.push({"value":level.id, "label":level.name,"shortName":level.shortName})
       }
     )
-    console.log(levelsArray);
     setLevels(levelsArray);
     
     const directory = new OfflineSearch(venueData)

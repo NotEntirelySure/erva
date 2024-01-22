@@ -25,7 +25,9 @@ function getOffices(token) {
             o.offices_address,
             o.offices_city,
             o.offices_state,
-            o.offices_zip 
+            o.offices_zip,
+            o.offices_lat,
+            o.offices_long
           FROM facilitypermissions as fp
           INNER JOIN facilities AS f ON f.facilities_id=fp.fp_fk_facility
           INNER JOIN offices AS o ON o.offices_id=f.facilities_fk_offices
@@ -40,7 +42,9 @@ function getOffices(token) {
                 "address":userOffices.rows[i].offices_address,
                 "city":userOffices.rows[i].offices_city,
                 "state":userOffices.rows[i].offices_state,
-                "zip":userOffices.rows[i].offices_zip
+                "zip":userOffices.rows[i].offices_zip,
+                "lat":userOffices.rows[i].offices_lat,
+                "long":userOffices.rows[i].offices_long
               })
             }
           }
@@ -66,6 +70,8 @@ function getFacilities(token, officeId) {
               f.facilities_city,
               f.facilities_state,
               f.facilities_zip,
+              f.facilities_lat,
+              f.facilities_long,
               f.facilities_image,
               f.facilities_code
             FROM facilities AS f
@@ -78,12 +84,14 @@ function getFacilities(token, officeId) {
             for (let i=0;i<userFacilities.rows.length;i++) {
               const image = images_model._getImage("facilities", userFacilities.rows[i].facilities_image)
               facilitiesArray.push({
-                "id":userFacilities.rows[i].facilities_id,
+                "facilityId":userFacilities.rows[i].facilities_id,
                 "name":userFacilities.rows[i].facilities_name,
                 "address":userFacilities.rows[i].facilities_address,
                 "city":userFacilities.rows[i].facilities_city,
                 "state":userFacilities.rows[i].facilities_state,
                 "zip":userFacilities.rows[i].facilities_zip,
+                "lat":userFacilities.rows[i].facilities_lat,
+                "long":userFacilities.rows[i].facilities_long,
                 "image":image,
                 "code":userFacilities.rows[i].facilities_code
               })
