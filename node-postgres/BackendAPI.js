@@ -26,55 +26,55 @@ app.use((req, res, next) => {
 app.get('/getqr', (req, res) => {
   account_model.generateQr()
     .then(response => res.status(200).send(response))
-    .catch(error => res.status(500).send(error))
+    .catch(error => res.status(500).send(error));
 });
 
 app.get('/getusers', (req, res) => {
   admin_model.getUsers()
     .then(response => res.status(200).send(response))
-    .catch(error => res.status(500).send(error))
+    .catch(error => res.status(500).send(error));
 });
 
 app.get('/sendemail', (req, res) => {
   email_model.sendEmail()
     .then(response => res.status(200).send(response))
-    .catch(error => res.status(500).send(error))
+    .catch(error => res.status(500).send(error));
 });
 
 app.post('/register', (req, res) => {
   account_model.register(req.body)
     .then(response => res.status(200).send(response))
-    .catch(error => res.status(500).send(error))
+    .catch(error => res.status(500).send(error));
 });
 
 app.post('/login', (req, res) => {
   account_model.login(req.body)
     .then(response => res.status(200).send(response))
-    .catch(error => res.status(500).send(error))
+    .catch(error => res.status(500).send(error));
 });
 
 app.post('/forgotpassword', (req, res) => {
   account_model.forgotPassword(req.body.email)
     .then(response => res.status(200).send(response))
-    .catch(error => res.status(500).send(error))
+    .catch(error => res.status(500).send(error));
 });
 
 app.post('/resetpassword', (req, res) => {
   account_model.resetPassword(req.body.resetToken,req.body.newPassword)
     .then(response => res.status(200).send(response))
-    .catch(error => res.status(500).send(error))
+    .catch(error => res.status(500).send(error));
 });
 
 app.post('/verifyjwt', (req, res) => {
   verifyJwt_model.verifyJwt(req.body.token)
     .then(response => res.status(200).send(response))
-    .catch(error => res.status(500).send(error))
+    .catch(error => res.status(500).send(error));
 });
 
 app.post('/verifyaccount', (req, res) => {
   account_model.verifyAccount(req.body.token)
     .then(response => res.status(200).send(response))
-    .catch(error => res.status(500).send(error))
+    .catch(error => res.status(500).send(error));
 });
 
 app.post('/getapikey', (req, res) => {
