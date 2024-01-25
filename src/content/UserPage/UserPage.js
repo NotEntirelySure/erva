@@ -14,6 +14,7 @@ import {
   HeaderMenuButton,
   HeaderName,
   IconTab,
+  InlineNotification,
   Loading,
   SideNav,
   SideNavItems,
@@ -67,10 +68,9 @@ const facilityTableHeader = [
 ]
 
 const blueprintTableHeader = [
-  {key:'imageId', header:'Image ID'},
-  {key:'facility', header:'Facility'},
+  {key:'id', header:'Image ID'},
   {key:'name', header:'Image Name'},
-  {key:'action', header:'Action'}
+  {key:'imageElement', header:'Image'}
 ]
 
 export default function UserPage() {
@@ -103,7 +103,8 @@ export default function UserPage() {
   const [imageModalImage, setImageModalImage] = useState();
   const [imageModalCaption, setImageModalCaption] = useState('');
   const [mapSideNavOpen, setMapSideNavOpen] = useState('none');
-  const [mapCenter, setMapCenter] = useState({lat:0, lng:0})
+  const [mapCenter, setMapCenter] = useState({lat:0, lng:0});
+  const [mapZoom, setMapZoom] = useState(10);
   const [selectedTab, setSelectedTab] = useState(0);
   const [mapSideNavFacility, setMapSideNavFacility] = useState(0);
   const jwt = useRef(null);
@@ -135,9 +136,18 @@ export default function UserPage() {
 
   useEffect(() => {verifyJwt()},[jwt.current]);
   useEffect(() => {
-    setMapCenter({lat:parseFloat(selectedOffice.lat), lng:parseFloat(selectedOffice.long)})
-  },[selectedOffice])
-
+    if (parseFloat(selectedOffice.lat) === 0 || !selectedOffice.lat) {
+      setMapCenter({lat:39.8097343, lng:-98.5556199});
+      setMapZoom(5);
+    }
+    else {
+      setMapCenter({lat:parseFloat(selectedOffice.lat), lng:parseFloat(selectedOffice.long)});
+      setMapZoom(10);
+    }
+  },[selectedOffice]);
+  useEffect(() => {
+    console.log(blueprintData);
+  },[blueprintData]);
   async function verifyJwt() {
     setTabsLoading(true);
     setLoadingMessage("Getting Offices");
@@ -283,7 +293,12 @@ export default function UserPage() {
     const blueprintsResponse = await blueprintsRequest.json();
     if (blueprintsResponse.length <= 0) {}
     if (blueprintsResponse.length > 0) {
-      setBlueprintData(blueprintsResponse);
+      const blueprints = blueprintsResponse.map(blueprint => (
+        {...blueprint,
+          imageElement:<Image width={200} src={URL.createObjectURL(new Blob([new Uint8Array(blueprint.image.data)], { type: 'image/png' }))} alt={blueprint.name}/>
+        }
+      ))
+      setBlueprintData(blueprints);
     }
     setContentLoading('none');
     setFacilityCards('none');
@@ -357,6 +372,8 @@ export default function UserPage() {
                       onClick={() => {
                         getFacilities(office.id);
                         setSelectedOffice(office);
+                        setShowFacilityData('block');
+                        setShowBlueprintData('none');
                       }}
                       children={office.name}
                       isActive={office.name === selectedOffice.name ? true:false}
@@ -380,10 +397,8 @@ export default function UserPage() {
         </div>
         <hr/>
         <div id="facilityData" style={{display:showFacilityData}}>
-        <div style={{display:contentLoading}}><Loading withOverlay={false} description='Loading...'/></div>
-          <div className="tabsHeader">
-            <div id="officeHeader">
-            </div>
+          <div style={{display:contentLoading}}><Loading withOverlay={false} description='Loading...'/></div>
+            <div className="tabsHeader">
             <Tabs selectedIndex={selectedTab}>
               <TabList aria-label='office tabs'>
                 <IconTab label='Grid view' onClick={()=>setSelectedTab(0)}>
@@ -503,7 +518,7 @@ export default function UserPage() {
                       <div>
                         <GoogleMap
                           //options={{mapId:"d47737aa5628c2d4"}}
-                          zoom={10}
+                          zoom={mapZoom}
                           center={mapCenter}
                           mapContainerClassName={"mapContainer"}
                           onLoad={()=>{}}
@@ -516,7 +531,6 @@ export default function UserPage() {
                                     setMapSideNavFacility(index);
                                     setSelectedFacility(facilityData[index]);
                                     setMapSideNavOpen('block');
-                                    setMapCenter({lat:parseFloat(item.lat), lng:parseFloat(item.long)})
                                   }}
                                   title={item.name}
                                   key={item.facilityId}
@@ -579,15 +593,23 @@ export default function UserPage() {
                 <TabPanel>
                   <div className='gridContainer'>
                     {
-                      blueprintData.map(blueprint => {
-                        return (
+                      !blueprintData.length ? <>
+                      <InlineNotification
+                        hideCloseButton
+                        kind="info"
+                        statusIconDescription="Nothing to display"
+                        subtitle="There are no blueprint images to display. "
+                        title="Nothing to dispaly"
+                      />
+                      </>:
+                      blueprintData.map(blueprint => (
                           <div>
                             <Tile key={blueprint.id} title={blueprint.name} className='locationCard'>
                             <Image src={URL.createObjectURL(new Blob([new Uint8Array(blueprint.image.data)], { type: 'image/png' }))} alt={blueprint.name}/>
                             </Tile>
                           </div>
                         )
-                      })
+                      )
                     }
                   </div>
                 </TabPanel>
