@@ -1,0 +1,45 @@
+scalar DateTime
+
+# Types for QR code functions
+type qrCode {
+  qrcode: String
+  secret: qrSecret
+}
+type qrSecret {
+  ascii: String
+  hex: String
+  base32: String
+  otpauth_url: String
+}
+
+#Type for users table
+type User {
+  id: ID
+  firstName: String
+  lastName: String
+  email: String
+  createdAt: DateTime
+  enabled: Boolean
+  verified: Boolean
+  role: Role
+  accountType: AccountType
+}
+
+#Type for user roles
+type Role {
+  id: ID
+  name: String
+}
+
+#Type for user account types
+type AccountType {
+  id: ID
+  name: String
+}
+
+#type to handle exceptions from deleting users
+type deleteUserResult {
+  success: Boolean!
+  errorCode: String
+  errorMessage: String
+}

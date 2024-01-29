@@ -12,33 +12,6 @@ const pool = new Pool({
   port: process.env.API_BASE_PORT_NUMBER,
 });
 
-const getUsers = () => {
-  return new Promise((resolve, reject) => {
-    pool.query(`
-      SELECT
-        u.users_id,
-        u.users_first_name,
-        u.users_last_name,
-        u.users_email,
-        u.users_created_at,
-        u.users_enabled,
-        r.roles_id,
-        r.roles_name,
-        at.at_id,
-        at.at_name
-      FROM users AS u
-      LEFT JOIN roles AS r
-      ON r.roles_id=u.users_fk_role
-      LEFT JOIN accounttypes AS at
-      ON at.at_id=u.users_fk_type;`,
-      (error, results) => {
-        if (error) {reject(error)}
-        resolve(results.rows);
-      }
-    );
-  });
-};
-
 function getOffices() {
   return new Promise((resolve, reject) => {
     pool.query('SELECT * FROM offices;', (error, results) => {

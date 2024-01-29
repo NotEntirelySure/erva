@@ -2,6 +2,7 @@ import React, {useState, useEffect, useRef} from 'react';
 import AdminHeader from '../../components/AdminHeader';
 import {
   Button,
+  ButtonSet,
   ComboBox,
   Content,
   DataTable,
@@ -56,7 +57,8 @@ export default function AdminUsersPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [errorInfo, setErrorInfo] = useState({heading:'',message:''});
   const [errorModalOpen, setErrorModalOpen] = useState(false);
-  const [showRightPane, setShowRightPane] = useState('translateX(35rem)');
+  const [showRightPane, setShowRightPane] = useState('translateX(60rem)');
+  const [userRoles, setUserRoles] = useState([{roleId:0,roleName:''}]);
   const [editUserData, setEditUserData] = useState({
     userId:0,
     firstName:'',
@@ -85,32 +87,59 @@ export default function AdminUsersPage() {
   }]);
 
   useEffect(() => {GetUsers();},[]);
-
+  
   async function GetUsers() {
     if (showDataTable === 'block') setShowDataTable('none');
-    if (showTableSkeleton === 'none') setShowTableSekeleton('block'); 
-    const usersRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/users/getall`, {mode:'cors'});
+    if (showTableSkeleton === 'none') setShowTableSekeleton('block');
+    const query = `
+      query {
+        getUsers {
+          id
+          firstName
+          lastName
+          email
+          createdAt
+          enabled
+          verified
+          role {
+            id
+            name
+          }
+          accountType {
+            id
+            name
+          }
+        }
+      }
+    `;
+    const usersRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/graphql`, {
+      mode:'cors',
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json"
+      },
+      body: JSON.stringify({query})
+    });
     const usersResponse = await usersRequest.json();
-    if (usersResponse.code === 200) {
-      const users = usersResponse.data.map((user, index) => (
+    if (usersResponse.data) {
+      const users = usersResponse.data.getUsers.map((user, index) => (
         {
           id:String(index),
-          userId:user.users_id,
-          firstName:user.users_first_name,
-          lastName:user.users_last_name,
-          email:user.users_email,
-          createdAt:user.users_created_at,
-          roleId:user.roles_id,
-          roleName:user.roles_name,
-          accountTypeId:user.at_id,
-          accountTypeName:user.at_name,
-          enabled:user.users_enabled,
-          enabledStatus:user.users_enabled ? 
+          userId:user.id,
+          firstName:user.firstName,
+          lastName:user.lastName,
+          email:user.email,
+          createdAt:user.createdAt,
+          roleName:user.role.name,
+          accountTypeName:user.accountType.name,
+          enabled:user.enabled,
+          enabledStatus:user.enabled ? 
             <div style={{display:'flex',alignItems:'center'}}><CircleFill fill='green'/>Yes</div>
             :
             <div style={{display:'flex',alignItems:'center'}}><Caution fill='red'/>No</div>,
-          verified:user.users_verified,
-          verifiedStatus:user.users_verified ? 
+          verified:user.verified,
+          verifiedStatus:user.verified ? 
             <div style={{display:'flex',alignItems:'center'}}><CheckmarkFilled fill='green'/>Yes</div>
             :
             <div style={{display:'flex',alignItems:'center'}}><Misuse fill='red'/>No</div>,
@@ -123,16 +152,20 @@ export default function AdminUsersPage() {
                 iconDescription='Edit'
                 onClick={() => {
                   setEditUserData({
-                    userId:user.users_id,
-                    firstName:user.users_first_name,
-                    lastName:user.users_last_name,
-                    email:user.users_email,
-                    createdAt:user.users_created_at,
-                    enabled:user.users_enabled,
-                    verified:user.users_verified,
-                    role:'',
+                    userId:user.id,
+                    firstName:user.firstName,
+                    lastName:user.lastName,
+                    email:user.email,
+                    createdAt:user.createdAt,
+                    enabled:user.enabled,
+                    verified:user.verified,
+                    role:{
+                      roleId:user.role.id,
+                      roleName:user.role.name
+                    },
                     accountType:''
                   })
+                  GetRoles();
                   setShowRightPane('translateX(0rem)');
                 }}
               />
@@ -142,7 +175,10 @@ export default function AdminUsersPage() {
                 renderIcon={TrashCan}
                 iconDescription='Delete'
                 onClick={() => {
-                  userToDelete.current = {userId:user.users_id,name:`${user.users_first_name} ${user.users_last_name}`};
+                  userToDelete.current = {
+                    userId:user.id,
+                    name:`${user.firstName} ${user.lastName}`
+                  };
                   setDeleteModalOpen(true);
                 }}
               />
@@ -154,32 +190,105 @@ export default function AdminUsersPage() {
       setShowDataTable('block');
       setShowTableSekeleton('none');
     };
-    if (usersResponse.code !== 200) {
-      setErrorInfo({heading:`Error: ${usersResponse.code}`,message:usersResponse.message})
+    if (usersResponse.errors) {
+      setErrorInfo({
+        heading:`Error: ${usersResponse.errors.code}`,
+        message:usersResponse.errors.message
+      })
       setErrorModalOpen(true);
     }
   }
 
-  async function DeleteUser() {
-    if (deleteModalOpen) setDeleteModalOpen(false);
-    const deleteRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/users/delete`,{
-      method:'DELETE',
+  async function GetRoles() {
+    const query = `
+      query {
+        getRoles {
+          id
+          name
+        }
+      }
+    `;
+    const rolesRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/graphql`, {
       mode:'cors',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(userToDelete.current)
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        Accept: "application/json"
+      },
+      body:JSON.stringify({query})
+    });
+    const rolesResponse = await rolesRequest.json();
+    if (rolesResponse.data) {
+      const roles = rolesResponse.data.getRoles.map(role => (
+        {
+          roleId:role.id,
+          roleName:role.name
+        }
+      ));
+      setUserRoles(roles);
+    };
+    if (rolesResponse.errors) {
+      setErrorInfo({heading:`Error`,message:rolesResponse.errors[0].message});
+      setErrorModalOpen(true);
+    };
+  };
+
+  async function DeleteUser() {
+    const query = `
+      mutation {
+        deleteUser(userId: ${userToDelete.current.userId}) {
+          success
+          errorCode
+          errorMessage
+        }
+      }
+    `;
+    if (deleteModalOpen) setDeleteModalOpen(false);
+    const deleteRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/graphql`, {
+      mode:'cors',
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        Accept: "application/json"
+      },
+      body:JSON.stringify({query})
     });
     const deleteResponse = await deleteRequest.json();
     userToDelete.current = {userId:'',name:''};
-    if (deleteResponse.code === 200) GetUsers();
-    if (deleteResponse.code !== 200) {
-      setErrorInfo({heading:`Error: ${deleteResponse.code}`,message:deleteResponse.message})
+    if (deleteResponse.data.deleteUser.success) GetUsers();
+    if (!deleteResponse.data.deleteUser.success) {
+      setErrorInfo({
+        heading:`Error: ${deleteResponse.data.deleteUser.errorCode}`,
+        message:deleteResponse.data.deleteUser.errorMessage
+      });
+      setErrorModalOpen(true);
+    };
+    if (deleteResponse.errors) {
+      setErrorInfo({heading:`Error`,message:deleteResponse.errors[0].message});
       setErrorModalOpen(true);
     }
+  };
+
+  function CloseRightPane() {
+    setShowRightPane('translateX(60rem)');
+    setEditUserData({
+      userId:0,
+      firstName:'',
+      lastName:'',
+      email:'',
+      createdAt:'',
+      enabled:false,
+      verified:false,
+      role:{roleId:0,roleName:''},
+      accountType:''
+    })
   }
+
   return (
     <>
       <Modal
         id='ErrorModal'
+        size='sm'
         open={errorModalOpen}
         modalLabel={errorInfo.heading}
         modalHeading={errorInfo.message}
@@ -197,7 +306,7 @@ export default function AdminUsersPage() {
       <Modal
         id='confirmDelete'
         danger
-        size='sm'
+        size='xs'
         open={deleteModalOpen}
         modalLabel='Confirm Delete'
         modalHeading={`Are you sure you want to delete ${userToDelete.current.name}?`}
@@ -269,20 +378,7 @@ export default function AdminUsersPage() {
               <CloseOutline 
                 className='closeButton'
                 size={28}
-                onClick={() => {
-                  setShowRightPane('translateX(35rem)');
-                  setEditUserData({
-                    userId:0,
-                    firstName:'',
-                    lastName:'',
-                    email:'',
-                    createdAt:'',
-                    enabled:false,
-                    verified:false,
-                    role:'',
-                    accountType:''
-                  })
-                }}
+                onClick={() => CloseRightPane()}
               />
             </div>
           </div>
@@ -304,7 +400,7 @@ export default function AdminUsersPage() {
                     id="lName"
                     labelText="Last Name"
                     value={editUserData.lastName}
-                    onChange={event => setEditUserData(previousState => ({...previousState, firstName:event.target.value}))}
+                    onChange={event => setEditUserData(previousState => ({...previousState, lastName:event.target.value}))}
                   />
                 </div>
                 <TextInput
@@ -319,51 +415,47 @@ export default function AdminUsersPage() {
                   labelText="Account Created"
                   value={editUserData.createdAt}
                 />
-                <Tile id="status">
-                  Account Status
-                  <hr/>
-                  <div style={{display:'flex', justifyContent:'space-evenly'}}>
+                <div style={{display:'flex', justifyContent:'space-evenly'}}>
+                  <div style={{width:'50%'}}>
 
-                    <Toggle 
-                      id='accountEnabled'
-                      labelText="Account Login"
-                      labelA="Disabled"
-                      labelB="Enabled"
-                      toggled={editUserData.enabled}
-                      onToggle={event => setEditUserData(previousState => ({...previousState, enabled:event}))}
-                    />
-                    <Toggle 
-                      id='accountVerified'
-                      labelText="Account Verified"
-                      labelA="Unverified"
-                      labelB="Verified"
-                      toggled={editUserData.verified}
-                      onToggle={event => setEditUserData(previousState => ({...previousState, verified:event}))}
-                    />
+                  <Tile id="status">
+                    Account Status
+                    <hr/>
+                    <div style={{display:'flex',gap:'1rem',flexDirection:'column'}}>
+                      <Toggle 
+                        id='accountEnabled'
+                        labelText="Account Login"
+                        labelA="Disabled"
+                        labelB="Enabled"
+                        toggled={editUserData.enabled}
+                        onToggle={event => setEditUserData(previousState => ({...previousState, enabled:event}))}
+                      />
+                      <Toggle 
+                        id='accountVerified'
+                        labelText="Account Verified"
+                        labelA="Unverified"
+                        labelB="Verified"
+                        toggled={editUserData.verified}
+                        onToggle={event => setEditUserData(previousState => ({...previousState, verified:event}))}
+                      />
                     </div>
-                </Tile>
-                {/* <ComboBox
-                  id="facilityImage"
-                  titleText="Image"
-                  label="Select"
-                  items={imageComboBoxItems}
-                  selectedItem={addEditData.image}
-                  itemToString={item => (item ? item.fileName : '')}
-                  onChange={event => {
-                    setAddEditData(previousState => ({...previousState, image:event.selectedItem}))
-                    GetImage(event.selectedItem.fileName);
-                  }}
-                />
-                <ComboBox
-                  id="organization"
-                  titleText="Assigned Organization"
-                  label="Select"
-                  items={organizationData}
-                  selectedItem={addEditData.organization}
-                  itemToString={item => (item ? item.name : '')}
-                  onChange={event => {setAddEditData(previousState => ({...previousState, organization:event.selectedItem}))}}
-                /> */}
-                <Button onClick={() => {}}>Save</Button>
+                  </Tile>
+                  </div>
+                  <ComboBox
+                    id="userRole"
+                    titleText="Account Role"
+                    label="Select"
+                    items={userRoles}
+                    selectedItem={editUserData.role}
+                    itemToString={item => (item ? item.roleName : '')}
+                    onChange={event => setEditUserData(previousState => ({...previousState, role:event.selectedItem}))}
+                  />
+                </div>
+                
+                <ButtonSet>
+                  <Button onClick={() => {}} kind="primary">Save</Button>
+                  <Button onClick={() => CloseRightPane()} kind="secondary">Close</Button>
+                </ButtonSet>
               </Stack>
             </Form>
           </div>

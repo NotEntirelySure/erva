@@ -33,29 +33,73 @@ function getUsers() {
       LEFT JOIN accounttypes AS at
       ON at.at_id=u.users_fk_type;`,
       (error, results) => {
-        if (error) {reject(error)}
-        resolve({code:200, data:results.rows});
+        if (error) reject(error)
+        const users = results.rows.map(row => ({
+          id: row.users_id,
+          firstName: row.users_first_name,
+          lastName: row.users_last_name,
+          email: row.users_email,
+          createdAt: new Date(row.users_created_at),
+          enabled: row.users_enabled,
+          verified:row.users_verified,
+          role: {
+            id: row.roles_id,
+            name: row.roles_name,
+          },
+          accountType: {
+            id: row.at_id,
+            name: row.at_name,
+          }
+          }));
+        resolve (users);
       }
     );
   });
-}
+};
 
-function deleteUser(data) {
+function getRoles() {
+  return new Promise((resolve, reject) => {
+    pool.query(
+      'SELECT * FROM ROLES',
+      (error, result) => {
+        if (error) reject(error);
+        const roles = result.rows.map(entry => (
+          {
+            id:entry.roles_id,
+            name:entry.roles_name
+          }
+        ))
+        resolve(roles);
+      });
+  });
+};
+
+function deleteUser(userId) {
+  
   return new Promise((resolve, reject) => {
     pool.query(
       'DELETE FROM users WHERE users_id=$1',
-      [data.userId],
+      [userId],
       (error, result) => {
         if (error) {
-          if (error.code === "23503") resolve({code:500,message:'User could not be deleted. User is still referenced in permissions table. Remove user\'s permissions and try again.'})
-          resolve({code:500,message:error.detail});
+          const errorResult = {success: false};
+          if (error.code === "23503") {
+            errorResult.errorCode = "23503";
+            errorResult.errorMessage = "User could not be deleted. User is still referenced in permissions table. Remove user\'s permissions and try again.";
+          }
+          else {
+            errorResult.errorCode = error.code;
+            errorResult.errorMessage = error.detail;
+          };
+          resolve(errorResult);
         };
-        resolve({code:200})
+        resolve({success:true});
     });
   });
 };
 
 module.exports = {
   getUsers,
+  getRoles,
   deleteUser
 }

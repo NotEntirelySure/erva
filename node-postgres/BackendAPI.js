@@ -4,6 +4,8 @@ require('dotenv').config();
 const https = require('https');
 const fs = require('fs');
 const express = require('express');
+const { graphqlHTTP } = require("express-graphql");
+const { buildSchema } = require("graphql");
 const cors = require('cors');
 const app = express().use('*', cors());
 
@@ -15,13 +17,51 @@ const database_model = require('./database_model');
 const email_model = require('./email_model');
 const images_model = require('./images_model')
 
+const types = fs.readFileSync('./graphql/types.graphql', 'utf-8');
+const queries = fs.readFileSync('./graphql/queries.graphql', 'utf-8');
+const mutations = fs.readFileSync('./graphql/mutations.graphql', 'utf-8');
+
+const schema = buildSchema(`
+  ${types}
+  ${queries}
+  ${mutations}
+`);
+
+const resolvers = {
+  getQr: async () => {
+    const qr = await account_model.generateQr();
+    return qr;
+  },
+  getUsers: async () => {
+    const users = await admin_users_model.getUsers();
+    return users;
+  },
+  getRoles: async () => {
+    const roles = await admin_users_model.getRoles();
+    return roles;
+  },
+  //Mutations
+  deleteUser: async ({ userId }) => {
+    const deleteUser = await admin_users_model.deleteUser(userId);
+    return deleteUser;
+  }
+};
+
 app.use(express.json({limit:'2mb'}))
-app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', process.env.API_ACCESS_ORIGIN);
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Access-Control-Allow-Headers');
-  next();
-});
+// app.use((req, res, next) => {
+//   res.setHeader('Access-Control-Allow-Origin', process.env.API_ACCESS_ORIGIN);
+//   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+//   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Access-Control-Allow-Headers');
+//   next();
+// });
+app.use(
+  "/graphql",
+  graphqlHTTP({
+    schema: schema,
+    rootValue: resolvers,
+    graphiql: true,
+  })
+);
 
 app.get('/getqr', (req, res) => {
   account_model.generateQr()

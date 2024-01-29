@@ -1,0 +1,5 @@
+type Query {
+  getQr: qrCode
+  getUsers: [User]
+  getRoles: [Role]
+}
