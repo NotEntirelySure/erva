@@ -234,6 +234,22 @@ export default function UserPage() {
     setLoadingDescription("Getting facilities associated to the selected office.");
     setFacilityCards('none');
     setContentLoading('block');
+    const query = `
+      query {
+        getFacilities {
+          facilityId
+          name
+          address
+          city
+          state
+          zip
+          lat
+          long
+          image
+          code
+        }
+      }
+    `
     const facilitiesRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/getfacilities`, {
       method:'POST',
       mode:'cors',

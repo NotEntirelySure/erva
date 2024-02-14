@@ -12,11 +12,11 @@ const pool = new Pool({
 });
 
 function getOffices(token) {
-  return new Promise(function(resolve, reject) {
+  return new Promise((resolve, reject) => {
     if(!token) {reject({"errorCode":401, "error":"No JWT provided"})}
     if (token) {
       jwt.verify(token, process.env.JWT_SECRET_KEY, async(err, result) => {
-        if(err) {reject({"errorCode":401, "error":err});}
+        if(err) reject({"errorCode":401, "error":err});
         if(result) {
           const userOffices = await pool.query(`
           SELECT DISTINCT
@@ -45,19 +45,48 @@ function getOffices(token) {
                 "zip":userOffices.rows[i].offices_zip,
                 "lat":userOffices.rows[i].offices_lat,
                 "long":userOffices.rows[i].offices_long
-              })
-            }
-          }
+              });
+            };
+          };
           resolve(officesArray);
-        }
+        };
       });
-    }
-  }) 
-}
+    };
+  });
+};
 
-function getFacilities(token, officeId) {
-  return new Promise(function(resolve, reject) {
-    if(!token) {reject({"errorCode":401, "error":"No JWT provided"})}
+function getFacilities(getImages) {
+  return new Promise((resolve, reject) => {
+    pool.query(
+      `SELECT * FROM facilities;`,
+      (error, result) => {
+        if (error) reject(error);
+        const facilitiesArray = result.rows.map(row => {
+          return (
+            {
+              "facilityId":row.facilities_id,
+              "name":row.facilities_name,
+              "address":row.facilities_address,
+              "city":row.facilities_city,
+              "state":row.facilities_state,
+              "zip":row.facilities_zip,
+              "lat":row.facilities_lat,
+              "long":row.facilities_long,
+              "image":getImages ? images_model.getImage("facilities", row.facilities_image):"",
+              "code":row.facilities_code
+            }
+          );
+        });
+        
+        resolve(facilitiesArray);
+      }
+    );
+  });
+};
+
+function getUserFacilities(token, officeId) {
+  return new Promise((resolve, reject) => {
+    if(!token) reject({"errorCode":401, "error":"No JWT provided"});
     if (token) {
       jwt.verify(token, process.env.JWT_SECRET_KEY, async(err, result) => {
         if(err) {reject({"errorCode":401, "error":err});}
@@ -106,7 +135,7 @@ function getFacilities(token, officeId) {
 
 function getBlueprints(token, facilityId) {
   
-  return new Promise(function(resolve, reject) {
+  return new Promise((resolve, reject) => {
     if(!token) {reject({"errorCode":401, "error":"No JWT provided"})}
     if (token) {
       jwt.verify(token, process.env.JWT_SECRET_KEY, async(err, result) => {
@@ -143,8 +172,41 @@ function getBlueprints(token, facilityId) {
 
 }
 
+function getUserPermissions(userId) {
+  
+  return new Promise((resolve, reject) => {
+    pool.query(
+      `SELECT 
+        fp.fp_id,
+        fp.fp_fk_facility,
+        f.facilities_name,
+        f.facilities_city
+        FROM facilitypermissions AS fp
+        INNER JOIN facilities AS f ON fp.fp_fk_facility=f.facilities_id
+        WHERE fp.fp_fk_user=$1;
+      `,
+      [userId],
+      (error, results) => {
+        if (error) reject(error);
+        const permissions = results.rows.map(row => (
+          {
+            permissionId: row.fp_id,
+            facilityId: row.fp_fk_facility,
+            facilityName: row.facilities_name,
+            facilityCity: row.facilities_city
+          }
+        ));
+      
+        resolve(permissions);
+      }
+    );
+  });
+};
+
 module.exports = {
   getOffices,
   getFacilities,
-  getBlueprints
+  getUserFacilities,
+  getBlueprints,
+  getUserPermissions
 }

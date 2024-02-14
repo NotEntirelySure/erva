@@ -22,22 +22,15 @@ function getImageList(directory) {
     resolve(fileStats);
     });
 };
-function getImage(data) {
+function getImage(category, imageName) {
   return new Promise((resolve,reject) => {
-    let dirExists = fs.existsSync(`../${data.category}/${data.imageName}`);
+    let dirExists = fs.existsSync(`../${category}/${imageName}`);
     if (dirExists) {
-      const base64 = fs.readFileSync(`../${data.category}/${data.imageName}`, "base64");
-      resolve({code:200,imageData:base64});
+      const base64 = fs.readFileSync(`../${category}/${imageName}`, "base64");
+      resolve(base64);
     };
-    if (!dirExists) {
-      const base64 = fs.readFileSync(`../${data.category}/default.jpg`, "base64");
-      resolve({
-        code:404,
-        message:'The requested image was not found.',
-        imageData:base64
-      });
-    }
-    else {reject({code:500})};
+    if (!dirExists) resolve('The requested image was not found.');
+    else {reject("the function encountered an unknown error.")};
   });
 }
 

@@ -98,8 +98,73 @@ function deleteUser(userId) {
   });
 };
 
+function addPermissions(permissions) {
+  const addResults = [];
+  const executeQuery = async element => {
+    return new Promise((resolve, reject) => {
+      pool.query(
+        `INSERT INTO facilitypermissions (fp_fk_user, fp_fk_facility) VALUES ($1, $2);`,
+        [element.userId, element.facilityId],
+        (error, results) => {
+          if (error) resolve({
+              success:false,
+              userId:element.userId,
+              errorCode:error.code,
+              errorMessage:error.message
+            });
+          resolve({
+            success:true,
+            userId:element.userId
+          });
+        }
+      );
+    });
+  };
+  return new Promise(async (resolve, reject) => {
+    const results = await Promise.all(permissions.map(async element => {
+      try {
+        const result = await executeQuery(element);
+        return result;
+      }
+      catch (error) {
+        console.log(error);
+      };
+    }));
+    console.log(results);
+    resolve(results);
+  });
+};
+
+function deletePermissions(permissions) {
+  return new Promise((resolve, reject) => {
+    const deleteResults = [];
+    permissions.forEach(permission => {
+      pool.query(
+        `DELETE FROM facilitypermissions WHERE fp_id=$1`,
+        [permission.permissionId],
+        (error, results) => {
+          if (error) {
+            deleteResults.push({
+              success:false,
+              permissionId:permission.permissionId,
+              errorCode:error.code,
+              errorMessage:error.message
+            });
+          };
+          deleteResults.push({
+            success:true,
+            permissionId:permission.permissionId
+          });
+        });
+    });
+    resolve(deleteResults);
+  });
+};
+
 module.exports = {
   getUsers,
   getRoles,
-  deleteUser
+  deleteUser,
+  addPermissions,
+  deletePermissions
 }

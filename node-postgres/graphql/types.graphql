@@ -27,19 +27,73 @@ type User {
 
 #Type for user roles
 type Role {
-  id: ID
-  name: String
+  id: ID!
+  name: String!
 }
 
 #Type for user account types
 type AccountType {
-  id: ID
-  name: String
+  id: ID!
+  name: String!
 }
 
 #type to handle exceptions from deleting users
 type deleteUserResult {
   success: Boolean!
+  errorCode: String
+  errorMessage: String
+}
+
+#type for facilities
+type Facility {
+  facilityId: ID!
+  name: String!
+  address: String!
+  city: String!
+  state: String!
+  zip: Int!
+  lat: Float
+  long: Float
+  image: String
+  code: String
+}
+
+#type for database images. images are sent at Buffers. This image type handles the Buffer format.
+type Image {
+  type: String
+  data:[Int]
+}
+
+#type to get permissions
+type UserPermission {
+  permissionId: ID
+  facilityId: ID
+  facilityName: String
+  facilityCity: String
+}
+
+#input type for adding user permissions
+input addPermission {
+  userId: Int!
+  facilityId: Int!
+}
+#input type to delete permission
+input deletePermission {
+  permissionId: Int
+}
+
+#type to handle exceptions from adding permissions
+type addPermissionResult {
+  success: Boolean!
+  userId: Int!
+  errorCode: String
+  errorMessage: String
+}
+
+#type to handle exceptions from deleting permissions
+type deletePermissionResult {
+  success: Boolean!
+  permissionId: Int!
   errorCode: String
   errorMessage: String
 }

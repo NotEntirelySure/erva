@@ -4,7 +4,7 @@
 };
 .rightPane {
   background-color:#e8e8e8;
-  //width: 10rem;
+  min-width: 25rem;
   height:100vh;
   overflow: scroll;
   overflow-x: hidden;
@@ -35,4 +35,9 @@
 .rightPaneContent{
   margin-top: 2rem;
   padding:1rem;
+}
+
+.userPermissions {
+  display: flex;
+  justify-content: center;
 }

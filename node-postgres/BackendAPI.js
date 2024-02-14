@@ -40,10 +40,38 @@ const resolvers = {
     const roles = await admin_users_model.getRoles();
     return roles;
   },
+  getFacilities: async (getImages) => {
+    const facilities = await database_model.getFacilities(getImages);
+    return facilities;
+  },
+  getUserPermissions: async ({ userId }) => {
+    const permissions = await database_model.getUserPermissions(userId);
+    return permissions;
+  },
   //Mutations
   deleteUser: async ({ userId }) => {
     const deleteUser = await admin_users_model.deleteUser(userId);
     return deleteUser;
+  },
+  addUserPermissions: async ({ addValues }) => {
+    if (addValues.length > 0) {
+      const addPermissions = await admin_users_model.addPermissions(addValues);
+      return addPermissions;
+    };
+    return [{
+      success: true,
+      userId:-1
+    }];
+  },
+  deleteUserPermissions: async ({ deleteValues }) => {
+    if (deleteValues.length > 0) {
+      const deletePermissions = await admin_users_model.deletePermissions(deleteValues);
+      return deletePermissions;
+    };
+    return [{
+      success: true,
+      permissionId: -1
+    }];
   }
 };
 
@@ -130,7 +158,7 @@ app.post('/getoffices', (req, res) => {
 });
 
 app.post('/getfacilities', (req, res) => {
-  database_model.getFacilities(req.body.token, req.body.office)
+  database_model.getUserFacilities(req.body.token, req.body.office)
     .then(response => res.status(200).send(response))
     .catch(error => res.status(500).send(error))
 });

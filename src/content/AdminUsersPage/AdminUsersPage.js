@@ -35,6 +35,8 @@ import {
   TrashCan
 } from '@carbon/react/icons';
 
+import { Transfer } from 'antd';
+
 export default function AdminUsersPage() {
 
   const usersHeader = [
@@ -59,6 +61,8 @@ export default function AdminUsersPage() {
   const [errorModalOpen, setErrorModalOpen] = useState(false);
   const [showRightPane, setShowRightPane] = useState('translateX(60rem)');
   const [userRoles, setUserRoles] = useState([{roleId:0,roleName:''}]);
+  const [transferElementTarget, setTransferElementTarget] = useState([]);
+  const [transferElementSource, setTransferElementSource] = useState([]);
   const [editUserData, setEditUserData] = useState({
     userId:0,
     firstName:'',
@@ -87,7 +91,13 @@ export default function AdminUsersPage() {
   }]);
 
   useEffect(() => {GetUsers();},[]);
-  
+  useEffect(() => {
+    if (editUserData.userId !== 0) {
+      GetRoles();
+      GetUserPermissions();
+    }
+  },[editUserData]);
+
   async function GetUsers() {
     if (showDataTable === 'block') setShowDataTable('none');
     if (showTableSkeleton === 'none') setShowTableSekeleton('block');
@@ -165,7 +175,6 @@ export default function AdminUsersPage() {
                     },
                     accountType:''
                   })
-                  GetRoles();
                   setShowRightPane('translateX(0rem)');
                 }}
               />
@@ -267,6 +276,111 @@ export default function AdminUsersPage() {
       setErrorInfo({heading:`Error`,message:deleteResponse.errors[0].message});
       setErrorModalOpen(true);
     }
+  };
+
+  async function GetUserPermissions () {
+    const query = `
+      query {
+        getUserPermissions(userId: ${editUserData.userId}) {
+          permissionId
+          facilityId
+          facilityName
+          facilityCity
+        }
+        getFacilities (getImages: false){
+          facilityId
+          name
+          city
+        }
+      }
+    `;
+
+    const permissionsRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/graphql`, {
+      mode:'cors',
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        Accept: 'application/json'
+      },
+      body:JSON.stringify({ query })
+    });
+    const permissionsResponse = await permissionsRequest.json();
+    if (permissionsResponse.data) {
+      const userPermissions = permissionsResponse.data.getUserPermissions;
+      const facilitySource = permissionsResponse.data.getFacilities;
+      const targetPermissions = [];
+      facilitySource.forEach(facility => {
+        facility["key"] = String(facility.facilityId);
+        facility["title"] = `${facility.name}${facility.city ? ` (${facility.city})`:''}`
+        const matchingPermission = userPermissions.find(permission => permission.facilityId === facility.facilityId);
+        if (matchingPermission) {
+          targetPermissions.push(facility.key);
+          Object.assign(facility, {permissionId: matchingPermission.permissionId});
+        };
+      })
+      console.log(facilitySource);
+      setTransferElementTarget(targetPermissions);
+      setTransferElementSource(facilitySource);
+    };
+    if (permissionsResponse.errors) {
+      setErrorInfo({heading:`Error`,message:permissionsResponse.errors[0].message});
+      setErrorModalOpen(true);
+    };
+  }
+
+  async function saveUserData() {
+
+    const addPermissions = [];
+    const deletePermissions = [];
+
+    transferElementSource.forEach(permission => {
+      if (transferElementTarget.includes(permission.key) && !permission.permissionId) {
+        addPermissions.push({
+          userId: parseInt(editUserData.userId),
+          facilityId:parseInt(permission.facilityId)
+        });
+        return;
+      };
+      if (!transferElementTarget.includes(permission.key) && permission.permissionId) {
+        deletePermissions.push({permissionId:parseInt(permission.permissionId)});
+      };
+    });
+
+    const query = `
+      mutation ($addValues: [addPermission]!, $deleteValues: [deletePermission]!) {
+        addUserPermissions(addValues: $addValues) {
+          success
+          userId
+          errorCode
+          errorMessage
+        }
+        deleteUserPermissions(deleteValues: $deleteValues) {
+          success
+          permissionId
+          errorCode
+          errorMessage
+        }
+      }
+    `;
+    console.log(query);
+    const saveDataRequest = fetch(`${process.env.REACT_APP_API_BASE_URL}/graphql`, {
+      mode:'cors',
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        Accept: 'application/json'
+      },
+      body:JSON.stringify({ 
+        query,
+        variables: {
+          addValues: addPermissions,
+          deleteValues: deletePermissions
+        }
+      })
+    })
+    const saveDataResponse = await saveDataRequest.json();
+    console.log(saveDataResponse);
+    CloseRightPane();
   };
 
   function CloseRightPane() {
@@ -375,11 +489,7 @@ export default function AdminUsersPage() {
         <div className='rightPane' style={{transform:showRightPane}}>
           <div className='closeButtonContainer'>
             <div>
-              <CloseOutline 
-                className='closeButton'
-                size={28}
-                onClick={() => CloseRightPane()}
-              />
+              
             </div>
           </div>
           <div className='rightPaneContent'>
@@ -451,9 +561,25 @@ export default function AdminUsersPage() {
                     onChange={event => setEditUserData(previousState => ({...previousState, role:event.selectedItem}))}
                   />
                 </div>
-                
+                <div className='userPermissions'>
+                <Transfer
+                  listStyle={{width:'15vw', minWidth:'10rem', height:'25rem'}}
+                  dataSource={transferElementSource}
+                  showSearch
+                  targetKeys={transferElementTarget}
+                  onChange={item => {
+                    console.log(item);
+                    setTransferElementTarget(item);
+                  }}
+                  onSearch={() => {}}
+                  render={item => item.title}
+                  titles={['Available Permissions','Assigned Permissions']}
+                />
+
+                </div>
+                <div><hr/></div>
                 <ButtonSet>
-                  <Button onClick={() => {}} kind="primary">Save</Button>
+                  <Button onClick={() => saveUserData()} kind="primary">Save</Button>
                   <Button onClick={() => CloseRightPane()} kind="secondary">Close</Button>
                 </ButtonSet>
               </Stack>
@@ -463,5 +589,4 @@ export default function AdminUsersPage() {
       </Content>
     </>
   )
-
 }
