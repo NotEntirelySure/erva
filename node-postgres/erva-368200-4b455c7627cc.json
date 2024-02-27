@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "erva-368200",
+  "private_key_id": "4b455c7627cc5b33449a71f0b859a017ff296eb7",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCjHD3j1716WilD\nehMAPZHZqHXoiHa4d0CgsRSwI8ajtbLDgUqBztNAI1ikRqvPelWPj2JGpFY/SvVy\nrwXEW/htUNLsU20C8Hu1Oh+U/3rTLm31GUYXa4EH9Ttfv0MN8yk6N2jUktsfWs1+\n8Zhi/XdlkDKUNO4q90mGerjW5QCpmMRW4EaTeZh4dcUMTnitpJ1Bt6cNULC4L4K+\nQY1VEvAgHt4Zc1RpobHYABqSqbWQMjTItrhjrxPQjsR/sWhXOdMXJBxSry5rRhKb\nU0Ns06EojnlTYcKNcEQ4NAh6J98FjBW0SkL9SfEk/DVaH2YKw/64Pop/cJJ5QYTh\nid2zjDqtAgMBAAECggEADpNN0y1f04N5Cnw/HxdhZXd7SdM1S1iaCtdSx5v6z9Lt\nwttWgsZY9Eie+YG4hVV44yznQElxIj4a3tZVspfxWXtjzcB1Y6eFC8sXhWNVthyr\nsL+YbCwBdL+XlapsCIlrwWBa2sa2FAAzkB4bWu/WxS70hhqQvyrShCo1Qua7Khcb\nH6seXEBluMnw0xEDdvZm6xrSCXCkX+lBgb6DEkKKCE9qp0xp6tLA3jW3x5dGL1R5\nama4wwbqaXYHMz29T1oyMVE1nHIS51q8l99qYkLkED3dDHgej24YhtCmEJIOh2RS\n4EEBgEg6hqvomyU1cHzEvcib4MDldRJTHUdO5I+PVQKBgQDQyjatVN/PIk+tthcc\nPjqeVNjpP7bonjdIPP8Z6sdCqtjPmhOj03FGsoDIjffW1E/Mq7cIMsal070//+pY\n5905SjDJBZ67cqP/E9ZvNhQpxcG2NcBhXdAVtQDvlYcJZ/7+50sj1epUq7o5wyRb\nUIcD6nOu+O5vsd6xAK2cw2XW5wKBgQDH/d6Xrw6Alt+3CTNNOViwxdS11f4+OEsx\nWrBiKI2dGe/TimpvEIcwQGnqdmQR8Ie6J3RwgvyP83HM1T1lvFkUc9Dh5P8b2KpL\n830FkNf9a3zIfhV3aYCuSmEPT23js17blm7R7ckhC8uJXUl/E5u9ghg+tbMSLwo6\nJCkUZl/zSwKBgHEfXoiDF8/uUyVXJyZSQQhQCEY4Ey3tqx4kjkLIhbWFQ3sXi9ST\nVyhqxoPjB4kJ90J5Nu3mNOLb2gm26o3I8n97xvrjZKFC97/YS7JtpncLgmzqqpUW\ncwuPyjYE2ekqw2nwfzGnURMXCAsLw8MF2mEwwgTnMqipwnI8X9QzuhW5AoGAO5N5\n8s+4T0AipsD74l5Z+FcGlaCI23ojlDFC6ArSnOE0G11ZdXqD+zDFHI5mIx33INJO\nEpJCsJNB7FX9s0fXdYtGx3RTNrVljbicHsNWRGz3wDYnKOpp5gHMRiZQQwuVD28R\n1kGyr8B2wpXiphNuSpbtqAiyrpEKx+Urw6L3pF8CgYAVouwvSXmOIboMn2cdjvoh\nbIIV00H3HoTw2EXeJffw5GFHHgs6nAr8sLfeTvFSKFvnBnOZLGgzYKdX0WEqNBde\nvF5uyzRp8aBNSCPZN5y1cKpuLQ/er1AuFVGAoLDFV2wzYD/MaOal07jactWNnAN5\nnKpEqTAz+ckhap/AtYjhvQ==\n-----END PRIVATE KEY-----\n",
+  "client_email": "erva-email-service@erva-368200.iam.gserviceaccount.com",
+  "client_id": "112078651093978722622",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/erva-email-service%40erva-368200.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

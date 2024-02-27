@@ -24,6 +24,26 @@ type User {
   role: Role
   accountType: AccountType
 }
+#input data type for updating user
+input UpdatedUserData {
+  id: ID
+  firstName: String
+  lastName: String
+  email: String
+  createdAt: DateTime
+  enabled: Boolean
+  verified: Boolean
+  role: UpdateUserRole
+  accountType: UpdateUserAccountType
+}
+
+#type to handle exceptions from updating user information
+type updateUserResult {
+  success: Boolean!
+  userId: Int!
+  errorCode: String
+  errorMessage: String
+}
 
 #Type for user roles
 type Role {
@@ -31,8 +51,20 @@ type Role {
   name: String!
 }
 
+#Input to update user roles
+input UpdateUserRole {
+  id: ID!
+  name: String!
+}
+
 #Type for user account types
 type AccountType {
+  id: ID!
+  name: String!
+}
+
+#Input to update user account types
+input UpdateUserAccountType {
   id: ID!
   name: String!
 }

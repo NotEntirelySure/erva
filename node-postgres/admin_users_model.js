@@ -57,20 +57,39 @@ function getUsers() {
   });
 };
 
-function getRoles() {
+function updateUser(userData) {
   return new Promise((resolve, reject) => {
     pool.query(
-      'SELECT * FROM ROLES',
-      (error, result) => {
-        if (error) reject(error);
-        const roles = result.rows.map(entry => (
-          {
-            id:entry.roles_id,
-            name:entry.roles_name
-          }
-        ))
-        resolve(roles);
-      });
+      `UPDATE users
+      SET
+        users_first_name=$2,
+        users_last_name=$3,
+        users_enabled=$4,
+        users_fk_role=$5
+      WHERE users_id=$1;`,
+      [
+        userData.id,
+        userData.firstName,
+        userData.lastName,
+        userData.enabled,
+        userData.role.id
+      ],
+      (error) => {
+        if (error) {
+          console.log(error);
+          resolve({
+            success: false,
+            userId: userData.id,
+            errorCode: error.code,
+            errorMessage: error.detail
+          });
+        };
+        resolve({
+          success: true,
+          userId: userData.id
+        });
+      }
+    );
   });
 };
 
@@ -98,8 +117,24 @@ function deleteUser(userId) {
   });
 };
 
+function getRoles() {
+  return new Promise((resolve, reject) => {
+    pool.query(
+      'SELECT * FROM ROLES',
+      (error, result) => {
+        if (error) reject(error);
+        const roles = result.rows.map(entry => (
+          {
+            id:entry.roles_id,
+            name:entry.roles_name
+          }
+        ))
+        resolve(roles);
+      });
+  });
+};
+
 function addPermissions(permissions) {
-  const addResults = [];
   const executeQuery = async element => {
     return new Promise((resolve, reject) => {
       pool.query(
@@ -130,39 +165,49 @@ function addPermissions(permissions) {
         console.log(error);
       };
     }));
-    console.log(results);
     resolve(results);
   });
 };
 
 function deletePermissions(permissions) {
-  return new Promise((resolve, reject) => {
-    const deleteResults = [];
-    permissions.forEach(permission => {
+  const executeQuery = async element => {
+    return new Promise((resolve, reject) => {
       pool.query(
         `DELETE FROM facilitypermissions WHERE fp_id=$1`,
-        [permission.permissionId],
+        [element.permissionId],
         (error, results) => {
           if (error) {
-            deleteResults.push({
+            resolve({
               success:false,
-              permissionId:permission.permissionId,
+              permissionId:element.permissionId,
               errorCode:error.code,
               errorMessage:error.message
             });
           };
-          deleteResults.push({
+          resolve({
             success:true,
-            permissionId:permission.permissionId
+            permissionId:element.permissionId
           });
         });
     });
-    resolve(deleteResults);
+  };
+  return new Promise(async (resolve, reject) => {
+    const results = await Promise.all(permissions.map(async element => {
+      try {
+        const result = await executeQuery(element);
+        return result;
+      }
+      catch (error) {
+        console.log(error);
+      };
+    }));
+    resolve(results);
   });
 };
 
 module.exports = {
   getUsers,
+  updateUser,
   getRoles,
   deleteUser,
   addPermissions,

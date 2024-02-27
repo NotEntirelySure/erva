@@ -4,4 +4,5 @@ type Query {
   getRoles: [Role]
   getFacilities(getImages: Boolean = true):[Facility]
   getUserPermissions(userId: Int):[UserPermission]
+  sendVerificationEmail(address: String):Boolean
 }

@@ -2,4 +2,5 @@ type Mutation {
   deleteUser(userId: Int!): deleteUserResult
   addUserPermissions(addValues: [addPermission]): [addPermissionResult]
   deleteUserPermissions(deleteValues: [deletePermission]): [deletePermissionResult]
+  updateUser(userData: UpdatedUserData): updateUserResult
 }

@@ -48,6 +48,10 @@ const resolvers = {
     const permissions = await database_model.getUserPermissions(userId);
     return permissions;
   },
+  sendVerificationEmail: async ({ address }) => {
+    const sendEmail = await email_model.sendVerifyEmail(address);
+    return sendEmail;
+  },
   //Mutations
   deleteUser: async ({ userId }) => {
     const deleteUser = await admin_users_model.deleteUser(userId);
@@ -72,6 +76,10 @@ const resolvers = {
       success: true,
       permissionId: -1
     }];
+  },
+  updateUser: async ({ userData }) => {
+    const updateUser = await admin_users_model.updateUser(userData);
+    return updateUser;
   }
 };
 

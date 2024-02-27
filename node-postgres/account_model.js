@@ -123,12 +123,7 @@ function register(registrationValues) {
           );`
         pool.query(userQuery, userValues, (error) => {
           if (error) reject(error)
-          const payload = {
-            type:"emailVerification",
-            email:registrationValues.email.toLowerCase()
-          }
-          const verificationToken = jwt.sign(payload, process.env.JWT_SECRET_KEY, {expiresIn: "2d"});
-          email_model.sendVerifyEmail(registrationValues.email.toLowerCase(), verificationToken)
+          email_model.sendVerifyEmail(registrationValues.email.toLowerCase())
           resolve({"code":200})
         })
       }

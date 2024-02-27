@@ -31,6 +31,7 @@ import {
   CircleFill,
   CloseOutline,
   Edit,
+  MailAll,
   Misuse,
   TrashCan
 } from '@carbon/react/icons';
@@ -60,18 +61,18 @@ export default function AdminUsersPage() {
   const [errorInfo, setErrorInfo] = useState({heading:'',message:''});
   const [errorModalOpen, setErrorModalOpen] = useState(false);
   const [showRightPane, setShowRightPane] = useState('translateX(60rem)');
-  const [userRoles, setUserRoles] = useState([{roleId:0,roleName:''}]);
+  const [userRoles, setUserRoles] = useState([{id:0,name:''}]);
   const [transferElementTarget, setTransferElementTarget] = useState([]);
   const [transferElementSource, setTransferElementSource] = useState([]);
   const [editUserData, setEditUserData] = useState({
-    userId:0,
+    id:0,
     firstName:'',
     lastName:'',
     email:'',
     createdAt:'',
     enabled:false,
     verified:false,
-    role:'',
+    role:{id:0,name:''},
     accountType:''
   });
   const [users, setUsers] = useState([{
@@ -91,13 +92,7 @@ export default function AdminUsersPage() {
   }]);
 
   useEffect(() => {GetUsers();},[]);
-  useEffect(() => {
-    if (editUserData.userId !== 0) {
-      GetRoles();
-      GetUserPermissions();
-    }
-  },[editUserData]);
-
+  
   async function GetUsers() {
     if (showDataTable === 'block') setShowDataTable('none');
     if (showTableSkeleton === 'none') setShowTableSekeleton('block');
@@ -162,7 +157,7 @@ export default function AdminUsersPage() {
                 iconDescription='Edit'
                 onClick={() => {
                   setEditUserData({
-                    userId:user.id,
+                    id:user.id,
                     firstName:user.firstName,
                     lastName:user.lastName,
                     email:user.email,
@@ -170,12 +165,14 @@ export default function AdminUsersPage() {
                     enabled:user.enabled,
                     verified:user.verified,
                     role:{
-                      roleId:user.role.id,
-                      roleName:user.role.name
+                      id:user.role.id,
+                      name:user.role.name
                     },
-                    accountType:''
+                    accountType:user.accountType
                   })
                   setShowRightPane('translateX(0rem)');
+                  GetUserPermissions(user.id);
+                  GetRoles()
                 }}
               />
               <Button
@@ -230,8 +227,8 @@ export default function AdminUsersPage() {
     if (rolesResponse.data) {
       const roles = rolesResponse.data.getRoles.map(role => (
         {
-          roleId:role.id,
-          roleName:role.name
+          id:role.id,
+          name:role.name
         }
       ));
       setUserRoles(roles);
@@ -242,6 +239,25 @@ export default function AdminUsersPage() {
     };
   };
 
+  async function SendVerificationEmail() {
+    const query = `
+      query {
+        sendVerificationEmail(address:"${editUserData.email}")
+        }
+    `;
+    const emailRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/graphql`, {
+      mode:'cors',
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        Accept: "application/json"
+      },
+      body:JSON.stringify({query})
+    });
+    const emailResponse = await emailRequest.json();
+    console.log(emailResponse);
+  };
+  
   async function DeleteUser() {
     const query = `
       mutation {
@@ -278,10 +294,10 @@ export default function AdminUsersPage() {
     }
   };
 
-  async function GetUserPermissions () {
+  async function GetUserPermissions (userId) {
     const query = `
       query {
-        getUserPermissions(userId: ${editUserData.userId}) {
+        getUserPermissions(userId: ${userId}) {
           permissionId
           facilityId
           facilityName
@@ -318,7 +334,6 @@ export default function AdminUsersPage() {
           Object.assign(facility, {permissionId: matchingPermission.permissionId});
         };
       })
-      console.log(facilitySource);
       setTransferElementTarget(targetPermissions);
       setTransferElementSource(facilitySource);
     };
@@ -334,20 +349,22 @@ export default function AdminUsersPage() {
     const deletePermissions = [];
 
     transferElementSource.forEach(permission => {
+      //if the current permission object contains a permission key, but doesn't have an existing permissionId, it means that a permission was moved to the "assigned" column. Add the permission.
       if (transferElementTarget.includes(permission.key) && !permission.permissionId) {
         addPermissions.push({
-          userId: parseInt(editUserData.userId),
+          userId: parseInt(editUserData.id),
           facilityId:parseInt(permission.facilityId)
         });
         return;
       };
+      //if the current permission object doesn't contain a permission key, but does have a permissionId, it means that the permission object was moved to the "unassigned" column. Delete this permission.
       if (!transferElementTarget.includes(permission.key) && permission.permissionId) {
         deletePermissions.push({permissionId:parseInt(permission.permissionId)});
       };
     });
-
+  
     const query = `
-      mutation ($addValues: [addPermission]!, $deleteValues: [deletePermission]!) {
+      mutation ($addValues: [addPermission]!, $deleteValues: [deletePermission]! $userData:UpdatedUserData!) {
         addUserPermissions(addValues: $addValues) {
           success
           userId
@@ -360,9 +377,14 @@ export default function AdminUsersPage() {
           errorCode
           errorMessage
         }
+        updateUser(userData: $userData) {
+          success
+          userId
+          errorCode
+          errorMessage
+        }
       }
     `;
-    console.log(query);
     const saveDataRequest = fetch(`${process.env.REACT_APP_API_BASE_URL}/graphql`, {
       mode:'cors',
       method:'POST',
@@ -370,33 +392,54 @@ export default function AdminUsersPage() {
         'Content-Type':'application/json',
         Accept: 'application/json'
       },
-      body:JSON.stringify({ 
+      body:JSON.stringify({
         query,
         variables: {
           addValues: addPermissions,
-          deleteValues: deletePermissions
+          deleteValues: deletePermissions,
+          userData:editUserData
         }
       })
-    })
-    const saveDataResponse = await saveDataRequest.json();
-    console.log(saveDataResponse);
-    CloseRightPane();
+    });
+    //this resolver needs to be created to hold the promise that's used for parallel processing of the request. 
+    const promiseAllresover = await saveDataRequest;
+    const saveDataResponse = await promiseAllresover.json();
+    saveDataResponse.data.addUserPermissions.forEach((result) => {
+      if (!result.success) {
+        setErrorInfo({heading:`Error ${result.errorCode}`,message:result.errorMessage});
+        setErrorModalOpen(true);
+      };
+    });
+    saveDataResponse.data.deleteUserPermissions.forEach((result) => {
+      if (!result.success) {
+        setErrorInfo({heading:`Error ${result.errorCode}`,message:result.errorMessage});
+        setErrorModalOpen(true);
+      };
+    });
+    if (!saveDataResponse.data.updateUser.success) {
+      setErrorInfo({heading:`Error ${saveDataResponse.data.updateUser.errorCode}`,message:saveDataResponse.data.updateUser.errorMessage});
+        setErrorModalOpen(true);
+    }
+    if (saveDataResponse.data.updateUser.success) {
+      GetUsers();
+      closeRightPane();
+    };
   };
 
-  function CloseRightPane() {
+  function closeRightPane() {
     setShowRightPane('translateX(60rem)');
     setEditUserData({
-      userId:0,
+      id:0,
       firstName:'',
       lastName:'',
       email:'',
       createdAt:'',
       enabled:false,
       verified:false,
-      role:{roleId:0,roleName:''},
+      role:{id:0,name:''},
       accountType:''
-    })
-  }
+    });
+  };
 
   return (
     <>
@@ -525,31 +568,40 @@ export default function AdminUsersPage() {
                   labelText="Account Created"
                   value={editUserData.createdAt}
                 />
-                <div style={{display:'flex', justifyContent:'space-evenly'}}>
+                <div style={{display:'flex', gap:'1rem'}}>
                   <div style={{width:'50%'}}>
-
-                  <Tile id="status">
-                    Account Status
-                    <hr/>
-                    <div style={{display:'flex',gap:'1rem',flexDirection:'column'}}>
-                      <Toggle 
-                        id='accountEnabled'
-                        labelText="Account Login"
-                        labelA="Disabled"
-                        labelB="Enabled"
-                        toggled={editUserData.enabled}
-                        onToggle={event => setEditUserData(previousState => ({...previousState, enabled:event}))}
-                      />
-                      <Toggle 
-                        id='accountVerified'
-                        labelText="Account Verified"
-                        labelA="Unverified"
-                        labelB="Verified"
-                        toggled={editUserData.verified}
-                        onToggle={event => setEditUserData(previousState => ({...previousState, verified:event}))}
-                      />
-                    </div>
-                  </Tile>
+                    <Tile id="status">
+                      Account Status
+                      <hr/>
+                      <div style={{display:'flex',gap:'1rem',flexDirection:'column'}}>
+                        <div>
+                          <Toggle 
+                            id='accountEnabled'
+                            labelText="Account Login"
+                            labelA="Disabled"
+                            labelB="Enabled"
+                            toggled={editUserData.enabled}
+                            onToggle={event => setEditUserData(previousState => ({...previousState, enabled:event}))}
+                          />
+                        </div>
+                        <div style={{display:'flex', gap:'1rem'}}>
+                          <div>
+                            Account Verified?
+                            {editUserData.verified ? <div style={{display:'flex',alignItems:'center'}}><CheckmarkFilled fill='green'/>Yes</div>:<div style={{display:'flex',alignItems:'center'}}><Misuse fill='red'/>No</div>}
+                          </div>
+                          <div>
+                            <Button
+                              disabled={false} //{editUserData.verified}
+                              renderIcon={MailAll}
+                              iconDescription="Send verification email"
+                              onClick={() => SendVerificationEmail()}
+                              size='sm'
+                            >Send email
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </Tile>
                   </div>
                   <ComboBox
                     id="userRole"
@@ -557,11 +609,14 @@ export default function AdminUsersPage() {
                     label="Select"
                     items={userRoles}
                     selectedItem={editUserData.role}
-                    itemToString={item => (item ? item.roleName : '')}
+                    itemToString={item => (item ? item.name : '')}
                     onChange={event => setEditUserData(previousState => ({...previousState, role:event.selectedItem}))}
                   />
                 </div>
                 <div className='userPermissions'>
+                <Tile id="status">
+                    User Permissions
+                    <hr/>
                 <Transfer
                   listStyle={{width:'15vw', minWidth:'10rem', height:'25rem'}}
                   dataSource={transferElementSource}
@@ -575,12 +630,12 @@ export default function AdminUsersPage() {
                   render={item => item.title}
                   titles={['Available Permissions','Assigned Permissions']}
                 />
-
+                </Tile>
                 </div>
                 <div><hr/></div>
                 <ButtonSet>
                   <Button onClick={() => saveUserData()} kind="primary">Save</Button>
-                  <Button onClick={() => CloseRightPane()} kind="secondary">Close</Button>
+                  <Button onClick={() => closeRightPane()} kind="secondary">Close</Button>
                 </ButtonSet>
               </Stack>
             </Form>
