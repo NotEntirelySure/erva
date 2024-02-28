@@ -62,8 +62,10 @@ export default function AdminUsersPage() {
   const [errorModalOpen, setErrorModalOpen] = useState(false);
   const [showRightPane, setShowRightPane] = useState('translateX(60rem)');
   const [userRoles, setUserRoles] = useState([{id:0,name:''}]);
+  const [accountTypes, setAccountTypes] = useState([{id:0,name:''}]);
   const [transferElementTarget, setTransferElementTarget] = useState([]);
   const [transferElementSource, setTransferElementSource] = useState([]);
+  const [emailSent, setEmailSent] = useState(false);
   const [editUserData, setEditUserData] = useState({
     id:0,
     firstName:'',
@@ -171,8 +173,7 @@ export default function AdminUsersPage() {
                     accountType:user.accountType
                   })
                   setShowRightPane('translateX(0rem)');
-                  GetUserPermissions(user.id);
-                  GetRoles()
+                  GetRightPaneData(user.id);
                 }}
               />
               <Button
@@ -205,41 +206,8 @@ export default function AdminUsersPage() {
     }
   }
 
-  async function GetRoles() {
-    const query = `
-      query {
-        getRoles {
-          id
-          name
-        }
-      }
-    `;
-    const rolesRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/graphql`, {
-      mode:'cors',
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        Accept: "application/json"
-      },
-      body:JSON.stringify({query})
-    });
-    const rolesResponse = await rolesRequest.json();
-    if (rolesResponse.data) {
-      const roles = rolesResponse.data.getRoles.map(role => (
-        {
-          id:role.id,
-          name:role.name
-        }
-      ));
-      setUserRoles(roles);
-    };
-    if (rolesResponse.errors) {
-      setErrorInfo({heading:`Error`,message:rolesResponse.errors[0].message});
-      setErrorModalOpen(true);
-    };
-  };
-
   async function SendVerificationEmail() {
+    
     const query = `
       query {
         sendVerificationEmail(address:"${editUserData.email}")
@@ -255,7 +223,10 @@ export default function AdminUsersPage() {
       body:JSON.stringify({query})
     });
     const emailResponse = await emailRequest.json();
-    console.log(emailResponse);
+    if (emailResponse.data.sendVerificationEmail) {
+      setEmailSent(true);
+      setTimeout(() => setEmailSent(false), 5000);
+    }
   };
   
   async function DeleteUser() {
@@ -294,7 +265,7 @@ export default function AdminUsersPage() {
     }
   };
 
-  async function GetUserPermissions (userId) {
+  async function GetRightPaneData (userId) {
     const query = `
       query {
         getUserPermissions(userId: ${userId}) {
@@ -308,10 +279,18 @@ export default function AdminUsersPage() {
           name
           city
         }
+        getRoles {
+          id
+          name
+        }
+        getAccountTypes {
+          id
+          name
+        }
       }
     `;
 
-    const permissionsRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/graphql`, {
+    const dataRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/graphql`, {
       mode:'cors',
       method:'POST',
       headers:{
@@ -320,10 +299,10 @@ export default function AdminUsersPage() {
       },
       body:JSON.stringify({ query })
     });
-    const permissionsResponse = await permissionsRequest.json();
-    if (permissionsResponse.data) {
-      const userPermissions = permissionsResponse.data.getUserPermissions;
-      const facilitySource = permissionsResponse.data.getFacilities;
+    const dataResponse = await dataRequest.json();
+    if (dataResponse.data) {
+      const userPermissions = dataResponse.data.getUserPermissions;
+      const facilitySource = dataResponse.data.getFacilities;
       const targetPermissions = [];
       facilitySource.forEach(facility => {
         facility["key"] = String(facility.facilityId);
@@ -334,11 +313,29 @@ export default function AdminUsersPage() {
           Object.assign(facility, {permissionId: matchingPermission.permissionId});
         };
       })
+      
+      const roles = dataResponse.data.getRoles.map(role => (
+        {
+          id:role.id,
+          name:role.name
+        }
+      ));
+      
+      const types = dataResponse.data.getAccountTypes.map(type => (
+        {
+          id:type.id,
+          name:type.name
+        }
+      ));
+
       setTransferElementTarget(targetPermissions);
       setTransferElementSource(facilitySource);
+      setUserRoles(roles);
+      setAccountTypes(types);
+      
     };
-    if (permissionsResponse.errors) {
-      setErrorInfo({heading:`Error`,message:permissionsResponse.errors[0].message});
+    if (dataResponse.errors) {
+      setErrorInfo({heading:`Error`,message:dataResponse.errors[0].message});
       setErrorModalOpen(true);
     };
   }
@@ -530,7 +527,7 @@ export default function AdminUsersPage() {
           />
         </div>
         <div className='rightPane' style={{transform:showRightPane}}>
-          <div className='closeButtonContainer'>
+          <div className='rightPaneHeader'>
             <div>
               
             </div>
@@ -569,7 +566,7 @@ export default function AdminUsersPage() {
                   value={editUserData.createdAt}
                 />
                 <div style={{display:'flex', gap:'1rem'}}>
-                  <div style={{width:'50%'}}>
+                  <div style={{width:'60%'}}>
                     <Tile id="status">
                       Account Status
                       <hr/>
@@ -591,7 +588,7 @@ export default function AdminUsersPage() {
                           </div>
                           <div>
                             <Button
-                              disabled={false} //{editUserData.verified}
+                              disabled={editUserData.verified}
                               renderIcon={MailAll}
                               iconDescription="Send verification email"
                               onClick={() => SendVerificationEmail()}
@@ -599,37 +596,57 @@ export default function AdminUsersPage() {
                             >Send email
                             </Button>
                           </div>
+                          {emailSent && (
+                            <>
+                              <div style={{display:'flex', alignItems:'center', gap:'0.25rem'}}>
+                                <CheckmarkFilled fill='green'/>
+                                <p style={{fontSize:'0.8rem'}}>email sent!</p>
+                              </div>
+                            </>
+                          )}
                         </div>
                       </div>
                     </Tile>
                   </div>
-                  <ComboBox
-                    id="userRole"
-                    titleText="Account Role"
-                    label="Select"
-                    items={userRoles}
-                    selectedItem={editUserData.role}
-                    itemToString={item => (item ? item.name : '')}
-                    onChange={event => setEditUserData(previousState => ({...previousState, role:event.selectedItem}))}
-                  />
+                  <div>
+                    <ComboBox
+                      id="userRole"
+                      titleText="Account Role"
+                      label="Select"
+                      items={userRoles}
+                      selectedItem={editUserData.role}
+                      itemToString={item => (item ? item.name : '')}
+                      onChange={event => setEditUserData(previousState => ({...previousState, role:event.selectedItem}))}
+                    />
+                    <br/>
+                    <ComboBox
+                      id="accountType"
+                      titleText="Acconut Type"
+                      label="Select"
+                      items={accountTypes}
+                      selectedItem={editUserData.accountType}
+                      itemToString={item => (item ? item.name : '')}
+                      onChange={event => setEditUserData(previousState => ({...previousState, accountType:event.selectedItem}))}
+                    />
+                  </div>
                 </div>
                 <div className='userPermissions'>
                 <Tile id="status">
-                    User Permissions
-                    <hr/>
-                <Transfer
-                  listStyle={{width:'15vw', minWidth:'10rem', height:'25rem'}}
-                  dataSource={transferElementSource}
-                  showSearch
-                  targetKeys={transferElementTarget}
-                  onChange={item => {
-                    console.log(item);
-                    setTransferElementTarget(item);
-                  }}
-                  onSearch={() => {}}
-                  render={item => item.title}
-                  titles={['Available Permissions','Assigned Permissions']}
-                />
+                  User Permissions
+                  <hr/>
+                  <Transfer
+                    listStyle={{width:'15vw', minWidth:'10rem', height:'25rem'}}
+                    dataSource={transferElementSource}
+                    showSearch
+                    targetKeys={transferElementTarget}
+                    onChange={item => {
+                      console.log(item);
+                      setTransferElementTarget(item);
+                    }}
+                    onSearch={() => {}}
+                    render={item => item.title}
+                    titles={['Available Permissions','Assigned Permissions']}
+                  />
                 </Tile>
                 </div>
                 <div><hr/></div>

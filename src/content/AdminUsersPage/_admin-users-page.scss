@@ -14,23 +14,10 @@
   position:absolute;
   transition: motion.$duration-moderate-02 motion.motion(standard, productive);;
 }
-.closeButtonContainer{
+.rightPaneHeader{
   width: auto;
   margin-top: 4rem;
   padding-left: 1rem;
-  animation: rotation 0.125s linear backwards;
-}
-.closeButton:hover{
-  cursor: pointer;
-  animation: rotation 0.125s linear forwards;
-}
-@keyframes rotation {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(90deg);
-  }
 }
 .rightPaneContent{
   margin-top: 2rem;

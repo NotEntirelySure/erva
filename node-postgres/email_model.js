@@ -33,54 +33,10 @@ async function createTransporter() {
       refreshToken: process.env.EMAIL_REFRESH_TOKEN
     }
   });
+
   return transporter;
 };
 
-async function makeTransporter (toAddress) {
-  const client = new OAuth2(
-    gmailKeys.web.client_id,
-    gmailKeys.web.client_secret,
-    gmailKeys.web.redirect_uris
-  );
-  
-  const tokens = await client.getAccessToken();
-  console.log(tokens);
-  const transporter = nodemailer.createTransport({
-    service:'gmail',
-    auth: {
-      type:'OAuth2',
-      user:'c.rosenberg@ervasystems.com',
-      clientId: gmailKeys.web.client_id,
-      clientSecret: gmailKeys.web.client_secret,
-      refreshToken: tokens.res.data.refresh_token,
-      accessToken: tokens.token,
-      expires: tokens.res.data.expires_in,
-    }
-  });
-  const payload = {
-    type:"emailVerification",
-    email:toAddress.toLowerCase()
-  };
-  const verificationToken = jwt.sign(payload, process.env.JWT_SECRET_KEY, {expiresIn: "2d"});
-  const options = {
-    subject: "ERVA Account Verification",
-    from: process.env.EMAIL_FROM_ADDRESS,
-    to: toAddress.toLowerCase(),
-    html: `
-      <div>
-        <p>Thank you for registering an account with ERVA. Before you can use your account you need to verify your email address</p>
-        <p>Click <a href="${process.env.EMAIL_BASE_URL}/verifyaccount?verificationToken=${verificationToken}">here</a> to verify your account.<p>
-      </div>
-    `
-  };
-  try {
-    // Send the email
-    const info = await transporter.sendMail(mailOptions);
-    console.log('Email sent successfully:', info.response);
-
-  } catch (error) {console.error('Error sending email:', error);};
-  return true;
-};
 
 const sendAccountExistsEmail = async(toAddress) => {
   const options = {
@@ -120,7 +76,8 @@ async function sendVerifyEmail(toAddress) {
   const emailTransporter = await createTransporter();
   const sendEmail = await emailTransporter.sendMail(options);
   console.log(sendEmail);
-  return true;
+  if (sendEmail.accepted.length > 0) return true;
+  if (sendEmail.rejected.length > 0) return false;
 };
 
 const sendForgotEmail = async(toAddress, resetToken) => {
@@ -142,6 +99,5 @@ const sendForgotEmail = async(toAddress, resetToken) => {
 module.exports = {
   sendVerifyEmail,
   sendAccountExistsEmail,
-  sendForgotEmail,
-  makeTransporter
+  sendForgotEmail
 };

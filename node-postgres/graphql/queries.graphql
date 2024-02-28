@@ -2,6 +2,7 @@ type Query {
   getQr: qrCode
   getUsers: [User]
   getRoles: [Role]
+  getAccountTypes: [AccountType]
   getFacilities(getImages: Boolean = true):[Facility]
   getUserPermissions(userId: Int):[UserPermission]
   sendVerificationEmail(address: String):Boolean

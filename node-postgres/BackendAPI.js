@@ -40,6 +40,10 @@ const resolvers = {
     const roles = await admin_users_model.getRoles();
     return roles;
   },
+  getAccountTypes: async () => {
+    const accountTypes = await admin_users_model.getAccountTypes();
+    return accountTypes;
+  },
   getFacilities: async (getImages) => {
     const facilities = await database_model.getFacilities(getImages);
     return facilities;

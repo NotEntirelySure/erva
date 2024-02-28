@@ -58,6 +58,7 @@ function getUsers() {
 };
 
 function updateUser(userData) {
+  console.log(userData);
   return new Promise((resolve, reject) => {
     pool.query(
       `UPDATE users
@@ -65,14 +66,16 @@ function updateUser(userData) {
         users_first_name=$2,
         users_last_name=$3,
         users_enabled=$4,
-        users_fk_role=$5
+        users_fk_role=$5,
+        users_fk_type=$6
       WHERE users_id=$1;`,
       [
         userData.id,
         userData.firstName,
         userData.lastName,
         userData.enabled,
-        userData.role.id
+        userData.role.id,
+        userData.accountType.id
       ],
       (error) => {
         if (error) {
@@ -97,7 +100,7 @@ function deleteUser(userId) {
   
   return new Promise((resolve, reject) => {
     pool.query(
-      'DELETE FROM users WHERE users_id=$1',
+      'DELETE FROM users WHERE users_id=$1;',
       [userId],
       (error, result) => {
         if (error) {
@@ -120,7 +123,7 @@ function deleteUser(userId) {
 function getRoles() {
   return new Promise((resolve, reject) => {
     pool.query(
-      'SELECT * FROM ROLES',
+      'SELECT * FROM roles;',
       (error, result) => {
         if (error) reject(error);
         const roles = result.rows.map(entry => (
@@ -130,6 +133,23 @@ function getRoles() {
           }
         ))
         resolve(roles);
+      });
+  });
+};
+
+function getAccountTypes() {
+  return new Promise((resolve, reject) => {
+    pool.query(
+      'SELECT * FROM accounttypes;',
+      (error, result) => {
+        if (error) reject(error);
+        const accountType = result.rows.map(entry => (
+          {
+            id:entry.at_id,
+            name:entry.at_name
+          }
+        ))
+        resolve(accountType);
       });
   });
 };
@@ -209,6 +229,7 @@ module.exports = {
   getUsers,
   updateUser,
   getRoles,
+  getAccountTypes,
   deleteUser,
   addPermissions,
   deletePermissions
