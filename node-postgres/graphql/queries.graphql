@@ -6,4 +6,5 @@ type Query {
   getFacilities(getImages: Boolean = true):[Facility]
   getUserPermissions(userId: Int):[UserPermission]
   sendVerificationEmail(address: String):Boolean
+  getOrganizations: [Organization]
 }

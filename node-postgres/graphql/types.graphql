@@ -129,3 +129,30 @@ type deletePermissionResult {
   errorCode: String
   errorMessage: String
 }
+
+type Organization {
+  id: ID
+  image:String
+  name:String
+  address:String
+  city:String
+  state:String
+  zip:Int
+}
+
+input ModifyOrg {
+  action:String!
+  id: ID!
+  image:String
+  name:String
+  address:String
+  city:String
+  state:String
+  zip:String
+}
+
+type ModOrgResult {
+  success: Boolean!
+  errorCode: String
+  errorMessage: String
+}

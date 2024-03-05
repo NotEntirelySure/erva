@@ -44,6 +44,10 @@ const resolvers = {
     const accountTypes = await admin_users_model.getAccountTypes();
     return accountTypes;
   },
+  getOrganizations: async () => {
+    const orgs = await admin_model.getOrganizations();
+    return orgs;
+  },
   getFacilities: async (getImages) => {
     const facilities = await database_model.getFacilities(getImages);
     return facilities;
@@ -84,7 +88,33 @@ const resolvers = {
   updateUser: async ({ userData }) => {
     const updateUser = await admin_users_model.updateUser(userData);
     return updateUser;
+  },
+  modOrganization: async ({ orgData }) => {
+    switch (orgData.action) {
+      case "add":
+        const addOrg = await admin_model.addOrganization(orgData);
+        return addOrg;
+      case "edit":
+        const editOrg = await admin_model.editOrganization(orgData);
+        return editOrg;
+      case "delete":
+        const deleteOrg = await admin_model.deleteOrganization(orgData);
+        return deleteOrg;
+    };
   }
+};
+
+function requestAuth(req, res, next) {
+  if (req) {
+    authHeader = req.headers.authorization; 
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      //throw new Error('Unauthorized');
+      console.log('no token');
+    }
+    //const token = authHeader.split(' ')[1]; 
+    //console.log(token);
+    next();
+  };
 };
 
 app.use(express.json({limit:'2mb'}))
@@ -95,7 +125,8 @@ app.use(express.json({limit:'2mb'}))
 //   next();
 // });
 app.use(
-  "/graphql",
+  "/api",
+  requestAuth,
   graphqlHTTP({
     schema: schema,
     rootValue: resolvers,

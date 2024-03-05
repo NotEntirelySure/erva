@@ -12,16 +12,27 @@ const pool = new Pool({
   port: process.env.API_BASE_PORT_NUMBER,
 });
 
-function getOffices() {
+function getOrganizations() {
   return new Promise((resolve, reject) => {
     pool.query('SELECT * FROM offices;', (error, results) => {
-      if (error) {reject(error)}
-      resolve(results.rows);
+      if (error) reject(error);
+      const orgs = results.rows.map(org => (
+        {
+          id:org.offices_id,
+          image:org.offices_image,
+          name:org.offices_name,
+          address:org.offices_address,
+          city:org.offices_city,
+          state:org.offices_state,
+          zip:org.offices_zip
+        }
+      ));
+      resolve(orgs);
     });
   }); 
 };
 
-function addOffice(data) {
+function addOrganization(data) {
   return new Promise((resolve, reject) => {
     pool.query(`
       INSERT INTO offices(
@@ -29,31 +40,31 @@ function addOffice(data) {
         offices_address,
         offices_city,
         offices_state,
-        offices_zip,
-        offices_lat,
-        offices_long,
-        offices_image
+        offices_zip
       )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8);`, 
+      VALUES ($1,$2,$3,$4,$5);`, 
       [
         data.name,
         data.address,
         data.city,
-        data.state.value,
-        data.zip,
-        data.lat,
-        data.long,
-        data.image
+        data.state,
+        parseInt(data.zip),
       ],
       (error, results) => {
-        if (error) {reject(error)}
-        resolve({code:200});
+        if (error) {
+          resolve({
+            success:false,
+            errorCode:error.code,
+            errorMessage:error.detail
+          })
+        };
+        resolve({success:true});
       }
     );
   }); 
 };
 
-function editOffice(data) {
+function editOrganization(data) {
   return new Promise((resolve, reject) => {
     pool.query(`
       UPDATE offices
@@ -71,34 +82,47 @@ function editOffice(data) {
         data.name,
         data.address,
         data.city,
-        data.state.value,
-        data.zip,
+        data.state,
+        parseInt(data.zip),
         data.lat,
         data.long,
         data.image,
         data.id
       ],
-      (error, results) => {
-        if (error) {reject(error)}
-        resolve({code:200});
+      (error) => {
+        if (error) {
+          resolve({
+            success:false,
+            errorCode:error.code,
+            errorMessage:error.detail
+
+          })
+        };
+        resolve({success:true});
       }
     );
   }); 
 };
 
-function deleteOffice(data) {
+function deleteOrganization(data) {
   return new Promise((resolve, reject) => {
     pool.query(
       'DELETE FROM offices WHERE offices_id=$1;', 
       [data.id],
       (error, results) => {
-        if (error) reject(error);
-        resolve({code:200});
+        if (error) {
+          resolve({
+            success:false,
+            errorCode:error.code,
+            errorMessage:error.detail
+
+          })
+        };
+        resolve({success:true});
       }
     );
   }); 
 };
-
 
 function getFacilities() {
   return new Promise((resolve, reject) => {
@@ -196,10 +220,10 @@ function deleteFacility(data) {
 };
 
 module.exports = {
-  getOffices,
-  addOffice,
-  editOffice,
-  deleteOffice,
+  getOrganizations,
+  addOrganization,
+  editOrganization,
+  deleteOrganization,
   getFacilities,
   addFacility,
   editFacility,

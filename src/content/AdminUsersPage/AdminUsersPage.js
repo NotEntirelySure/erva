@@ -25,11 +25,9 @@ import {
   Toggle
 } from '@carbon/react';
 import {
-  Add,
   Caution,
   CheckmarkFilled,
   CircleFill,
-  CloseOutline,
   Edit,
   MailAll,
   Misuse,
@@ -119,7 +117,7 @@ export default function AdminUsersPage() {
         }
       }
     `;
-    const usersRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/graphql`, {
+    const usersRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api`, {
       mode:'cors',
       method: "POST",
       headers: {
@@ -213,7 +211,7 @@ export default function AdminUsersPage() {
         sendVerificationEmail(address:"${editUserData.email}")
         }
     `;
-    const emailRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/graphql`, {
+    const emailRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api`, {
       mode:'cors',
       method:'POST',
       headers:{
@@ -240,7 +238,7 @@ export default function AdminUsersPage() {
       }
     `;
     if (deleteModalOpen) setDeleteModalOpen(false);
-    const deleteRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/graphql`, {
+    const deleteRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api`, {
       mode:'cors',
       method:'POST',
       headers:{
@@ -289,11 +287,12 @@ export default function AdminUsersPage() {
         }
       }
     `;
-
-    const dataRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/graphql`, {
+    const jwt = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
+    const dataRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api`, {
       mode:'cors',
       method:'POST',
       headers:{
+        Authorization: `Bearer ${jwt}`,
         'Content-Type':'application/json',
         Accept: 'application/json'
       },
@@ -312,7 +311,7 @@ export default function AdminUsersPage() {
           targetPermissions.push(facility.key);
           Object.assign(facility, {permissionId: matchingPermission.permissionId});
         };
-      })
+      });
       
       const roles = dataResponse.data.getRoles.map(role => (
         {
@@ -382,7 +381,7 @@ export default function AdminUsersPage() {
         }
       }
     `;
-    const saveDataRequest = fetch(`${process.env.REACT_APP_API_BASE_URL}/graphql`, {
+    const saveDataRequest = fetch(`${process.env.REACT_APP_API_BASE_URL}/api`, {
       mode:'cors',
       method:'POST',
       headers:{

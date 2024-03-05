@@ -4,7 +4,6 @@ const { GoogleAuth } = require('google-auth-library');
 const { google } = require("googleapis");
 const jwt = require("jsonwebtoken");
 const OAuth2 = google.auth.OAuth2;
-const gmailKeys = require('./emailKeys.json');
 
 async function createTransporter() {
   const oauth2Client = new OAuth2(
@@ -75,7 +74,7 @@ async function sendVerifyEmail(toAddress) {
   };
   const emailTransporter = await createTransporter();
   const sendEmail = await emailTransporter.sendMail(options);
-  console.log(sendEmail);
+
   if (sendEmail.accepted.length > 0) return true;
   if (sendEmail.rejected.length > 0) return false;
 };

@@ -49,7 +49,7 @@ export default function AdminOrganizationsPage() {
   ];
   
   const orgTableHeader = [
-    {key:'officeId', header:'Office ID'},
+    {key:'orgId', header:'Organization ID'},
     {key:'name', header:'Name'},
     {key:'address', header:'Address'},
     {key:'city', header:'City'},
@@ -58,7 +58,7 @@ export default function AdminOrganizationsPage() {
     {key:'action', header:'Action'}
   ]
 
-  const emptyOfficeData = {
+  const emptyOrgData = {
     action:"",
     id:"",
     name:"",
@@ -66,57 +66,74 @@ export default function AdminOrganizationsPage() {
     city:"",
     state:"",
     zip:"",
-    image:'',
-    lat:0,
-    long:0
+    image:''
   }
 
-  const officeToDelete = useRef({id:'',name:''})
+  const orgToDelete = useRef({id:'',name:''})
 
-  const [officeData, setOfficeData] = useState([emptyOfficeData]);
+  const [organizationData, setOrganizationData] = useState([emptyOrgData]);
   const [addEditModalOpen, setAddEditModalOpen] = useState(false);
-  const [addEditData, setAddEditData] = useState(emptyOfficeData);
+  const [modOrgData, setModOrgData] = useState(emptyOrgData);
   const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = useState(false);
   const [showDataTable, setShowDataTable] = useState('none');
   const [showTableSkeleton, setShowTableSekeleton] = useState('block');
+  const [errorInfo, setErrorInfo] = useState({heading:'',message:''});
+  const [errorModalOpen, setErrorModalOpen] = useState(false);
 
-  useEffect(() => {GetOffices();},[]);
+  useEffect(() => {GetOrganizations();},[]);
 
-  async function GetOffices() {
+  async function GetOrganizations() {
     if (showDataTable === 'block') setShowDataTable('none');
     if (showTableSkeleton === 'none') setShowTableSekeleton('block'); 
-    const officesRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/offices/getall`,{mode:'cors'});
-    const officesResponse = await officesRequest.json();
-    const offices = officesResponse.map((office, index) => (
+    const query = `
+      query {
+        getOrganizations {
+          id
+          name
+          address
+          city
+          state
+          zip
+        }
+      }
+    `;
+
+    const orgsRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api`, {
+      mode:'cors',
+      method:'POST',
+      headers: {
+        'Content-Type':'application/json',
+        Accept: "application/json",
+        Authorization:`Bearer {jwt}`,
+      },
+      body: JSON.stringify({query})
+    });
+    const orgsResponse = await orgsRequest.json();
+
+    const organizations = orgsResponse.data.getOrganizations.map((org, index) => (
       {
         id:String(index),
-        officeId:office.offices_id,
-        name:office.offices_name,
-        address:office.offices_address,
-        city:office.offices_city,
-        state:office.offices_state,
-        zip:office.offices_zip,
-        image:office.offices_image,
-        lat:office.offices_lat,
-        long:office.offices_long,
+        orgId:org.id,
+        name:org.name,
+        address:org.address,
+        city:org.city,
+        state:org.state,
+        zip:String(org.zip),
         action:<>
-          <div>
           <Button
             hasIconOnly
             renderIcon={Edit}
-            iconDescription={`Edit ${office.offices_name}`}
+            iconDescription={`Edit ${org.name}`}
             onClick={() => {
-              setAddEditData({
+              setModOrgData({
                   action:"edit",
-                  id:office.offices_id,
-                  name:office.offices_name,
-                  address:office.offices_address,
-                  city:office.offices_city,
-                  state:states.find(element => element.value === office.offices_state),
-                  zip:office.offices_zip,
-                  image:office.offices_image,
-                  lat:office.offices_lat,
-                  long:office.offices_long
+                  id:org.id,
+                  name:org.name,
+                  address:org.address,
+                  city:org.city,
+                  state:states.find(element => element.value === org.state),
+                  zip:String(org.zip),
+                  image:'org.image',
                 })
                 setAddEditModalOpen(true);
               }}
@@ -127,45 +144,76 @@ export default function AdminOrganizationsPage() {
             renderIcon={TrashCan}
             iconDescription={`Delete Organization`}
             onClick={() => {
-              officeToDelete.current = {id:office.offices_id, name:office.offices_name};
+              setModOrgData({
+                action:"delete",
+                id:org.id,
+                name:org.name
+              });
               setConfirmDeleteModalOpen(true);
             }}
           />
-          </div>
         </>
      }
-    ))
-    setOfficeData(offices);
+    ));
+    setOrganizationData(organizations);
     setShowTableSekeleton('none');
     setShowDataTable('block');
   }
 
-  async function AddEditOffice() {
+  async function ModifyOrg() {
     setAddEditModalOpen(false);
-    const addRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/offices/${addEditData.action}`, {
+    setConfirmDeleteModalOpen(false);
+    const query = `
+      mutation ($data: ModifyOrg!) {
+        modOrganization(orgData: $data) {
+          success
+          errorCode
+          errorMessage
+        }
+      }
+    `;
+    const modRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api`, {
       method:'POST',
       mode:'cors',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(addEditData)
-    })
-    const addResponse = await addRequest.json();
-    if (addResponse.code === 200) GetOffices();
-  }
+      headers:{
+        'Content-Type':'application/json',
+        Accept:'application/json',
+        Authorization:`Bearer {jwt}`
+      },
+      body:JSON.stringify({
+        query,
+        variables: { data:{...modOrgData, state:modOrgData.state?.value }}
+      })
+    });
+    const modResponse = await modRequest.json();
+    setModOrgData(emptyOrgData);
+    if (modResponse.data.modOrganization.success) GetOrganizations()
+    if (!modResponse.data.modOrganization.success) {
+      setErrorInfo({heading:`Error: ${modResponse.data.modOrganization.errorCode}`,message:modResponse.data.modOrganization.errorMessage});
+      setErrorModalOpen(true);
+    }
 
-  async function DeleteOffice() {
-    setConfirmDeleteModalOpen(false);
-    const deleteRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/offices/delete`, {
-      method:'DELETE',
-      mode:'cors',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(officeToDelete.current)
-    })
-    const deleteResponse = await deleteRequest.json();
-    if (deleteResponse.code === 200) GetOffices();
-  } 
+  };
 
   return (
     <>
+    <Modal
+        id='ErrorModal'
+        size='sm'
+        open={errorModalOpen}
+        modalLabel={errorInfo.heading}
+        modalHeading={errorInfo.message}
+        modalAriaLabel='error modal'
+        primaryButtonText='Ok'
+        onRequestClose={() => {
+          setErrorModalOpen(false);
+          setTimeout(() => setErrorInfo({heading:'',message:''}),750)
+        }}
+        onRequestSubmit={() => {
+          setErrorModalOpen(false);
+          setTimeout(() => setErrorInfo({heading:'',message:''}),750)
+        }}
+      />
       <Modal
         id="ConfirmDeleteModal"
         danger
@@ -175,25 +223,26 @@ export default function AdminOrganizationsPage() {
         modalAriaLabel="confirm delete modal"
         onRequestClose={() => {
           setConfirmDeleteModalOpen(false);
-          officeToDelete.current = {id:'',name:''};
+          setModOrgData(emptyOrgData);
         }}
-        onRequestSubmit={() => DeleteOffice()}
+        onRequestSubmit={() => ModifyOrg()}
         primaryButtonText='Delete'
         secondaryButtonText='Cancel'
-        children={`Are you sure you want to delete ${officeToDelete.current.name}?`}
+        children={`Are you sure you want to delete ${modOrgData.name}?`}
       />
       <Modal
         id="addEditModal"
+        size='sm'
         open={addEditModalOpen}
         hasScrollingContent
-        modalHeading={addEditData.action === "add" ? "Add Office":`Edit ${addEditData.name}`}
+        modalHeading={modOrgData.action === "add" ? "Add Office":`Edit ${modOrgData.name}`}
         modalAriaLabel="Add/Edit modal"
         onRequestClose={() => {
           setAddEditModalOpen(false);
-          setAddEditData(emptyOfficeData);
+          setModOrgData(emptyOrgData);
         }}
-        onRequestSubmit={() => AddEditOffice()}
-        primaryButtonText={addEditData.action === 'add' ? 'Add':'Save'}
+        onRequestSubmit={() => ModifyOrg()}
+        primaryButtonText={modOrgData.action === 'add' ? 'Add':'Save'}
         secondaryButtonText="Cancel"
         children={
           <Form>
@@ -201,22 +250,22 @@ export default function AdminOrganizationsPage() {
               <TextInput
                 id="name"
                 labelText="Name"
-                value={addEditData.name}
-                onChange={event => setAddEditData(previousState => ({...previousState, name:event.target.value}))}
+                value={modOrgData.name}
+                onChange={event => setModOrgData(previousState => ({...previousState, name:event.target.value}))}
               />
               <TextInput
                 id="address"
                 labelText="Address"
-                value={addEditData.address}
-                onChange={event => setAddEditData(previousState => ({...previousState, address:event.target.value}))}
+                value={modOrgData.address}
+                onChange={event => setModOrgData(previousState => ({...previousState, address:event.target.value}))}
               />
               <div style={{display:'grid', gap:'2rem', alignItems:'baseline', gridTemplateColumns:'2fr 1.5fr 1fr'}}>
                 <div>
                   <TextInput
                     id="city"
                     labelText="City"
-                    value={addEditData.city}
-                    onChange={event => setAddEditData(previousState => ({...previousState, city:event.target.value}))}
+                    value={modOrgData.city}
+                    onChange={event => setModOrgData(previousState => ({...previousState, city:event.target.value}))}
                   />
                 </div>
                 <div> 
@@ -225,17 +274,17 @@ export default function AdminOrganizationsPage() {
                     titleText="State"
                     label="Select"
                     items={states}
-                    selectedItem={addEditData.state}
+                    selectedItem={modOrgData.state}
                     itemToString={item => (item ? item.text : '')}
-                    onChange={event => {setAddEditData(previousState => ({...previousState, state:event.selectedItem}))}}
+                    onChange={event => {setModOrgData(previousState => ({...previousState, state:event.selectedItem}))}}
                   />
                 </div>
                 <div>
                   <TextInput
                     id="zip"
                     labelText="Zip"
-                    value={addEditData.zip}
-                    onChange={event => setAddEditData(previousState => ({...previousState, zip:event.target.value}))}
+                    value={modOrgData.zip}
+                    onChange={event => setModOrgData(previousState => ({...previousState, zip:event.target.value}))}
                   />
                 </div>
               </div>
@@ -246,7 +295,7 @@ export default function AdminOrganizationsPage() {
       <AdminHeader activeSideBarItem="organizations"/>
       <Content className='pageContent'>
         <div style={{display:showDataTable}}> 
-          <DataTable rows={officeData} headers={orgTableHeader} isSortable>
+          <DataTable rows={organizationData} headers={orgTableHeader} isSortable>
             {({
               rows,
               headers,
@@ -280,16 +329,15 @@ export default function AdminOrganizationsPage() {
                       iconDescription='Add Office'
                       renderIcon={Add}
                       onClick={() => {
-                        setAddEditData({
+                        setModOrgData({
                           action:"add",
+                          id:0,
                           name:"",
                           address:"",
                           city:"",
                           state:"",
                           zip:"",
-                          image:'',
-                          lat:0,
-                          long:0
+                          image:''
                         });
                         setAddEditModalOpen(true);
                       }}
