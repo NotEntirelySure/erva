@@ -151,19 +151,25 @@ function addFacility(data) {
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10);`, 
       [
         data.name,
-        data.organization.organizationId,
+        data.organization,
         data.address,
         data.city,
-        data.state.value,
+        data.state,
         data.zip,
         data.lat,
         data.long,
-        data.image.fileName,
-        data.facilityCode
+        data.image,
+        data.code
       ],
-      (error, results) => {
-        if (error) {reject(error)}
-        resolve({code:200});
+      (error) => {
+        if (error) {
+          console.log(error);
+          resolve({
+          success:false,
+          errorCode:error.code,
+          errorMessage:error.detail
+        })}
+        resolve({success:true});
       }
     );
   }); 
@@ -187,20 +193,24 @@ function editFacility(data) {
       WHERE facilities_id=$11;`, 
       [
         data.name,
-        data.organization.organizationId,
+        data.organization,
         data.address,
         data.city,
-        data.state.value,
+        data.state,
         data.zip,
         data.lat,
         data.long,
-        data.image.fileName,
-        data.facilityCode,
+        data.image,
+        data.code,
         data.id
       ],
-      (error, results) => {
-        if (error) {reject(error)}
-        resolve({code:200});
+      (error) => {
+        if (error) resolve({
+          success:false,
+          errorCode:error.code,
+          errorMessage:error.detail
+        })
+        resolve({success:true});
       }
     );
   }); 
@@ -211,9 +221,13 @@ function deleteFacility(data) {
     pool.query(
       'DELETE FROM facilities WHERE facilities_id=$1;', 
       [data.id],
-      (error, results) => {
-        if (error) reject(error);
-        resolve({code:200});
+      (error) => {
+        if (error) resolve({
+          success:false,
+          errorCode:error.code,
+          errorMessage:error.detail
+        })
+        resolve({success:true});
       }
     );
   }); 

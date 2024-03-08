@@ -65,8 +65,7 @@ export default function AdminOrganizationsPage() {
     address:"",
     city:"",
     state:"",
-    zip:"",
-    image:''
+    zip:""
   }
 
   const orgToDelete = useRef({id:'',name:''})
@@ -132,8 +131,7 @@ export default function AdminOrganizationsPage() {
                   address:org.address,
                   city:org.city,
                   state:states.find(element => element.value === org.state),
-                  zip:String(org.zip),
-                  image:'org.image',
+                  zip:String(org.zip)
                 })
                 setAddEditModalOpen(true);
               }}
@@ -336,8 +334,7 @@ export default function AdminOrganizationsPage() {
                           address:"",
                           city:"",
                           state:"",
-                          zip:"",
-                          image:''
+                          zip:""
                         });
                         setAddEditModalOpen(true);
                       }}

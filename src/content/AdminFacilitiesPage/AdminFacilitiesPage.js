@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import AdminHeader from '../../components/AdminHeader';
 import {
   Button,
+  ButtonSet,
   ComboBox,
   Content,
   DataTable,
@@ -68,7 +69,7 @@ export default function AdminFacilitiesPage() {
     {key:'facilityId', header:'Facility ID'},
     {key:'name', header:'Name'},
     {key:'organization', header:'Assigned Organization'},
-    {key:'facilityCode', header:'Facility Code'},
+    {key:'code', header:'Facility Code'},
     {key:'address', header:'Address'},
     {key:'city', header:'City'},
     {key:'state', header:'State'},
@@ -81,7 +82,7 @@ export default function AdminFacilitiesPage() {
     id:"",
     name:"",
     organization:"",
-    facilityCode:"",
+    code:"",
     address:"",
     city:"",
     state:"",
@@ -91,18 +92,17 @@ export default function AdminFacilitiesPage() {
     long:0
   }
 
-  const facilityToDelete = useRef({id:'',name:''});
   const imageToDelete = useRef({name:''});
 
   const [organizationData, setOrganizationData] = useState([{organizationId:-1,name:''}]);
   const [facilityData, setFacilityData] = useState([emptyFacilityData]);
   const [faciliityImage, setFacilityImage] = useState({imageData:'',fileName:''});
-  const [addEditModalOpen, setAddEditModalOpen] = useState(false);
-  const [addEditData, setAddEditData] = useState(emptyFacilityData);
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [facilityModData, setFacilityModData] = useState(emptyFacilityData);
   const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = useState(false);
   const [showDataTable, setShowDataTable] = useState('none');
   const [showTableSkeleton, setShowTableSekeleton] = useState('block');
-  const [showRightPane, setShowRightPane] = useState('translateX(35rem)');
+  const [showRightPane, setShowRightPane] = useState('translateX(60rem)');
   const [showImageTable, setShowImageTable] = useState('none');
   const [showImageTableSkeleton, setShowImageTableSkeleton] = useState('block')
   const [showImage, setShowImage] = useState('block');
@@ -117,46 +117,102 @@ export default function AdminFacilitiesPage() {
   const [imageUploadButtonDisabled, setImageUploadButtonDisabled] = useState(true);
   const [errorModalOpen, setErrorModalOpen] = useState(false);
   const [errorInfo, setErrorInfo] = useState({heading:'',message:''});
+  const [formValidation, setFormValidation] = useState({
+    nameInvalid:false,
+    addressInvalid:false,
+    cityInvalid:false,
+    stateInvalid:false,
+    zipInvalid:false
+  })
 
   useEffect(() => {
     if (showDataTable === 'block') setShowDataTable('none');
     if (showTableSkeleton === 'none') setShowTableSekeleton('block');
     GetOrganizations();
   },[]);
+  
+  //I don't want to have the image list contengent on the organization data. It needs to be pulled when the person clicks the edit button, not when the org data changes. It's causing unnecessary data pulls by having it tied to organizationData.
   useEffect(() => {GetImageList('combobox');},[organizationData]);
   useEffect(() => {GetFacilities();},[imageComboBoxItems]);
 
   async function GetOrganizations() {
-    const orgRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/offices/getall`,{mode:'cors'});
-    const orgResponse = await orgRequest.json();
-    const organizations = orgResponse.map(organization => (
+    if (showDataTable === 'block') setShowDataTable('none');
+    if (showTableSkeleton === 'none') setShowTableSekeleton('block'); 
+    const query = `
+      query {
+        getOrganizations {
+          id
+          name
+        }
+      }
+    `;
+    const orgsRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api`, {
+      mode:'cors',
+      method:'POST',
+      headers: {
+        'Content-Type':'application/json',
+        Accept: "application/json",
+        Authorization:`Bearer {jwt}`,
+      },
+      body: JSON.stringify({ query })
+    });
+    const orgsResponse = await orgsRequest.json();
+    const organizations = orgsResponse.data.getOrganizations.map(organization => (
       {
-        organizationId:organization.offices_id,
-        name:organization.offices_name
+        organizationId:organization.id,
+        name:organization.name
       }
     ));
+    console.log(organizations);
     setOrganizationData(organizations);
   }
 
   async function GetFacilities() {
     if (showDataTable === 'block') setShowDataTable('none');
     if (showTableSkeleton === 'none') setShowTableSekeleton('block');
-    const facilitiesRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/facilities/getall`,{mode:'cors'});
+
+    const query = `
+      query {
+        getFacilities (getImages: false){
+          id
+          name
+          address
+          city
+          state
+          zip
+          organization
+          lat
+          long
+          image
+          code
+        }
+      }`;
+
+    const facilitiesRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api`,{
+      mode:'cors',
+      method:'POST',
+      headers: {
+        'Content-Type':'application/json',
+        Accept: "application/json",
+        Authorization:`Bearer {jwt}`,
+      },
+      body: JSON.stringify({ query })});
+
     const facilitiesResponse = await facilitiesRequest.json();
-    const facilities = facilitiesResponse.map((facility, index) => (
+    const facilities = facilitiesResponse.data.getFacilities.map((facility, index) => (  
       {
         id:String(index),
-        facilityId:facility.facilities_id,
-        name:facility.facilities_name,
-        organization:facility.facilities_fk_offices ? organizationData.find(element => element.organizationId === facility.facilities_fk_offices).name:'',
-        facilityCode:facility.facilities_code,
-        address:facility.facilities_address,
-        city:facility.facilities_city,
-        state:facility.facilities_state,
-        zip:facility.facilities_zip,
-        image:facility.facilities_image,
-        lat:facility.facilities_lat,
-        long:facility.facilities_long,
+        facilityId:facility.id,
+        name:facility.name,
+        organization:facility.organization ? organizationData.find(element => parseInt(element.organizationId) === facility.organization).name:'',
+        code:facility.code,
+        address:facility.address,
+        city:facility.city,
+        state:facility.state,
+        zip:facility.zip,
+        image:facility.image,
+        lat:facility.lat,
+        long:facility.long,
         action:<>
           <div>
             <Button
@@ -165,24 +221,24 @@ export default function AdminFacilitiesPage() {
               renderIcon={Edit}
               iconDescription='Edit Facility'
               onClick={() => {
-                setAddEditData({
+                setFacilityModData({
                   action:"edit",
-                  id:facility.facilities_id,
-                  name:facility.facilities_name,
-                  organization: facility.facilities_fk_offices ? 
-                    organizationData.find(element => element.organizationId === facility.facilities_fk_offices):
+                  id:facility.id,
+                  name:facility.name,
+                  organization: facility.organization ? 
+                    organizationData.find(element => parseInt(element.organizationId) === facility.organization):
                     {organizationId:0,name:''},
-                  facilityCode:facility.facilities_code,
-                  address:facility.facilities_address,
-                  city:facility.facilities_city,
-                  state:states.find(element => element.value === facility.facilities_state),
-                  zip:facility.facilities_zip,
-                  image:imageComboBoxItems.find(element => element.fileName === facility.facilities_image),
-                  lat:facility.facilities_lat,
-                  long:facility.facilities_long
+                  code:facility.code,
+                  address:facility.address,
+                  city:facility.city,
+                  state:states.find(element => element.value === facility.state),
+                  zip:facility.zip,
+                  image:imageComboBoxItems.find(element => element.fileName === facility.image),
+                  lat:facility.lat,
+                  long:facility.long
                 })
                 setShowRightPane('translateX(0rem)');
-                GetImage(facility.facilities_image);
+                GetImage(facility.image);
                 if(imageComboBoxItems[0].fileName === 'initialLoad') GetImageList();
               }}
             />
@@ -192,7 +248,12 @@ export default function AdminFacilitiesPage() {
               renderIcon={TrashCan}
               iconDescription={`Delete Facility`}
               onClick={() => {
-                facilityToDelete.current = {id:facility.facilities_id, name:facility.facilities_name};
+                setFacilityModData(previousState => ({
+                  ...facilityModData,
+                  action:'delete',
+                  id:facility.id,
+                  name:facility.name
+                }));
                 setConfirmDeleteModalOpen(true);
               }}
             />
@@ -205,39 +266,81 @@ export default function AdminFacilitiesPage() {
     setShowDataTable('block');
   }
 
-  async function AddEditFacility() {
-    if (addEditModalOpen) setAddEditModalOpen(false);
-    if (showRightPane === 'translateX(0rem)') setShowRightPane('translateX(35rem)');
-    const addRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/facilities/${addEditData.action}`, {
+  function VerifyForm() {
+    let valid = true;
+    switch (facilityModData.action) {
+      case "add":
+      case "edit":
+        if (facilityModData.name === "" || facilityModData.name === null) {
+          valid = false;
+          setFormValidation(previousState => ({...previousState, nameInvalid:true}));
+        };
+        if (facilityModData.address === "" || facilityModData.address === null) {
+          valid = false;
+          setFormValidation(previousState => ({...previousState, addressInvalid:true}));
+        };
+        if (facilityModData.city === "" || facilityModData.city === null) {
+          valid = false;
+          setFormValidation(previousState => ({...previousState, cityInvalid:true}));
+        };
+        if (facilityModData.state === "" || facilityModData.state === null) {
+          valid = false;
+          setFormValidation(previousState => ({...previousState, stateInvalid:true}));
+        };
+        if (facilityModData.zip === "" || facilityModData.zip === null) {
+          valid = false;
+          setFormValidation(previousState => ({...previousState, zipInvalid:true}));
+        };
+        break;
+      case "delete":
+        break
+    };
+    if (!valid) return false;
+    if (valid) return true;
+  }
+
+  async function ModifyFacility() {
+    const isValid = VerifyForm();
+    if (!isValid) return;
+    if (addModalOpen) setAddModalOpen(false);
+    if (showRightPane === 'translateX(0rem)') setShowRightPane('translateX(60rem)');
+
+    const query = `
+      mutation($data: ModFacility) {
+        modFacility(facilityData:$data) {
+          success
+          errorCode
+          errorMessage
+        }
+      }
+    `;
+    
+    const modRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api`, {
       method:'POST',
       mode:'cors',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(addEditData)
+      headers:{
+        'Content-Type':'application/json',
+        Accept:'application/json',
+        Authorization:'Bearer {jwt}'
+      },
+      body:JSON.stringify({
+        query,
+        variables: {data:{
+          ...facilityModData,
+          state:facilityModData.state?.value,
+          image:facilityModData.image?.fileName,
+          organization:parseInt(facilityModData.organization?.organizationId)
+        }}
+      })
     })
-    const addResponse = await addRequest.json();
-    setAddEditData(emptyFacilityData);
-    if (addResponse.code === 200) GetFacilities();
-    if (addResponse.code !== 200) {
-      setErrorInfo({heading:addResponse.code,message:addResponse.message})
+    const modResponse = await modRequest.json();
+    setFacilityModData(emptyFacilityData);
+    if (modResponse.data.modFacility.success) GetFacilities();
+    if (!modResponse.data.modFacility.success) {
+      setErrorInfo({heading:modResponse.data.modFacility.errorCode,message:modResponse.data.modFacility.errorMessage})
       setErrorModalOpen(true);
     }
   }
-
-  async function DeleteFacility() {
-    setConfirmDeleteModalOpen(false);
-    const deleteRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/facilities/delete`, {
-      method:'DELETE',
-      mode:'cors',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(facilityToDelete.current)
-    })
-    const deleteResponse = await deleteRequest.json();
-    if (deleteResponse.code === 200) GetFacilities();
-    if (deleteResponse.code !== 200) {
-      setErrorInfo({heading:deleteResponse.code,message:deleteResponse.message})
-      setErrorModalOpen(true);
-    }
-  } 
 
   async function GetImage(imageName) {
     if (showImage === 'flex') setShowImage('none');
@@ -358,10 +461,15 @@ export default function AdminFacilitiesPage() {
     }
   }
 
+  function CloseRightPane() {
+    setShowRightPane('translateX(60rem)');
+    setFacilityModData(emptyFacilityData);
+  };
   return (
     <>
       <Modal
         id='ErrorModal'
+        size='sm'
         open={errorModalOpen}
         modalHeading={errorInfo.heading}
         modalAriaLabel='error modal'
@@ -385,24 +493,28 @@ export default function AdminFacilitiesPage() {
         modalAriaLabel="confirm delete modal"
         onRequestClose={() => {
           setConfirmDeleteModalOpen(false);
-          facilityToDelete.current = {id:'',name:''};
+          setFacilityModData(emptyFacilityData);
         }}
-        onRequestSubmit={() => DeleteFacility()}
+        onRequestSubmit={() => {
+          setConfirmDeleteModalOpen(false);
+          ModifyFacility();
+        }}
         primaryButtonText='Delete'
         secondaryButtonText='Cancel'
-        children={`Are you sure you want to delete ${facilityToDelete.current.name}?`}
+        children={`Are you sure you want to delete ${facilityModData.name}?`}
       />
       <Modal
-        id="addEditModal"
-        open={addEditModalOpen}
-        modalHeading={addEditData.action === "add" ? "Add Office":`Edit ${addEditData.name}`}
-        modalAriaLabel="Add/Edit modal"
+        id="addModal"
+        size='sm'
+        open={addModalOpen}
+        modalHeading="Add Facility"
+        modalAriaLabel="Add modal"
         onRequestClose={() => {
-          setAddEditModalOpen(false);
-          setAddEditData(emptyFacilityData);
+          setAddModalOpen(false);
+          setFacilityModData(emptyFacilityData);
         }}
-        onRequestSubmit={() => AddEditFacility()}
-        primaryButtonText={`${addEditData.action.charAt(0).toUpperCase()}${addEditData.action.slice(1)}`}
+        onRequestSubmit={() => ModifyFacility()}
+        primaryButtonText="Add"
         secondaryButtonText="Cancel"
         children={
           <Form>
@@ -410,43 +522,37 @@ export default function AdminFacilitiesPage() {
               <TextInput
                 id="name"
                 labelText="Name"
-                value={addEditData.name}
-                onChange={event => setAddEditData(previousState => ({...previousState, name:event.target.value}))}
-              />
-              <ComboBox
-                id="facilityImage"
-                titleText="Image"
-                label="Select"
-                items={imageComboBoxItems}
-                selectedItem={addEditData.image}
-                itemToString={item => (item ? item.fileName : '')}
+                value={facilityModData.name}
+                invalid={formValidation.nameInvalid}
+                invalidText={"Please enter a facility name"}
                 onChange={event => {
-                  setAddEditData(previousState => ({...previousState, image:event.selectedItem}))
-                  GetImage(event.selectedItem.fileName);
+                  if (formValidation.nameInvalid) setFormValidation(previousState => ({...previousState, nameInvalid:false}));
+                  setFacilityModData(previousState => ({...previousState, name:event.target.value}));
                 }}
-              />
-              <ComboBox
-                id="organization"
-                titleText="Assigned Organization"
-                label="Select"
-                items={organizationData}
-                selectedItem={addEditData.organization}
-                itemToString={item => (item ? item.name : '')}
-                onChange={event => {setAddEditData(previousState => ({...previousState, organization:event.selectedItem}))}}
               />
               <TextInput
                 id="address"
                 labelText="Address"
-                value={addEditData.address}
-                onChange={event => setAddEditData(previousState => ({...previousState, address:event.target.value}))}
+                value={facilityModData.address}
+                invalid={formValidation.addressInvalid}
+                invalidText="Please enter an address"
+                onChange={event => {
+                  if (formValidation.addressInvalid) setFormValidation(previousState => ({...previousState, addressInvalid:false}));
+                  setFacilityModData(previousState => ({...previousState, address:event.target.value}));
+                }}
               />
               <div style={{display:'grid', gap:'2rem', alignItems:'baseline', gridTemplateColumns:'2fr 1.5fr 1fr'}}>
                 <div>
                   <TextInput
                     id="city"
                     labelText="City"
-                    value={addEditData.city}
-                    onChange={event => setAddEditData(previousState => ({...previousState, city:event.target.value}))}
+                    value={facilityModData.city}
+                    invalid={formValidation.cityInvalid}
+                    invalidText="Please enter a city"
+                    onChange={event => {
+                      if (formValidation.cityInvalid) setFormValidation(previousState => ({...previousState, cityInvalid:false}));
+                      setFacilityModData(previousState => ({...previousState, city:event.target.value}));
+                    }}
                   />
                 </div>
                 <div> 
@@ -455,17 +561,27 @@ export default function AdminFacilitiesPage() {
                     titleText="State"
                     label="Select"
                     items={states}
-                    selectedItem={addEditData.state}
+                    selectedItem={facilityModData.state}
                     itemToString={item => (item ? item.text : '')}
-                    onChange={event => {setAddEditData(previousState => ({...previousState, state:event.selectedItem}))}}
+                    invalid={formValidation.stateInvalid}
+                    invalidText="Please select a state"
+                    onChange={event => {
+                      if (formValidation.stateInvalid) setFormValidation(previousState => ({...previousState, stateInvalid:false}));
+                      setFacilityModData(previousState => ({...previousState, state:event.selectedItem}));
+                    }}
                   />
                 </div>
                 <div>
                   <TextInput
                     id="zip"
                     labelText="Zip"
-                    value={addEditData.zip}
-                    onChange={event => setAddEditData(previousState => ({...previousState, zip:event.target.value}))}
+                    value={facilityModData.zip}
+                    invalid={formValidation.zipInvalid}
+                    invalidText="Please enter a zip code"
+                    onChange={event => {
+                      if (formValidation.zipInvalid) setFormValidation(previousState => ({...previousState, zipInvalid:false}));
+                      setFacilityModData(previousState => ({...previousState, zip:event.target.value}));
+                  }}
                   />
                 </div>
               </div>
@@ -474,24 +590,47 @@ export default function AdminFacilitiesPage() {
                   <TextInput
                     id="latitude"
                     labelText="Latitude"
-                    value={addEditData.lat}
-                    onChange={event => setAddEditData(previousState => ({...previousState, lat:event.target.value}))}
+                    value={facilityModData.lat}
+                    onChange={event => setFacilityModData(previousState => ({...previousState, lat:event.target.value}))}
                   />
                 </div>
                 <div>
                   <TextInput
                     id="longitude"
                     labelText="Longitude"
-                    value={addEditData.long}
-                    onChange={event => setAddEditData(previousState => ({...previousState, long:event.target.value}))}
+                    value={facilityModData.long}
+                    onChange={event => setFacilityModData(previousState => ({...previousState, long:event.target.value}))}
                   />
                 </div>
               </div>
+              <ComboBox
+                id="facilityImage"
+                titleText="Image"
+                label="Select"
+                items={imageComboBoxItems}
+                selectedItem={facilityModData.image}
+                itemToString={item => (item ? item.fileName : '')}
+                onChange={event => {
+                  setFacilityModData(previousState => ({...previousState, image:event.selectedItem}))
+                  GetImage(event.selectedItem.fileName);
+                }}
+              />
+              <ComboBox
+                id="organization"
+                titleText="Assigned Organization"
+                label="Select"
+                items={organizationData}
+                selectedItem={facilityModData.organization}
+                itemToString={item => (item ? item.name : '')}
+                onChange={event => {
+                  setFacilityModData(previousState => ({...previousState, organization:event.selectedItem}))}
+                }
+              />
               <TextInput
-                id="facilityCode"
+                id="code"
                 labelText="Facility Code"
-                value={addEditData.facilityCode}
-                onChange={event => setAddEditData(previousState => ({...previousState, facilityCode:event.target.value}))}
+                value={facilityModData.code}
+                onChange={event => setFacilityModData(previousState => ({...previousState, code:event.target.value}))}
               />
             </Stack>
           </Form>
@@ -596,8 +735,8 @@ export default function AdminFacilitiesPage() {
             <Tab 
               onClick={() => {
                 GetImageList();
-                if (showRightPane === 'translateX(0rem)') setShowRightPane('translateX(35rem)');
-                setAddEditData(emptyFacilityData);
+                if (showRightPane === 'translateX(0rem)') setShowRightPane('translateX(60rem)');
+                setFacilityModData(emptyFacilityData);
               }}
             >
               <Image size={18}/> Images
@@ -629,11 +768,11 @@ export default function AdminFacilitiesPage() {
                             iconDescription='Add Facility'
                             renderIcon={Add}
                             onClick={() => {
-                              setAddEditData({
+                              setFacilityModData({
                                 action:"add",
                                 name:"",
                                 organization:"",
-                                facilityCode:"",
+                                code:"",
                                 address:"",
                                 city:"",
                                 state:"",
@@ -642,7 +781,7 @@ export default function AdminFacilitiesPage() {
                                 lat:0,
                                 long:0
                               });
-                              setAddEditModalOpen(true);
+                              setAddModalOpen(true);
                             }}
                           />
                         </TableToolbarContent>
@@ -680,19 +819,7 @@ export default function AdminFacilitiesPage() {
                 />
               </div>
               <div className='rightPane' style={{transform:showRightPane}}>
-                <div className='closeButtonContainer'>
-                  <div>
-                    <CloseOutline 
-                      className='closeButton'
-                      size={28}
-                      onClick={() => {
-                        setShowRightPane('translateX(35rem)');
-                        setAddEditData(emptyFacilityData);
-                      }}
-                    />
-                  </div>
-                </div>
-                <div className='rightPaneContent'>
+                <div className='rightPaneHeader'>
                   <div style={{display:'flex', gap:'2rem'}}>
                     <div style={{display:showImage}}>
                       <Tile>
@@ -702,28 +829,28 @@ export default function AdminFacilitiesPage() {
                     <div style={{display:showImageLoading, justifyContent:'center', alignItems:'center'}}>
                       <Loading withOverlay={false} />
                     </div>
-                    <div>
-                      <p><strong>{addEditData.name}</strong></p>
-                    </div>
                   </div>
+                </div>
+                <div className='rightPaneContent'>
+                  <p><strong>{facilityModData.name}</strong></p>
                   <hr/>
                   <Form>
                     <Stack gap={5}>
                       <TextInput
                         id="name"
                         labelText="Name"
-                        value={addEditData.name}
-                        onChange={event => setAddEditData(previousState => ({...previousState, name:event.target.value}))}
+                        value={facilityModData.name}
+                        onChange={event => setFacilityModData(previousState => ({...previousState, name:event.target.value}))}
                       />
                       <ComboBox
                         id="facilityImage"
                         titleText="Image"
                         label="Select"
                         items={imageComboBoxItems}
-                        selectedItem={addEditData.image}
+                        selectedItem={facilityModData.image}
                         itemToString={item => (item ? item.fileName : '')}
                         onChange={event => {
-                          setAddEditData(previousState => ({...previousState, image:event.selectedItem}))
+                          setFacilityModData(previousState => ({...previousState, image:event.selectedItem}))
                           GetImage(event.selectedItem.fileName);
                         }}
                       />
@@ -732,23 +859,23 @@ export default function AdminFacilitiesPage() {
                         titleText="Assigned Organization"
                         label="Select"
                         items={organizationData}
-                        selectedItem={addEditData.organization}
+                        selectedItem={facilityModData.organization}
                         itemToString={item => (item ? item.name : '')}
-                        onChange={event => {setAddEditData(previousState => ({...previousState, organization:event.selectedItem}))}}
+                        onChange={event => {setFacilityModData(previousState => ({...previousState, organization:event.selectedItem}))}}
                         />
                       <TextInput
                         id="address"
                         labelText="Address"
-                        value={addEditData.address}
-                        onChange={event => setAddEditData(previousState => ({...previousState, address:event.target.value}))}
+                        value={facilityModData.address}
+                        onChange={event => setFacilityModData(previousState => ({...previousState, address:event.target.value}))}
                         />
                       <div style={{display:'grid', gap:'2rem', alignItems:'baseline', gridTemplateColumns:'2fr 1.5fr 1fr'}}>
                         <div>
                           <TextInput
                             id="city"
                             labelText="City"
-                            value={addEditData.city}
-                            onChange={event => setAddEditData(previousState => ({...previousState, city:event.target.value}))}
+                            value={facilityModData.city}
+                            onChange={event => setFacilityModData(previousState => ({...previousState, city:event.target.value}))}
                           />
                         </div>
                         <div> 
@@ -757,17 +884,17 @@ export default function AdminFacilitiesPage() {
                             titleText="State"
                             label="Select"
                             items={states}
-                            selectedItem={addEditData.state}
+                            selectedItem={facilityModData.state}
                             itemToString={item => (item ? item.text : '')}
-                            onChange={event => {setAddEditData(previousState => ({...previousState, state:event.selectedItem}))}}
+                            onChange={event => {setFacilityModData(previousState => ({...previousState, state:event.selectedItem}))}}
                           />
                         </div>
                         <div>
                           <TextInput
                             id="zip"
                             labelText="Zip"
-                            value={addEditData.zip}
-                            onChange={event => setAddEditData(previousState => ({...previousState, zip:event.target.value}))}
+                            value={facilityModData.zip}
+                            onChange={event => setFacilityModData(previousState => ({...previousState, zip:event.target.value}))}
                           />
                         </div>
                       </div>
@@ -776,26 +903,30 @@ export default function AdminFacilitiesPage() {
                           <TextInput
                             id="latitude"
                             labelText="Latitude"
-                            value={addEditData.lat}
-                            onChange={event => setAddEditData(previousState => ({...previousState, lat:event.target.value}))}
+                            value={facilityModData.lat}
+                            onChange={event => setFacilityModData(previousState => ({...previousState, lat:event.target.value}))}
                             />
                         </div>
                         <div>
                           <TextInput
                             id="longitude"
                             labelText="Longitude"
-                            value={addEditData.long}
-                            onChange={event => setAddEditData(previousState => ({...previousState, long:event.target.value}))}
+                            value={facilityModData.long}
+                            onChange={event => setFacilityModData(previousState => ({...previousState, long:event.target.value}))}
                             />
                         </div>
                       </div>
                       <TextInput
-                        id="facilityCode"
+                        id="code"
                         labelText="Facility Code"
-                        value={addEditData.facilityCode}
-                        onChange={event => setAddEditData(previousState => ({...previousState, facilityCode:event.target.value}))}
+                        value={facilityModData.code}
+                        onChange={event => setFacilityModData(previousState => ({...previousState, code:event.target.value}))}
                         />
-                        <Button onClick={() => AddEditFacility()}>Save</Button>
+                        <div><hr/></div>
+                        <ButtonSet>
+                          <Button onClick={() => ModifyFacility()} kind="primary">Save</Button>
+                          <Button onClick={() => CloseRightPane()} kind="secondary">Close</Button>
+                        </ButtonSet>
                     </Stack>
                   </Form>
                 </div>

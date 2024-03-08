@@ -78,12 +78,29 @@ type deleteUserResult {
 
 #type for facilities
 type Facility {
-  facilityId: ID!
+  id: ID!
   name: String!
   address: String!
   city: String!
   state: String!
   zip: Int!
+  organization:Int
+  lat: Float
+  long: Float
+  image: String
+  code: String
+}
+
+#input for modifying facility
+input ModFacility {
+  action:String
+  id: ID
+  name: String!
+  address: String
+  city: String
+  state: String
+  zip: String
+  organization:Int
   lat: Float
   long: Float
   image: String
@@ -151,7 +168,7 @@ input ModifyOrg {
   zip:String
 }
 
-type ModOrgResult {
+type ModResult {
   success: Boolean!
   errorCode: String
   errorMessage: String

@@ -273,7 +273,7 @@ export default function AdminUsersPage() {
           facilityCity
         }
         getFacilities (getImages: false){
-          facilityId
+          id
           name
           city
         }
@@ -304,9 +304,9 @@ export default function AdminUsersPage() {
       const facilitySource = dataResponse.data.getFacilities;
       const targetPermissions = [];
       facilitySource.forEach(facility => {
-        facility["key"] = String(facility.facilityId);
+        facility["key"] = String(facility.id);
         facility["title"] = `${facility.name}${facility.city ? ` (${facility.city})`:''}`
-        const matchingPermission = userPermissions.find(permission => permission.facilityId === facility.facilityId);
+        const matchingPermission = userPermissions.find(permission => permission.facilityId === facility.id);
         if (matchingPermission) {
           targetPermissions.push(facility.key);
           Object.assign(facility, {permissionId: matchingPermission.permissionId});
@@ -349,7 +349,7 @@ export default function AdminUsersPage() {
       if (transferElementTarget.includes(permission.key) && !permission.permissionId) {
         addPermissions.push({
           userId: parseInt(editUserData.id),
-          facilityId:parseInt(permission.facilityId)
+          facilityId:parseInt(permission.id)
         });
         return;
       };

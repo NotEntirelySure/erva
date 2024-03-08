@@ -64,12 +64,13 @@ function getFacilities(getImages) {
         const facilitiesArray = result.rows.map(row => {
           return (
             {
-              "facilityId":row.facilities_id,
+              "id":row.facilities_id,
               "name":row.facilities_name,
               "address":row.facilities_address,
               "city":row.facilities_city,
               "state":row.facilities_state,
               "zip":row.facilities_zip,
+              "organization":row.facilities_fk_offices,
               "lat":row.facilities_lat,
               "long":row.facilities_long,
               "image":getImages ? images_model.getImage("facilities", row.facilities_image):"",

@@ -101,6 +101,19 @@ const resolvers = {
         const deleteOrg = await admin_model.deleteOrganization(orgData);
         return deleteOrg;
     };
+  },
+  modFacility: async ({ facilityData }) => {
+    switch (facilityData.action) {
+      case "add":
+        const addFacility = await admin_model.addFacility(facilityData);
+        return addFacility;
+      case "edit":
+        const editFacility = await admin_model.editFacility(facilityData);
+        return editFacility;
+      case "delete":
+        const deleteFacility = await admin_model.deleteFacility(facilityData);
+        return deleteFacility;
+    };
   }
 };
 
