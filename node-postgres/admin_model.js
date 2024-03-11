@@ -48,7 +48,7 @@ function addOrganization(data) {
         data.address,
         data.city,
         data.state,
-        parseInt(data.zip),
+        data.zip,
       ],
       (error, results) => {
         if (error) {
@@ -83,7 +83,7 @@ function editOrganization(data) {
         data.address,
         data.city,
         data.state,
-        parseInt(data.zip),
+        data.zip,
         data.lat,
         data.long,
         data.image,
@@ -115,7 +115,6 @@ function deleteOrganization(data) {
             success:false,
             errorCode:error.code,
             errorMessage:error.detail
-
           })
         };
         resolve({success:true});
@@ -126,11 +125,32 @@ function deleteOrganization(data) {
 
 function getFacilities() {
   return new Promise((resolve, reject) => {
-    pool.query('SELECT * FROM facilities;', (error, results) => {
-      if (error) {reject(error)}
-      resolve(results.rows);
-    });
-  }); 
+    pool.query(
+      `SELECT * FROM facilities;`,
+      (error, result) => {
+        if (error) reject(error);
+        const facilitiesArray = result.rows.map(row => {
+          return (
+            {
+              "id":row.facilities_id,
+              "name":row.facilities_name,
+              "address":row.facilities_address,
+              "city":row.facilities_city,
+              "state":row.facilities_state,
+              "zip":row.facilities_zip,
+              "organization":row.facilities_fk_offices,
+              "lat":row.facilities_lat,
+              "long":row.facilities_long,
+              "image":row.facilities_image,
+              "code":row.facilities_code
+            }
+          );
+        });
+        
+        resolve(facilitiesArray);
+      }
+    );
+  });
 };
 
 function addFacility(data) {
@@ -163,11 +183,10 @@ function addFacility(data) {
       ],
       (error) => {
         if (error) {
-          console.log(error);
           resolve({
-          success:false,
-          errorCode:error.code,
-          errorMessage:error.detail
+            success:false,
+            errorCode:error.code,
+            errorMessage:error.detail
         })}
         resolve({success:true});
       }
@@ -176,6 +195,7 @@ function addFacility(data) {
 };
 
 function editFacility(data) {
+  console.log(data);
   return new Promise((resolve, reject) => {
     pool.query(`
       UPDATE facilities
@@ -204,12 +224,14 @@ function editFacility(data) {
         data.code,
         data.id
       ],
-      (error) => {
+      (error, result) => {
+        console.log(result);
         if (error) resolve({
           success:false,
           errorCode:error.code,
           errorMessage:error.detail
         })
+        console.log(result);
         resolve({success:true});
       }
     );

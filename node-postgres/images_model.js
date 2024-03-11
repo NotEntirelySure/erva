@@ -1,44 +1,88 @@
 const fs = require("fs");
 
-function _getImage(directory, imageName) {
-  const dirExists = fs.existsSync(`../${directory}/${imageName}`);
-  if (dirExists) {
-    const imageData = fs.readFileSync(`../${directory}/${imageName}`);
-    return imageData;
-  }
-  if (!dirExists) {
-    const imageData = fs.readFileSync(`../${directory}/default.jpg`);
-    return imageData;
-  }
+function getImage(type, name) {
+  return new Promise((resolve, reject) => {
+    let directory;
+    switch (type) {
+      case 'blueprint':
+        directory = 'blueprints';
+        break;
+      case 'facility':
+        directory = 'facilities';
+        break;
+    };
+    if (!directory) resolve ({
+      success:false,
+      message:'invalid image type or no type specified.'
+    });
+    const dirExists = fs.existsSync(`../${directory}/${name}`);
+    if (dirExists) {
+      const imageData = fs.readFileSync(`../${directory}/${name}`, 'base64');
+      resolve ({
+        name: name,
+        data: imageData,
+        success: true
+      });
+    };
+    if (!dirExists) {
+      const imageData = fs.readFileSync(`../${directory}/default.jpg`, 'base64');
+      resolve ({
+        name: "default.jpg",
+        data: imageData,
+        success: false,
+        message:'image not found'
+      });
+    };
+  });
 };
 
-function getImageList(directory) {
+function getImageList(type) {
   return new Promise((resolve, reject) => {
+    let directory;
+    switch (type) {
+      case 'blueprint':
+        directory = 'blueprints';
+        break;
+      case 'facility':
+        directory = 'facilities';
+        break;
+    };
     const files = fs.readdirSync(`../${directory}`);
     const fileStats = files.map(fileName => {
       const stats = fs.statSync(`../${directory}/${fileName}`);
-      return ({'fileName':fileName,size:stats.size,createdAt:stats.birthtime})
-    }) 
-    resolve(fileStats);
+      return ({
+        name:fileName,
+        createdAt:stats.birthtime,
+        size:stats.size
+      })
     });
-};
-function getImage(category, imageName) {
-  return new Promise((resolve,reject) => {
-    let dirExists = fs.existsSync(`../${category}/${imageName}`);
-    if (dirExists) {
-      const base64 = fs.readFileSync(`../${category}/${imageName}`, "base64");
-      resolve(base64);
-    };
-    if (!dirExists) resolve('The requested image was not found.');
-    else {reject("the function encountered an unknown error.")};
+    resolve(fileStats);
   });
-}
+};
 
-function uploadImage(data) {
+function uploadImage(imageData) {
   return new Promise ((resolve, reject) => {
     try {
-      let searchValue = '';
-      switch (data.fileName.split('.')[1]) {
+      let searchValue, directory;
+      switch (imageData.type) {
+        case 'blueprint':
+          directory = 'blueprints';
+          break;
+        case 'facility':
+          directory = 'facilities';
+          break;
+      };
+      
+      const dirExists = fs.existsSync(`../${directory}/${imageData.name}`);
+      if (dirExists) {
+        resolve({
+          success:false,
+          errorCode:409,
+          errorMessage:`A file with the name ${imageData.name} already exists.`
+        });
+      };
+
+      switch (imageData.name.split('.')[1]) {
         case 'png':
           searchValue = 'data:image/png;base64,';
           break;
@@ -46,29 +90,48 @@ function uploadImage(data) {
         case 'jpeg':
           searchValue = 'data:image/jpeg;base64,';
           break;
-      }
-      const imageBuffer = Buffer.from(data.imageData.replace(searchValue,''), 'base64');
-      fs.writeFileSync(`../facilities/${data.fileName}`, imageBuffer, {encoding: 'binary'});
-      resolve({code:200});
-    }
-    catch (error) {resolve({code:500, message:error});}
-  })
-}
+      };
+      
 
-function deleteImage(directory, data) {
+      const imageBuffer = Buffer.from(imageData.data.replace(searchValue,''), 'base64');
+      fs.writeFileSync(`../${directory}/${imageData.name}`, imageBuffer, {encoding: 'binary'});
+      resolve({success:true});
+    }
+    catch (error) {
+      resolve({
+        success:false,
+        errorCode:error.code,
+        errorMessage:error.message
+      });
+    };
+  });
+};
+
+function deleteImage(type, name) {
   return new Promise ((resolve, reject) => {
-    fs.unlink(`../${directory}/${data.name}`, (error) => {
-      if (error) {
-        if (error.errno === -4058) resolve({error:500, message:`Error: the file ${data.name} does not exist or cannot be found.`})
-        resolve({code:500,message:error});
-      }
-      resolve({code:200});
+    let directory;
+    switch (type) {
+      case 'blueprint':
+        directory = 'blueprints';
+        break;
+      case 'facility':
+        directory = 'facilities';
+        break;
+    };
+    fs.unlink(`../${directory}/${name}`, error => {
+      if (error) { 
+        resolve({
+          success:false,
+          errorCode: error.errno,
+          errorMessage:error.errno === -4058 ? `Error: the file ${name} does not exist or cannot be found.`:error.message
+        })
+      };
+      resolve({success:true});
     });
   });
 };
 
 module.exports = {
-  _getImage,
   getImage,
   getImageList,
   uploadImage,

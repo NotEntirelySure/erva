@@ -2,8 +2,10 @@ type Query {
   getQr: qrCode
   getUsers: [User]
   getRoles: [Role]
+  getImage(type: String, name: String): Image
+  getImageList(type: String): [ImageDetail]
   getAccountTypes: [AccountType]
-  getFacilities(getImages: Boolean = true):[Facility]
+  getFacilities: [Facility]
   getUserPermissions(userId: Int):[UserPermission]
   sendVerificationEmail(address: String):Boolean
   getOrganizations: [Organization]

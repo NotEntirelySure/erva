@@ -40,6 +40,14 @@ const resolvers = {
     const roles = await admin_users_model.getRoles();
     return roles;
   },
+  getImage: async ({type, name}) => {
+    const image = await images_model.getImage(type, name);
+    return image;
+  },
+  getImageList: async ({ type }) => {
+    const imageList = await images_model.getImageList(type);
+    return imageList;
+  },
   getAccountTypes: async () => {
     const accountTypes = await admin_users_model.getAccountTypes();
     return accountTypes;
@@ -49,7 +57,7 @@ const resolvers = {
     return orgs;
   },
   getFacilities: async (getImages) => {
-    const facilities = await database_model.getFacilities(getImages);
+    const facilities = await admin_model.getFacilities(getImages);
     return facilities;
   },
   getUserPermissions: async ({ userId }) => {
@@ -113,6 +121,16 @@ const resolvers = {
       case "delete":
         const deleteFacility = await admin_model.deleteFacility(facilityData);
         return deleteFacility;
+    };
+  },
+  modImage: async ({ imageData }) => {
+    switch (imageData.action) {
+      case "upload":
+        const uploadImage = await images_model.uploadImage(imageData);
+        return uploadImage;
+      case "delete":
+        const deleteImage = await images_model.deleteImage(imageData.type, imageData.name);
+        return deleteImage;
     };
   }
 };
@@ -214,7 +232,7 @@ app.post('/getoffices', (req, res) => {
 });
 
 app.post('/getfacilities', (req, res) => {
-  database_model.getUserFacilities(req.body.token, req.body.office)
+  database_model.getFacilitiesByUser(req.body.token, req.body.office)
     .then(response => res.status(200).send(response))
     .catch(error => res.status(500).send(error))
 });

@@ -243,7 +243,8 @@ export default function AdminUsersPage() {
       method:'POST',
       headers:{
         'Content-Type':'application/json',
-        Accept: "application/json"
+        Accept: "application/json",
+        Authorization:`Bearer: {jwt}`
       },
       body:JSON.stringify({query})
     });
@@ -272,7 +273,7 @@ export default function AdminUsersPage() {
           facilityName
           facilityCity
         }
-        getFacilities (getImages: false){
+        getFacilities {
           id
           name
           city

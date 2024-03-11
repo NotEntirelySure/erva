@@ -117,7 +117,7 @@ export default function AdminOrganizationsPage() {
         address:org.address,
         city:org.city,
         state:org.state,
-        zip:String(org.zip),
+        zip:org.zip,
         action:<>
           <Button
             hasIconOnly
@@ -131,7 +131,7 @@ export default function AdminOrganizationsPage() {
                   address:org.address,
                   city:org.city,
                   state:states.find(element => element.value === org.state),
-                  zip:String(org.zip)
+                  zip:org.zip
                 })
                 setAddEditModalOpen(true);
               }}

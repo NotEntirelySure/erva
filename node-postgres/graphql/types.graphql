@@ -1,6 +1,6 @@
 scalar DateTime
 
-# Types for QR code functions
+#-- Types for QR code functions --
 type qrCode {
   qrcode: String
   secret: qrSecret
@@ -11,8 +11,9 @@ type qrSecret {
   base32: String
   otpauth_url: String
 }
+#----------------------------
 
-#Type for users table
+#-- Types for users --
 type User {
   id: ID
   firstName: String
@@ -24,7 +25,17 @@ type User {
   role: Role
   accountType: AccountType
 }
-#input data type for updating user
+type deleteUserResult {
+  success: Boolean!
+  errorCode: String
+  errorMessage: String
+}
+type updateUserResult {
+  success: Boolean!
+  userId: Int!
+  errorCode: String
+  errorMessage: String
+}
 input UpdatedUserData {
   id: ID
   firstName: String
@@ -36,62 +47,44 @@ input UpdatedUserData {
   role: UpdateUserRole
   accountType: UpdateUserAccountType
 }
+#---------------------------
 
-#type to handle exceptions from updating user information
-type updateUserResult {
-  success: Boolean!
-  userId: Int!
-  errorCode: String
-  errorMessage: String
-}
-
-#Type for user roles
+#-- Types for roles --
 type Role {
   id: ID!
   name: String!
 }
-
-#Input to update user roles
 input UpdateUserRole {
   id: ID!
   name: String!
 }
+#----------------------------
 
-#Type for user account types
+#-- Type for user account types --
 type AccountType {
   id: ID!
   name: String!
 }
-
-#Input to update user account types
 input UpdateUserAccountType {
   id: ID!
   name: String!
 }
+#----------------------------
 
-#type to handle exceptions from deleting users
-type deleteUserResult {
-  success: Boolean!
-  errorCode: String
-  errorMessage: String
-}
-
-#type for facilities
+#-- Types for facilities --
 type Facility {
   id: ID!
   name: String!
   address: String!
   city: String!
   state: String!
-  zip: Int!
+  zip: String!
   organization:Int
   lat: Float
   long: Float
   image: String
   code: String
 }
-
-#input for modifying facility
 input ModFacility {
   action:String
   id: ID
@@ -106,47 +99,58 @@ input ModFacility {
   image: String
   code: String
 }
+#-----------------------------
 
-#type for database images. images are sent at Buffers. This image type handles the Buffer format.
+#-- type for database images --
 type Image {
+  name: String
+  data: String
+  success: Boolean
+  message:String
+}
+type ImageDetail {
+  name: String
+  createdAt: DateTime
+  size: String
+}
+input ImageData {
+  action: String!
   type: String
-  data:[Int]
+  name: String
+  data: String
 }
 
-#type to get permissions
+#-----------------------------
+
+#-- types to for user permissions --
 type UserPermission {
   permissionId: ID
   facilityId: ID
   facilityName: String
   facilityCity: String
 }
-
-#input type for adding user permissions
 input addPermission {
   userId: Int!
   facilityId: Int!
 }
-#input type to delete permission
 input deletePermission {
   permissionId: Int
 }
-
-#type to handle exceptions from adding permissions
 type addPermissionResult {
   success: Boolean!
   userId: Int!
   errorCode: String
   errorMessage: String
 }
-
-#type to handle exceptions from deleting permissions
 type deletePermissionResult {
   success: Boolean!
   permissionId: Int!
   errorCode: String
   errorMessage: String
 }
+#------------------------------
 
+#-- Types for organizations --
 type Organization {
   id: ID
   image:String
@@ -154,7 +158,7 @@ type Organization {
   address:String
   city:String
   state:String
-  zip:Int
+  zip:String
 }
 
 input ModifyOrg {
@@ -167,9 +171,12 @@ input ModifyOrg {
   state:String
   zip:String
 }
+#------------------------------
 
+# -- Type for various modifications --
 type ModResult {
   success: Boolean!
   errorCode: String
   errorMessage: String
 }
+#--------------------------

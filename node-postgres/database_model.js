@@ -55,37 +55,7 @@ function getOffices(token) {
   });
 };
 
-function getFacilities(getImages) {
-  return new Promise((resolve, reject) => {
-    pool.query(
-      `SELECT * FROM facilities;`,
-      (error, result) => {
-        if (error) reject(error);
-        const facilitiesArray = result.rows.map(row => {
-          return (
-            {
-              "id":row.facilities_id,
-              "name":row.facilities_name,
-              "address":row.facilities_address,
-              "city":row.facilities_city,
-              "state":row.facilities_state,
-              "zip":row.facilities_zip,
-              "organization":row.facilities_fk_offices,
-              "lat":row.facilities_lat,
-              "long":row.facilities_long,
-              "image":getImages ? images_model.getImage("facilities", row.facilities_image):"",
-              "code":row.facilities_code
-            }
-          );
-        });
-        
-        resolve(facilitiesArray);
-      }
-    );
-  });
-};
-
-function getUserFacilities(token, officeId) {
+function getFacilitiesByUser(token, officeId) {
   return new Promise((resolve, reject) => {
     if(!token) reject({"errorCode":401, "error":"No JWT provided"});
     if (token) {
@@ -206,8 +176,7 @@ function getUserPermissions(userId) {
 
 module.exports = {
   getOffices,
-  getFacilities,
-  getUserFacilities,
+  getFacilitiesByUser,
   getBlueprints,
   getUserPermissions
 }
