@@ -104,7 +104,7 @@ function getFacilitiesByUser(token, officeId) {
   });
 };
 
-function getBlueprints(token, facilityId) {
+function getBlueprintsByUser(token, facilityId) {
   
   return new Promise((resolve, reject) => {
     if(!token) {reject({"errorCode":401, "error":"No JWT provided"})}
@@ -177,6 +177,6 @@ function getUserPermissions(userId) {
 module.exports = {
   getOffices,
   getFacilitiesByUser,
-  getBlueprints,
+  getBlueprintsByUser,
   getUserPermissions
 }

@@ -54,7 +54,7 @@ function getImageList(type) {
         name:fileName,
         createdAt:stats.birthtime,
         size:stats.size
-      })
+      });
     });
     resolve(fileStats);
   });

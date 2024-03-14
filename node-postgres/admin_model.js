@@ -195,7 +195,6 @@ function addFacility(data) {
 };
 
 function editFacility(data) {
-  console.log(data);
   return new Promise((resolve, reject) => {
     pool.query(`
       UPDATE facilities
@@ -225,13 +224,11 @@ function editFacility(data) {
         data.id
       ],
       (error, result) => {
-        console.log(result);
         if (error) resolve({
           success:false,
           errorCode:error.code,
           errorMessage:error.detail
         })
-        console.log(result);
         resolve({success:true});
       }
     );
@@ -255,6 +252,114 @@ function deleteFacility(data) {
   }); 
 };
 
+function getBlueprints() {
+  return new Promise((resolve, reject) => {
+    pool.query(
+      'SELECT * FROM blueprints;',
+      (error, results) => {
+        if (error) reject([{
+          success:false,
+          errorCode:error?.code,
+          errorMessage:error.detail
+        }]
+        );
+        if (results.rowCount < 1) resolve([{
+          success:true,
+          id:0,
+          facilityId:0,
+          name:"No blueprint records",
+          image:"-"
+        }]);
+        if (results.rowCount > 0) {
+          const blueprints = results.rows.map(blueprint => (
+            {
+              id:blueprint.blueprint_id,
+              facilityId:blueprint.blueprint_fk_facility_id,
+              name:blueprint.blueprint_name,
+              image:blueprint.blueprint_image
+            }
+          ));
+          resolve(blueprints);
+        };
+        reject({
+          success:false,
+          errorCode:500,
+          errorMessage:"An unknown error occurred."
+        });
+      }
+    );
+  });
+};
+
+async function addBlueprint(blueprintData) {
+  return new Promise((resolve, reject) => {
+    pool.query(
+      `INSERT INTO blueprints (
+        blueprint_fk_facility_id,
+        blueprint_name,
+        blueprint_image
+      )
+      VALUES ($1, $2, $3);`,
+      [
+        blueprintData.facility,
+        blueprintData.name,
+        blueprintData.image
+      ],
+      (error, results) => {
+        if (error) resolve({
+          success:false,
+          errorCode:error.code,
+          errorMessage:error.message
+        });
+        resolve({success:true});
+      }
+    );
+  });
+};
+async function editBlueprint(blueprintData) {
+  return new Promise((resolve, reject) => {
+    pool.query(
+      `UPDATE blueprints
+      SET 
+        blueprint_fk_facility_id=$1,
+        blueprint_name=$2,
+        blueprint_image=$3
+      WHERE blueprint_id=$4;`,
+      [
+        blueprintData.facility,
+        blueprintData.name,
+        blueprintData.image,
+        parseInt(blueprintData.id)
+      ],
+      error => {
+        if (error) resolve({
+          success:false,
+          errorCode:error.code,
+          errorMessage:error.message
+        });
+        resolve({success:true});
+      }
+    );
+  });
+};
+
+async function deleteBlueprint(blueprintData) {
+  return new Promise((resolve, reject) => {
+    pool.query(
+      'DELETE FROM blueprints WHERE blueprint_id=$1',
+      [blueprintData.id],
+      error => {
+        if (error) resolve({
+          success:false,
+          errorCode:error.code,
+          errorMessage:error.message
+        });
+        resolve({success:true});
+      }
+    );
+  });
+};
+
 module.exports = {
   getOrganizations,
   addOrganization,
@@ -263,5 +368,9 @@ module.exports = {
   getFacilities,
   addFacility,
   editFacility,
-  deleteFacility
+  deleteFacility,
+  getBlueprints,
+  addBlueprint,
+  editBlueprint,
+  deleteBlueprint
 };

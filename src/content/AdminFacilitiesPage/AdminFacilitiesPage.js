@@ -34,7 +34,6 @@ import {
 import {
   Add,
   Building,
-  CloseOutline,
   Edit,
   Image,
   NoImage,
@@ -511,6 +510,7 @@ export default function AdminFacilitiesPage() {
       })
     });
     const uploadResponse = await uploadRequest.json();
+    fileUploaderRef.current.clearFiles();
     setModImageData({
       action:'',
       type:'',
@@ -932,7 +932,7 @@ export default function AdminFacilitiesPage() {
                         itemToString={item => (item ? item.fileName : '')}
                         onChange={event => {
                           setFacilityModData(previousState => ({...previousState, image:event.selectedItem}))
-                          GetImage(event.selectedItem.fileName);
+                          if (event.selectedItem) GetImage(event.selectedItem.fileName);
                         }}
                       />
                       <ComboBox

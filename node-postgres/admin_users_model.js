@@ -58,7 +58,6 @@ function getUsers() {
 };
 
 function updateUser(userData) {
-  console.log(userData);
   return new Promise((resolve, reject) => {
     pool.query(
       `UPDATE users

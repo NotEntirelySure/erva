@@ -56,9 +56,13 @@ const resolvers = {
     const orgs = await admin_model.getOrganizations();
     return orgs;
   },
-  getFacilities: async (getImages) => {
-    const facilities = await admin_model.getFacilities(getImages);
+  getFacilities: async () => {
+    const facilities = await admin_model.getFacilities();
     return facilities;
+  },
+  getBlueprints: async () => {
+    const blueprints = await admin_model.getBlueprints();
+    return blueprints;
   },
   getUserPermissions: async ({ userId }) => {
     const permissions = await database_model.getUserPermissions(userId);
@@ -131,6 +135,19 @@ const resolvers = {
       case "delete":
         const deleteImage = await images_model.deleteImage(imageData.type, imageData.name);
         return deleteImage;
+    };
+  },
+  modBlueprint: async ({ blueprintData }) => {
+    switch (blueprintData.action) {
+      case "add":
+        const addBlueprint = await admin_model.addBlueprint(blueprintData);
+        return addBlueprint;
+      case "edit":
+        const editBlueprint = await admin_model.editBlueprint(blueprintData);
+        return editBlueprint;
+      case "delete":
+        const deleteBlueprint = await admin_model.deleteBlueprint(blueprintData);
+        return deleteBlueprint;
     };
   }
 };

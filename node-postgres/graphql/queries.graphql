@@ -6,6 +6,7 @@ type Query {
   getImageList(type: String): [ImageDetail]
   getAccountTypes: [AccountType]
   getFacilities: [Facility]
+  getBlueprints: [Blueprint]
   getUserPermissions(userId: Int):[UserPermission]
   sendVerificationEmail(address: String):Boolean
   getOrganizations: [Organization]

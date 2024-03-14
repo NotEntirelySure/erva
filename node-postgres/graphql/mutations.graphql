@@ -6,4 +6,5 @@ type Mutation {
   modOrganization(orgData: ModifyOrg): ModResult
   modFacility(facilityData: ModFacility): ModResult
   modImage(imageData: ImageData): ModResult
+  modBlueprint(blueprintData: BlueprintData): ModResult 
 }

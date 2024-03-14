@@ -163,7 +163,7 @@ type Organization {
 
 input ModifyOrg {
   action:String!
-  id: ID!
+  id:ID!
   image:String
   name:String
   address:String
@@ -172,6 +172,21 @@ input ModifyOrg {
   zip:String
 }
 #------------------------------
+
+# -- Types for blueprints --
+type Blueprint {
+  id:ID
+  facilityId:Int
+  name:String
+  image:String
+}
+input BlueprintData {
+  action:String!
+  id:ID
+  name:String!
+  facility:Int!
+  image:String
+}
 
 # -- Type for various modifications --
 type ModResult {
