@@ -28,6 +28,10 @@ const schema = buildSchema(`
 `);
 
 const resolvers = {
+  login: async ({ loginData }) => {
+    const login = await account_model.adminLogin(loginData);
+    return login;
+  },
   getQr: async () => {
     const qr = await account_model.generateQr();
     return qr;
@@ -152,26 +156,33 @@ const resolvers = {
   }
 };
 
-function requestAuth(req, res, next) {
+async function requestAuth(req, res, next) {
   if (req) {
-    authHeader = req.headers.authorization; 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      //throw new Error('Unauthorized');
-      console.log('no token');
-    }
-    //const token = authHeader.split(' ')[1]; 
-    //console.log(token);
-    next();
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).send('Unauthorized');
+    const token = authHeader.split(' ')[1];
+    const tokenValidation = await verifyJwt_model._verifyJwt(token);
+    if (tokenValidation.verified && tokenValidation.result.type === 3) next();
+    else {return res.status(401).send('Unauthorized');};
   };
 };
 
 app.use(express.json({limit:'2mb'}))
-// app.use((req, res, next) => {
-//   res.setHeader('Access-Control-Allow-Origin', process.env.API_ACCESS_ORIGIN);
-//   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-//   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Access-Control-Allow-Headers');
-//   next();
-// });
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', process.env.API_ACCESS_ORIGIN);
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Access-Control-Allow-Headers');
+  next();
+});
+
+app.post('/api/adminlogin', (req, res) => {
+  console.log(req.body)
+  account_model.adminLogin(req.body)
+    .then(response => res.status(200).send(response))
+    .catch(error => res.status(500).send(error));
+});
+
 app.use(
   "/api",
   requestAuth,
@@ -181,6 +192,8 @@ app.use(
     graphiql: true,
   })
 );
+
+
 
 app.get('/getqr', (req, res) => {
   account_model.generateQr()

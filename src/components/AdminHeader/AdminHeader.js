@@ -10,7 +10,6 @@ import {
   SkipToContent
 } from '@carbon/react';
 import { Building, ChartRelationship, Floorplan, UserAdmin } from '@carbon/react/icons';
-import {FlowChart} from '@carbon/pictograms-react';
 
 export default function AdminHeader(props) {
 
@@ -61,7 +60,7 @@ export default function AdminHeader(props) {
               isActive={isSideNavExpanded}
               aria-expanded={isSideNavExpanded}
               />
-            <HeaderName href="#" prefix="ERVA">
+            <HeaderName href="/adminlogin" prefix="ERVA">
               [Admin Portal]
             </HeaderName>
             <SideNav

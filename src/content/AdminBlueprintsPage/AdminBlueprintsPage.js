@@ -200,6 +200,7 @@ export default function AdminFacilitiesPage() {
   }
 
   function VerifyForm() {
+    console.log(blueprintModData);
     let valid = true;
     switch (blueprintModData.action) {
       case "add":
@@ -208,7 +209,7 @@ export default function AdminFacilitiesPage() {
           valid = false;
           setFormValidation(previousState => ({...previousState, nameInvalid:true}));
         };
-        if (blueprintModData.facility === "" || blueprintModData === null) {
+        if (blueprintModData.facility === "" || blueprintModData.facility === null) {
           valid = false;
           setFormValidation(previousState => ({...previousState, facilityInvalid:true}));
         };
@@ -397,9 +398,9 @@ export default function AdminFacilitiesPage() {
       let fileReader = new FileReader();
       fileReader.onloadend = event => setModImageData({
         action:'upload',
-        type:'facility',
+        type:'blueprint',
         name:fileName,
-        data:event.target.result,
+        data:event.target.result
       });
       fileReader.readAsDataURL(file);
       setFileUploadStatus('edit');
@@ -788,7 +789,12 @@ export default function AdminFacilitiesPage() {
                         items={facilityData}
                         selectedItem={blueprintModData.facility}
                         itemToString={item => (item ? item.name : '')}
-                        onChange={event => {setBlueprintModData(previousState => ({...previousState, organization:event.selectedItem}))}}
+                        invalid={formValidation.facilityInvalid}
+                        invalidText="Please select a facility"
+                        onChange={event => {
+                          setBlueprintModData(previousState => ({...previousState, facility:event.selectedItem}));
+                          if (formValidation.facilityInvalid) setFormValidation(previousState => ({...previousState, facilityInvalid:false}));
+                        }}
                       />
                       <div><hr/></div>
                       <ButtonSet>

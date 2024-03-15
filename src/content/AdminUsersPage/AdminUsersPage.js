@@ -51,6 +51,7 @@ export default function AdminUsersPage() {
     {key:'action', header:'Action'}
   ]
 
+  const jwt = sessionStorage.getItem("ervaJwt");
   const userToDelete = useRef({userId:'',name:''});
 
   const [showDataTable, setShowDataTable] = useState('none');
@@ -122,9 +123,10 @@ export default function AdminUsersPage() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Accept: "application/json"
+        Accept: "application/json",
+        Authorization:`Bearer ${jwt}`
       },
-      body: JSON.stringify({query})
+      body:JSON.stringify({query})
     });
     const usersResponse = await usersRequest.json();
     if (usersResponse.data) {
@@ -216,7 +218,8 @@ export default function AdminUsersPage() {
       method:'POST',
       headers:{
         'Content-Type':'application/json',
-        Accept: "application/json"
+        Accept: "application/json",
+        Authorization:`Bearer ${jwt}`
       },
       body:JSON.stringify({query})
     });
@@ -244,7 +247,7 @@ export default function AdminUsersPage() {
       headers:{
         'Content-Type':'application/json',
         Accept: "application/json",
-        Authorization:`Bearer: {jwt}`
+        Authorization:`Bearer ${jwt}`
       },
       body:JSON.stringify({query})
     });
@@ -295,7 +298,8 @@ export default function AdminUsersPage() {
       headers:{
         Authorization: `Bearer ${jwt}`,
         'Content-Type':'application/json',
-        Accept: 'application/json'
+        Accept: 'application/json',
+        Authorization:`Bearer ${jwt}`
       },
       body:JSON.stringify({ query })
     });
@@ -387,7 +391,8 @@ export default function AdminUsersPage() {
       method:'POST',
       headers:{
         'Content-Type':'application/json',
-        Accept: 'application/json'
+        Accept: 'application/json',
+        Authorization:`Bearer ${jwt}`
       },
       body:JSON.stringify({
         query,

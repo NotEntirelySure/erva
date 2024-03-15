@@ -18,16 +18,13 @@ const verifyJwt = (token) => {
   })
 }
 
-const verifyJwtInternal = (token) => {
-
+const _verifyJwt = (token) => {
   return new Promise((resolve) => {
-    
     jwt.verify(token, process.env.JWT_SECRET_KEY, (err, result) => {
       if(err) resolve({"verified":false,"error":err.message})
       if(result) resolve({"verified":true,"result":result})
     });
-  
   })
 }
 
-module.exports = {verifyJwt, verifyJwtInternal}
+module.exports = {verifyJwt, _verifyJwt}

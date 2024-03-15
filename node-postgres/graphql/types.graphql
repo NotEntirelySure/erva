@@ -1,4 +1,18 @@
 scalar DateTime
+#-- Type for login credentials --
+input Credentials {
+  username:String!
+  password:String!
+  otp:Int!
+}
+type LoginResult {
+  success:Boolean!
+  jwt:String
+  errorCode:String
+  errorMessage:String
+}
+
+#--------------------------------
 
 #-- Types for QR code functions --
 type qrCode {

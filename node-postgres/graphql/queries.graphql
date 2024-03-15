@@ -1,4 +1,5 @@
 type Query {
+  login(loginData: Credentials):LoginResult
   getQr: qrCode
   getUsers: [User]
   getRoles: [Role]

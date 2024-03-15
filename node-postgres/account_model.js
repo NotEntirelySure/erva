@@ -15,6 +15,28 @@ const pool = new Pool({
   port: process.env.API_BASE_PORT_NUMBER,
 });
 
+function adminLogin(credentials) {
+  return new Promise((resolve, reject) => {
+    console.log(credentials);
+    // resolve({
+    //   success:false,
+    //   errorCode:401,
+    //   errorMessage:"Invalid username, password, or OTP"
+    // });
+
+    const payload = {
+      "id":1,
+      "type":3
+    }
+    const token = jwt.sign(payload, process.env.JWT_SECRET_KEY, {expiresIn: "1d"});
+    resolve({
+      success:true,
+      jwt:token
+    });
+  })
+};
+
+
 function login(loginValues) {
   return new Promise(async(resolve, reject) => { 
     try {
@@ -52,11 +74,7 @@ function login(loginValues) {
               if (userInfo.rows[0].users_enabled && userInfo.rows[0].users_verified) {
                 const payload = {
                   "id":userInfo.rows[0].users_id,
-                  "type":userInfo.rows[0].users_type,
-                  "fname":userInfo.rows[0].users_first_name,
-                  "lname":userInfo.rows[0].users_last_name,
-                  "email":userInfo.rows[0].users_email,
-                  "type":userInfo.rows[0].at_name
+                  "type":userInfo.rows[0].users_fk_type
                 }
                 const token = jwt.sign(payload, process.env.JWT_SECRET_KEY, {expiresIn: "1d"});
                 resolve({"jwt":token});
@@ -242,6 +260,7 @@ function getApiKey(token) {
 };
 
 module.exports = {
+  adminLogin,
   generateQr,
   login,
   register,

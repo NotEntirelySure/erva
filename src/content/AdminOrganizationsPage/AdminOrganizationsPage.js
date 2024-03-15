@@ -68,8 +68,6 @@ export default function AdminOrganizationsPage() {
     zip:""
   }
 
-  const orgToDelete = useRef({id:'',name:''})
-
   const [organizationData, setOrganizationData] = useState([emptyOrgData]);
   const [addEditModalOpen, setAddEditModalOpen] = useState(false);
   const [modOrgData, setModOrgData] = useState(emptyOrgData);

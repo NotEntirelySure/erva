@@ -10,7 +10,6 @@ import LandingPage from './content/LandingPage';
 import AboutUsPage from './content/AboutUsPage/AboutUsPage';
 import AdminLoginPage from './content/AdminLoginPage';
 import UserLoginPage from './content/UserLoginPage';
-import AdminPage from './content/AdminPage';
 import UserPage from './content/UserPage';
 import MapPage from './content/MapPage';
 import RegistrationPage from './content/RegistrationPage';
@@ -33,7 +32,6 @@ export default function App() {
           <Route path="/aboutus" element={<AboutUsPage/>}/>
           <Route path="/adminlogin" element={<AdminLoginPage/>}/>
           <Route path="/userpage" element={<UserPage/>}/>
-          <Route path="/adminpage" element={<AdminPage/>}/>
           <Route path="/mappage" element={<MapPage/>}/>
           <Route path="/register" element={<RegistrationPage/>}/>
           <Route path="/verifyaccount" element={<AccountVerificationPage/>}/>

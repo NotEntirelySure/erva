@@ -1,4 +1,13 @@
-.adminBanner {
-  margin-top: 2%;
-  text-align: center;
+.backgroundImage {
+  height: 100vh;
+  margin: 0; /* Remove default margin */
+  background-image: url("/assets/images/background.jpg");
+  background-repeat: no-repeat; /* Prevent image tiling */
+  background-position: center; /* Center the image */
+  background-size: cover;
+}
+.loginButton{
+  left: 75vw;
+  top:5vh;
+  position: relative;
 }
