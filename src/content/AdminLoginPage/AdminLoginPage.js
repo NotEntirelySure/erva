@@ -6,15 +6,15 @@ import {
   Modal, 
   TextInput
 } from '@carbon/react';
-import { WarningHex } from '@carbon/react/icons';
+import { WarningHex, Login } from '@carbon/react/icons';
 
 export default function AdminLoginPage() {
   
   const jwt = sessionStorage.getItem('ervaJwt');
   const navigate = useNavigate();
-  const userTextBoxRef = useRef();
-  const passTextBoxRef = useRef();
-  const otpTextBoxRef = useRef();
+  const userTextBoxRef = useRef({value:''});
+  const passTextBoxRef = useRef({value:''});
+  const otpTextBoxRef = useRef({value:''});
 
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [otpModalOpen, setOtpModalOpen] = useState(false);
@@ -51,13 +51,13 @@ export default function AdminLoginPage() {
         };
         if (valid) {
           setOtpModalOpen(false);
-          Login();
+          LoginUser();
         };
         break;
     };
   };
 
-  async function Login() {
+  async function LoginUser() {
     const query = `
       query ($data: Credentials) {
         login(loginData: $data) {
@@ -208,6 +208,7 @@ export default function AdminLoginPage() {
         <div className='loginButton'>
         <Button
           kind="secondary"
+          renderIcon={Login}
           children="Login"
           onClick={() => setLoginModalOpen(true)}
         />

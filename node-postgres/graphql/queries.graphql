@@ -1,5 +1,5 @@
 type Query {
-  login(loginData: Credentials):LoginResult
+  verifyAdmin:AdminAuth
   getQr: qrCode
   getUsers: [User]
   getRoles: [Role]

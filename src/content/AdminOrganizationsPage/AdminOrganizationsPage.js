@@ -68,6 +68,7 @@ export default function AdminOrganizationsPage() {
     zip:""
   }
 
+  const jwt = sessionStorage.getItem("ervaJwt");
   const [organizationData, setOrganizationData] = useState([emptyOrgData]);
   const [addEditModalOpen, setAddEditModalOpen] = useState(false);
   const [modOrgData, setModOrgData] = useState(emptyOrgData);
@@ -101,7 +102,7 @@ export default function AdminOrganizationsPage() {
       headers: {
         'Content-Type':'application/json',
         Accept: "application/json",
-        Authorization:`Bearer {jwt}`,
+        Authorization:`Bearer ${jwt}`,
       },
       body: JSON.stringify({query})
     });
@@ -174,7 +175,7 @@ export default function AdminOrganizationsPage() {
       headers:{
         'Content-Type':'application/json',
         Accept:'application/json',
-        Authorization:`Bearer {jwt}`
+        Authorization:`Bearer ${jwt}`
       },
       body:JSON.stringify({
         query,
@@ -231,7 +232,7 @@ export default function AdminOrganizationsPage() {
         size='sm'
         open={addEditModalOpen}
         hasScrollingContent
-        modalHeading={modOrgData.action === "add" ? "Add Office":`Edit ${modOrgData.name}`}
+        modalHeading={modOrgData.action === "add" ? "Add Organization":`Edit ${modOrgData.name}`}
         modalAriaLabel="Add/Edit modal"
         onRequestClose={() => {
           setAddEditModalOpen(false);

@@ -2,6 +2,7 @@ import { React } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { Layout } from 'antd';
 
+import WithAuth from './components/ProtectedRoute/WithAuth.js';
 import AdminUsersPage from './content/AdminUsersPage';
 import AdminOrganizationsPage from './content/AdminOrganizationsPage';
 import AdminFacilitiesPage from './content/AdminFacilitiesPage';
@@ -38,10 +39,10 @@ export default function App() {
           <Route path="/forgotpassword" element={<ForgotPasswordPage/>}/>
           <Route path="/passwordreset" element={<PasswordResetPage/>}/>
 
-          <Route path="/adminusers" element={<AdminUsersPage/>}/>
-          <Route path="/adminorganizations" element={<AdminOrganizationsPage/>}/>
-          <Route path="/adminfacilities" element={<AdminFacilitiesPage/>}/>
-          <Route path="/adminblueprints" element={<AdminBlueprintsPage/>}/>
+          <Route path="/adminusers" element={<WithAuth page='users'/>}/>
+          <Route path="/adminorganizations" element={<WithAuth page='organizations'/>}/>
+          <Route path="/adminfacilities" element={<WithAuth page='facilities'/>}/>
+          <Route path="/adminblueprints" element={<WithAuth page='blueprints'/>}/>
 
           <Route path="/test" element={<TestPage/>}/>
         </Routes>

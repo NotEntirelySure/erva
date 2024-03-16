@@ -5,7 +5,6 @@ const speakeasy = require("speakeasy");
 const QRCode = require('qrcode');
 const verifyJwt_model = require('./verifyJwt_model');
 const email_model = require('./email_model');
-//const { resolve } = require('path');
 const Pool = require('pg').Pool
 const pool = new Pool({
   user: process.env.API_BASE_USER_ACCOUNT,
@@ -17,7 +16,7 @@ const pool = new Pool({
 
 function adminLogin(credentials) {
   return new Promise((resolve, reject) => {
-    console.log(credentials);
+    
     // resolve({
     //   success:false,
     //   errorCode:401,

@@ -28,9 +28,13 @@ const schema = buildSchema(`
 `);
 
 const resolvers = {
-  login: async ({ loginData }) => {
-    const login = await account_model.adminLogin(loginData);
-    return login;
+  verifyAdmin: () => {
+    /*
+      The reason why this just returns true, is because the thinking is that if a request can reach this function,
+      it has passed the check in the requestAuth() function. That function checks to see if the token is valid
+      and that its type is 3 (admin). Since a request can reach here, it has been verified as being an admin token.
+    */
+    return({isAuth:true});
   },
   getQr: async () => {
     const qr = await account_model.generateQr();
@@ -177,7 +181,6 @@ app.use((req, res, next) => {
 });
 
 app.post('/api/adminlogin', (req, res) => {
-  console.log(req.body)
   account_model.adminLogin(req.body)
     .then(response => res.status(200).send(response))
     .catch(error => res.status(500).send(error));

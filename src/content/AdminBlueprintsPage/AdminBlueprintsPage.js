@@ -58,6 +58,8 @@ export default function AdminFacilitiesPage() {
     image:''
   }
 
+  const jwt = sessionStorage.getItem("ervaJwt");
+
   const fileUploaderRef = useRef();
 
   const [blueprintData, setBlueprintData] = useState([]);
@@ -109,7 +111,7 @@ export default function AdminFacilitiesPage() {
       headers: {
         'Content-Type':'application/json',
         Accept: "application/json",
-        Authorization:`Bearer {jwt}`,
+        Authorization:`Bearer ${jwt}`,
       },
       body: JSON.stringify({ query })});
 
@@ -142,7 +144,7 @@ export default function AdminFacilitiesPage() {
       headers: {
         'Content-Type':'application/json',
         Accept: "application/json",
-        Authorization:`Bearer {jwt}`,
+        Authorization:`Bearer ${jwt}`,
       },
       body: JSON.stringify({ query })
     });
@@ -243,7 +245,7 @@ export default function AdminFacilitiesPage() {
       headers:{
         'Content-Type':'application/json',
         Accept:'application/json',
-        Authorization:'Bearer {jwt}'
+        Authorization:`Bearer ${jwt}`
       },
       body:JSON.stringify({
         query,
@@ -292,7 +294,7 @@ export default function AdminFacilitiesPage() {
       headers:{
         'Content-Type':'application/json',
         Accept:'application/json',
-        Authorization:'Bearer: {jwt}'
+        Authorization:`Bearer ${jwt}`
       },
       body:JSON.stringify({ query })
     });
@@ -328,7 +330,7 @@ export default function AdminFacilitiesPage() {
       headers:{
         'Content-Type':'application/json',
         Accept:'application/json',
-        Authorization:'Bearer: {jwt}'
+        Authorization:`Bearer ${jwt}`
       },
       body:JSON.stringify({ query })
     });
@@ -428,7 +430,7 @@ export default function AdminFacilitiesPage() {
       headers:{
         'Content-Type':'application/json',
         Accept:'application/json',
-        Authorization:'Bearer: {jwt}'
+        Authorization:`Bearer ${jwt}`
       },
       body:JSON.stringify({ 
         query,

@@ -9,7 +9,13 @@ import {
   SideNavLink,
   SkipToContent
 } from '@carbon/react';
-import { Building, ChartRelationship, Floorplan, UserAdmin } from '@carbon/react/icons';
+import {
+  Building,
+  ChartRelationship,
+  Floorplan,
+  Logout,
+  UserAdmin 
+} from '@carbon/react/icons';
 
 export default function AdminHeader(props) {
 
@@ -91,6 +97,14 @@ export default function AdminHeader(props) {
                   isActive={blueprintsActive}
                   href="/adminblueprints">
                   Blueprints
+                </SideNavLink>
+                <SideNavLink
+                  renderIcon={Logout}
+                  isActive={false}
+                  href="/adminlogin"
+                  onClick={() => sessionStorage.removeItem('ervaJwt')}
+                >
+                  Logout
                 </SideNavLink>
               </SideNavItems>
             </SideNav>
