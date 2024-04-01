@@ -3,11 +3,8 @@ import { Button } from '@carbon/react';
 import { Login } from '@carbon/react/icons';
 import { useNavigate } from 'react-router';
 import forbiddenImage from '../../assets/images/403.png';
-import AdminUsersPage from '../../content/AdminUsersPage';
-import AdminOrganizationsPage from '../../content/AdminOrganizationsPage';
-import AdminFacilitiesPage from '../../content/AdminFacilitiesPage';
-import AdminBlueprintsPage from '../../content/AdminBlueprintsPage';
-import AdminLoginPage from '../../content/AdminLoginPage';
+import UserPage from '../../content/UserPage/UserPage.js';
+import MapPage from '../../content/MapPage/MapPage.js';
 
 export default function WithAuth(props) {
   
@@ -31,7 +28,7 @@ export default function WithAuth(props) {
           kind='secondary'
           renderIcon={Login}
           children='Login'
-          onClick={() => navigate('/adminlogin')}
+          onClick={() => navigate('/')}
         />
       </div>
     </div>
@@ -49,7 +46,7 @@ export default function WithAuth(props) {
     if (token) {
       const query = `
         query {
-          verifyAdmin {
+          verifyAccess {
             isAuth
           }
         }
@@ -64,8 +61,12 @@ export default function WithAuth(props) {
         },
         body:JSON.stringify({ query })
       });
+      if (verifyRequest.status === 403) {
+        setIsAuth(false);
+        return;
+      }
       const verifyResponse = await verifyRequest.json();
-      if (!verifyResponse.error) setIsAuth(verifyResponse.data.verifyAdmin.isAuth);
+      if (!verifyResponse.error) setIsAuth(verifyResponse.data.verifyAccess.isAuth);
       else {setIsAuth(false)};
     };
   };
@@ -75,19 +76,13 @@ export default function WithAuth(props) {
       case true:
         let page;
         switch (props.page) {
-          case "users":
-            page = <AdminUsersPage/>
+          case "user":
+            page = <UserPage/>
             break;
-          case "organizations":
-            page = <AdminOrganizationsPage/>
+          case "map":
+            page = <MapPage/>
             break;
-          case "facilities":
-            page = <AdminFacilitiesPage/>
-            break;
-          case "blueprints":
-            page = <AdminBlueprintsPage/>
-            break;
-          default: page = <AdminLoginPage/>
+          default: page = <><div></div></>
         };
         return page;
       case false: return forbidden

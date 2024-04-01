@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+//import { DataContext } from "../DataContext/DataContext";
 import { 
   getVenue,
   showVenue,
@@ -24,8 +25,9 @@ import {
   EnvironmentOutlined,
   ProfileOutlined
 } from '@ant-design/icons';
+import { Content } from '@carbon/react';
 import { useLocation } from 'react-router-dom';
-import GlobalHeader from '../../components/GlobalHeader';
+import GlobalHeader from '../../components/GlobalHeader/GlobalHeader';
 import verifyJwt from '../../components/verifyJwt';
 
 export default function MapPage() {
@@ -228,7 +230,8 @@ export default function MapPage() {
 
   return (
     <>
-      <GlobalHeader isAuth={authStatus.isAuth} userInfo={authStatus.userInfo}/>
+      <GlobalHeader isAuth={true}/>
+      <Content>
       <div>
       <div className='overlay' style={{display:contentLoading}}>
           <div className='loadingIcon'>
@@ -375,6 +378,7 @@ export default function MapPage() {
         </div>
       </div>
       <div id="mapView" ref={mapRef} />
+      </Content>
     </>
   );
 }

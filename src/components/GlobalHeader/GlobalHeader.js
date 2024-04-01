@@ -1,92 +1,158 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { DataContext } from "../DataContext/DataContext";
 import {
-  Avatar,
-  Button,
-  Input,
-  Drawer
-} from 'antd';
-import { UserOutlined } from '@ant-design/icons';
-import entPortal from '../../assets/images/ERVA_Ent_Portal.jpg';
-import govPortal from '../../assets/images/ERVA_Gov_Portal.png';
-import genPortal from '../../assets/images/ERVA_Portal.jpg';
+  Header,
+  HeaderContainer,
+  HeaderGlobalAction,
+  HeaderGlobalBar,
+  HeaderMenuButton,
+  HeaderName,
+  SideNav,
+  SideNavItems,
+  SideNavLink,
+  SkipToContent,
+  SkeletonText,
+  SideNavItem,
+  SideNavDivider,
+  HeaderPanel
+} from '@carbon/react';
+import {
+  Logout,
+  Notification,
+  NotificationFilled,
+  UserAvatar,
+  UserAvatarFilled,
+  UserAvatarFilledAlt
+} from '@carbon/react/icons';
 import eyeLogo from '../../assets/images/eye_logo.jpg';
 
-const { Search } = Input;
+export default function GlobalHeader(props) {
 
-const GlobalHeader = (props) => {
+  const navigate = useNavigate();
+  const { contextData, setContextData } = useContext(DataContext);
+  const [userPanelExpanded, setUserPanelExpanded] = useState(false);
+  const [notificationPanelExpanded, setNotificationPanelExpanded] = useState(false)
+  
+  return (
+    <HeaderContainer
+      render={({ isSideNavExpanded, onClickSideNavExpand }) => (
+        <>
+          <Header aria-label="ERVA">
+            <SkipToContent />
+            <HeaderMenuButton
+              aria-label="Open menu"
+              onClick={onClickSideNavExpand}
+              isActive={isSideNavExpanded}
+            />
+            <HeaderName 
+              href="/"
+              prefix=""
+              children={
+                <>
+                  <img style={{paddingRight:'1rem',maxHeight:'2.5rem', width:'auto'}} id="eyeLogo" src={eyeLogo}></img>
+                  ERVA
+                </>
+              }
+            >
+            </HeaderName>
+            {props.isAuth && (
+              <>
+                <HeaderGlobalBar>
+                  <HeaderGlobalAction
+                    aria-label="Notifications"
+                    isActive={notificationPanelExpanded}
+                    onClick={() => {
+                      if (userPanelExpanded) setUserPanelExpanded(false);
+                      setNotificationPanelExpanded(!notificationPanelExpanded);
+                    }}
+                    children={notificationPanelExpanded ? <NotificationFilled size={20}/>:<Notification size={20}/>}
+                  />
+                  <HeaderGlobalAction
+                    aria-label="Account"
+                    isActive={userPanelExpanded}
+                    onClick={() => {
+                      if (notificationPanelExpanded) setNotificationPanelExpanded(false);
+                      setUserPanelExpanded(!userPanelExpanded);
+                    }}
+                    tooltipAlignment="end"
+                    children={userPanelExpanded ? <UserAvatarFilled size={20}/>:<UserAvatar size={20}/>}
+                  />
+                </HeaderGlobalBar>
+                <HeaderPanel
+                  id='userPanel'
+                  expanded={userPanelExpanded}
+                  children={
+                    <>
+                      <br/>
+                      <p style={{paddingLeft:'1rem'}}><strong>{contextData.userInfo.firstName} {contextData.userInfo.lastName}</strong></p>
+                      <SideNavDivider/>
+                      <div style={{display:'flex', justifyContent:'center'}}>
+                        <UserAvatarFilledAlt size={107}/>
+                      </div>
+                      <div style={{display:'flex', justifyContent:'center'}}>
+                        <p>{contextData.userInfo.email}</p>
+                      </div>
+                      <SideNavDivider/>
+                      <SideNavItems
+                        children={
+                          <SideNavLink
+                            renderIcon={Logout}
+                            isActive={true}
+                            large={true}
+                            children={"Logout"}
+                            onClick={() => {
+                              sessionStorage.removeItem('ervaJwt');
+                              navigate('/');
+                            }}
+                          />
+                        }
+                      />
+                    </>
+                  }
+                />
+                <HeaderPanel
+                  id='notificationPanel'
+                  expanded={notificationPanelExpanded}
+                  children={<><div>No notifications</div></>}
+                />
+                {props.showNav && (
 
-  const [drawerOpen, setDrawerOpen] = useState(false);
-
-  const PortalLogo = () => {
-    if (props.isAuth) {
-      switch (props.userInfo.type) {
-        case "enterprise":
-          return <>
-            <Link to='/'>
-              <img className='logoImage' src={entPortal}></img>
-            </Link>
-          </>
-        case "government":
-          return <>
-            <Link to='/'>
-              <img className='logoImage' src={govPortal}></img>
-            </Link>
-          </>
-        case "generic":
-          return <>
-            <Link to='/'>
-              <img className='logoImage' src={genPortal}></img>
-            </Link>
-          </>
-      }
-    }
-    if (!props.isAuth) {
-      return <>
-        <Link to='/'>
-          <div style={{maxWidth:'75%'}}>
-          <img id="genericLogo" src={eyeLogo}></img>
-          </div>
-        </Link>
-      </>
-    }
-  }
-
-  const UserPanel = () => {
-    if (props.isAuth) {
-      return <>
-        <div className='userAvatar'>
-          <Avatar 
-            onClick={() => setDrawerOpen(true)}
-            icon={<UserOutlined />}
-            style={{backgroundColor:'#ED2027', verticalAlign:'middle'}}
-            gap={1}
-            size={{
-              xs: 24,
-              sm: 32,
-              md: 40,
-              lg: 54,
-              xl: 64,
-              xxl:64
-            }}
-          />
-        </div>
-        <Drawer title={props.userInfo.email} placement="right" onClose={() => setDrawerOpen(false)} visible={drawerOpen}>
-          <p>Name: {`${props.userInfo.fname} ${props.userInfo.lname}`}</p>
-          <p>Account Type: {props.userInfo.type}</p>
-          <Link to='/' onClick={() => sessionStorage.removeItem("jwt")}><Button type="primary">logout</Button></Link>
-          <Button>settings</Button>
-        </Drawer>
-      </>
-    }
-  }
-  return <>
-    <div className="globalHeader">
-      <div className='logoContainer'>
-        <PortalLogo/>
-      </div>
-        <UserPanel/>
-    </div>
-  </>
+                
+                <SideNav aria-label="Side navigation" expanded={isSideNavExpanded}>
+                  <SideNavItems>
+                    <SideNavDivider/>
+                    { props.orgs && (
+                      props.orgsLoading ? 
+                      <>
+                        <SideNavItem children={<SkeletonText/>}/>
+                        <SideNavItem children={<SkeletonText/>}/>
+                        <SideNavItem children={<SkeletonText/>}/>
+                        <SideNavItem children={<SkeletonText/>}/>
+                      </>
+                      :
+                      props.orgs.map(organization => (
+                        <SideNavLink
+                          key={organization.id}
+                          onClick={() => {
+                            setContextData(previousState => ({
+                              ...previousState,
+                              selectedOrganization:organization
+                            }));
+                          }}
+                          children={organization.name}
+                          isActive={organization.id === contextData.selectedOrganization.id}
+                        />
+                      ))
+                    )}
+                  </SideNavItems>
+                </SideNav>
+                )}
+              </>
+            )}
+          </Header>
+        </>
+      )}
+    />
+  );
 };
-export default GlobalHeader;

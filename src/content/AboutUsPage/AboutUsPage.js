@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Col, Divider, Row, Typography} from 'antd';
-import GlobalHeader from '../../components/GlobalHeader';
 import emt from '../../assets/images/aboutus/emt.jpg';
 import swat from '../../assets/images/aboutus/swat.jpg';
 import jennifer from '../../assets/images/aboutus/cliff_2.jpg';
@@ -19,7 +18,6 @@ const AboutUsPage = () => {
   })
   return (
     <>
-      <GlobalHeader/>
       <div className='aboutHeader'>
         <div style={{
           position:'absolute',

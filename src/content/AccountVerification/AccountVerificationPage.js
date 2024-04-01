@@ -1,7 +1,8 @@
 import React, {useState, useEffect} from "react";
 import { Navigate, useSearchParams } from "react-router-dom";
 import {Button, message, Result} from 'antd';
-import GlobalHeader from "../../components/GlobalHeader";
+import GlobalHeader from "../../components/GlobalHeader/GlobalHeader";
+import { Content } from '@carbon/react';
 
 export default function AccountVerificationPage() {
 
@@ -65,24 +66,29 @@ export default function AccountVerificationPage() {
     message ? message.destroy("verifyMessage"):<></>;
     return (
       <>
-        <div>
-          <Result
-            status={status}
-            title={title}
-            subTitle={subtitle}
-            extra={extra}
-          />
-        </div>
+        <Content>
+          <div>
+            <Result
+              status={status}
+              title={title}
+              subTitle={subtitle}
+              extra={extra}
+              />
+          </div>
+        </Content>
       </>
-    )
-  }
+    );
+  };
+
   return (
     <>
-      <div>
-        {redirect ? <Navigate to="/login"/>:null}
-        <GlobalHeader/>
-        <ShowVerificationResult/>
-      </div>
+      <Content>
+        <div>
+          {redirect ? <Navigate to="/login"/>:null}
+          {/* <GlobalHeader/> */}
+          <ShowVerificationResult/>
+        </div>
+      </Content>
     </>
   )
 }

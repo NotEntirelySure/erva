@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import GlobalHeader from '../../components/GlobalHeader';
+import GlobalHeader from '../../components/GlobalHeader/GlobalHeader';
 import SiteFooter from '../../components/SiteFooter/SiteFooter';
 import {
   Avatar,
@@ -19,6 +19,7 @@ import {
   Spin
 } from 'antd';
 import {ArrowRightOutlined, LoadingOutlined, UserAddOutlined} from '@ant-design/icons';
+import { Content } from '@carbon/react';
 const { Option } = Select;
 
 const formItemLayout = {
@@ -38,7 +39,7 @@ const tailFormItemLayout = {
   }
 };
 
-const RegistrationPage = () => {
+export default function RegistrationPage() {
   const [form] = Form.useForm();
   const [qrCode, setQrCode] = useState([]);
   const [generatingQr, setGeneratingQr] = useState(false);
@@ -52,7 +53,7 @@ const RegistrationPage = () => {
 
   const onFinish = async(values) => {
     
-    const registerRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/register`, {
+    const registerRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/register`, {
       method:'POST',
       mode:'cors',
       headers:{'Content-Type':'application/json'},
@@ -95,7 +96,7 @@ const RegistrationPage = () => {
   const getQr = async() => {
     setGeneratingQr(true);
     try{
-      const qrRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/getqr`, {mode:'cors'})
+      const qrRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/getqr`, {mode:'cors'})
       const qrResponse = await qrRequest.json();
       setQrCode(qrResponse)
       setShowNextSteps('block');
@@ -308,6 +309,7 @@ const RegistrationPage = () => {
   return (
     <>
       <GlobalHeader searchEnabled={false}/>
+      <Content>
       <div style={{display: displayForm}}>
             <Form
             {...formItemLayout}
@@ -356,8 +358,7 @@ const RegistrationPage = () => {
         />
       </div>
       <SiteFooter/>
+      </Content>
     </>
   );
 };
-
-export default RegistrationPage;

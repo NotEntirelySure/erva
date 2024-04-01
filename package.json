@@ -58,5 +58,8 @@
   "description": "Building diagram management system",
   "main": "index.js",
   "author": "NotEntirelySure <72530241+NotEntirelySure@users.noreply.github.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11"
+  }
 }

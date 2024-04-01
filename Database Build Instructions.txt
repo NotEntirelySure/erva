@@ -38,7 +38,7 @@ CREATE TABLE users (
 	users_last_name VARCHAR,
 	users_email TEXT NOT NULL UNIQUE,
 	users_password TEXT NOT NULL,
-	users_otp_key TEXT NOT NULL,
+	users_otp_key BYTEA NOT NULL,
 	users_api_key TEXT,
 	users_created_at TIMESTAMP,
 	users_enabled BOOLEAN,
@@ -109,3 +109,17 @@ INSERT INTO roles (roles_name) values ('user');
 #Check to see if this worked by using the command SELECT * from accounttypes;
 
 #You should see 4 rows listed
+
+CREATE OR REPLACE FUNCTION forgot_password (emailAddress VARCHAR)
+RETURNS TABLE(id INT, email TEXT, password TEXT)
+LANGUAGE plpgsql
+AS $$
+  BEGIN 
+    IF EXISTS (SELECT 1 FROM users WHERE users_email=emailAddress) THEN
+	RETURN QUERY SELECT users_id, users_email, users_password
+	FROM users
+	WHERE users_email=emailAddress;
+    END IF;
+    RETURN;
+  END;
+$$;

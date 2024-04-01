@@ -1,18 +1,12 @@
-@import './content/AdminUsersPage/admin-users-page.scss';
-@import './content/AdminOrganizationsPage/admin-organizations-page.scss';
-@import './content/AdminFacilitiesPage/admin-facilities-page.scss';
-@import './content/AdminBlueprintsPage/admin-blueprints-page.scss';
 @import './content/LandingPage/landing-page.scss';
 @import './content/AboutUsPage/about-us-page.scss';
 @import './content/RegistrationPage/registration-page.scss';
-@import './content/UserLoginPage/user-login-page.scss';
-@import './content/AdminLoginPage/admin-login-page.scss';
-@import './components/GlobalHeader/global-header.scss';
 @import './content/UserPage/user-page.scss';
 @import './content/MapPage/map-page.scss';
 @import './content/AccountVerification/account-verification-page.scss';
 @import './content/ForgotPasswordPage/forgot-password-page.scss';
 @import './content/PasswordResetPage/password-reset-page.scss';
+
 
 .formPositioner {
   display: flex;
@@ -32,6 +26,8 @@
 .formHeader {
   display: flex;
   justify-content: center;
+  font-family:Arial, Helvetica, sans-serif;
+  font-weight: bold
 }
 .formBody {
   display: flex;
