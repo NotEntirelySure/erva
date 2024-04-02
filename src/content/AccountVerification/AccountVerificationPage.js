@@ -1,94 +1,97 @@
 import React, {useState, useEffect} from "react";
-import { Navigate, useSearchParams } from "react-router-dom";
-import {Button, message, Result} from 'antd';
+import { useNavigate, useSearchParams } from "react-router-dom";
 import GlobalHeader from "../../components/GlobalHeader/GlobalHeader";
-import { Content } from '@carbon/react';
+import { 
+  ActionableNotification,
+  Content,
+  Loading,
+  SideNavDivider,
+  Stack,
+  Tile
+} from '@carbon/react';
+import { UserAdmin } from '@carbon/react/icons';
 
 export default function AccountVerificationPage() {
-
-  const [tokenParam, setTokenPeram] = useSearchParams();
-  const [verificationResult, setVerificationResult] = useState({code:null});
-  const [redirect, setRedirect] = useState(false);
-
-  useEffect(() => {
-    message.loading({content:'Verifying Account...',key:'verifyMessage',duration:0});
-    verifyAccount();
-  },[]);
   
-  useEffect(() => {ShowVerificationResult()},[verificationResult])
+  const navigate = useNavigate()
+  const [ tokenParam ] = useSearchParams();
+  const [verificationActive, setVerificationActive] = useState(true);
+  const [verificationResult, setVerificationResult] = useState({
+    status:'',
+    title:'',
+    message:''
+  });
+
+  useEffect(() => {VerifyAccount();},[]);
   
-  const verifyAccount = async() => {
-    const verifyRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/verifyaccount`, {
+  async function VerifyAccount() {
+    setVerificationActive(true);
+    const verifyRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/verifyaccount`, {
       method:'POST',
       mode:'cors',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({token:tokenParam.get("verificationToken")})
     });
     const verifyResponse = await verifyRequest.json();
-    setVerificationResult(verifyResponse);
-  }
-  
-  const ShowVerificationResult = () => {
-    let status, title, subtitle, extra;
-    
-    switch (verificationResult.code) {
-      case 200:
-        status = "success";
-        title="Account Verified!";
-        subtitle="Your account was sucessfully verified. Please proceed to the login page to login to your account.";
-        extra = [
-          <Button
-            type="primary" 
-            onClick={() => setRedirect(true)}
-            key="loginButton"
-          >
-            Login
-          </Button>
-        ]
-        break;
-      case 403:
-        status="error"
-        title="403: Token Expired"
-        subtitle=verificationResult.error
-        break;
-      case 498:
-        status="error"
-        title="498: Invalid Token"
-        subtitle=verificationResult.error
-        break;
-      case 500:
-       status="error"
-       title="Error"
-       subtitle=verificationResult.error
-       break;
-      default: return <><div></div></>
-    }
-    message ? message.destroy("verifyMessage"):<></>;
-    return (
-      <>
-        <Content>
-          <div>
-            <Result
-              status={status}
-              title={title}
-              subTitle={subtitle}
-              extra={extra}
-              />
-          </div>
-        </Content>
-      </>
-    );
+    if (!verifyResponse.success) {
+      setVerificationResult({
+        status:'error',
+        title:'Verification Error!',
+        message:verifyResponse.error
+      });
+    };
+    if (verifyResponse.success) {
+      setVerificationResult({
+        status:'success',
+        title:"Success!",
+        message:"Your account was sucessfully verified."
+      });
+    };
+    setVerificationActive(false);
   };
-
+  
   return (
     <>
       <Content>
-        <div>
-          {redirect ? <Navigate to="/login"/>:null}
-          {/* <GlobalHeader/> */}
-          <ShowVerificationResult/>
+        <GlobalHeader/>
+        <div className="formPositioner">
+          <Tile style={{width:'22rem', height:'23rem'}}>
+            <Stack gap={4}>
+              <div className='formBody'>
+                <UserAdmin size={64}/>
+              </div>
+              <div>
+                <p className="formHeader">Account Verification</p>
+              </div>
+              <SideNavDivider/>
+            </Stack>
+              <div style={{display:'flex', justifyContent:'center',marginTop:'1rem'}}>
+                <div style={{display:'flex', gap:'0.5rem', alignItems:'center'}}>
+                  {
+                    verificationActive ? 
+                      <>
+                        <Loading small={true} withOverlay={false}/>
+                        <p>Verifying Account...</p>
+                      </>
+                      :
+                      <ActionableNotification
+                      actionButtonLabel={verificationResult.status === "success" ? "Login":"Retry"}
+                      kind={verificationResult.status}
+                      hideCloseButton={true}
+                      onActionButtonClick={() => {
+                        if (verificationResult.status === "success") navigate("/");
+                        else {VerifyAccount()}
+                      }}
+                      statusIconDescription="notification"
+                      title={verificationResult.title}
+                      subtitle={verificationResult.message}
+                      />
+                  }
+                </div>
+              </div>
+          </Tile>
         </div>
       </Content>
     </>
-  )
-}
+  );
+};

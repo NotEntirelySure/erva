@@ -100,7 +100,7 @@ export default function LandingPage() {
         modalLabel='Login Error'
         modalHeading={errorInfo.heading}
         modalAriaLabel='error modal'
-        primaryButtonText='Ok'
+        primaryButtonText='OK'
         onRequestClose={() => {
           setErrorModalOpen(false);
           setTimeout(() => setErrorInfo({heading:'',message:''}),750)
