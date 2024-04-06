@@ -22,6 +22,7 @@ export default function LandingPage() {
   const [otpModalOpen, setOtpModalOpen] = useState(false);
   const [errorInfo, setErrorInfo] = useState({heading:'',message:''});
   const [errorModalOpen, setErrorModalOpen] = useState(false);
+  const [buttonLoadingStatus, setButtonLoadingStatus] = useState('inactive')
   const [inputValidation, setInputValidation] = useState({
     userInvalid:false,
     passInvalid:false,
@@ -51,15 +52,13 @@ export default function LandingPage() {
           valid = false;
           setInputValidation(previousState => ({...previousState, otpInvalid:true}));
         };
-        if (valid) {
-          setOtpModalOpen(false);
-          LoginUser();
-        };
+        if (valid) LoginUser();
         break;
     };
   };
 
   async function LoginUser() {
+    setButtonLoadingStatus("active");
     const loginRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/login`,{
       mode:'cors',
       method:"POST",
@@ -87,7 +86,9 @@ export default function LandingPage() {
         heading:`Error ${loginResult.errorCode}`,
         message:`A login error occured: ${loginResult.errorMessage}`
       });
+      setOtpModalOpen(false);
       setErrorModalOpen(true);
+      setButtonLoadingStatus("inactive");
     };
   };
 
@@ -175,6 +176,8 @@ export default function LandingPage() {
         shouldSubmitOnEnter={true}
         preventCloseOnClickOutside={true}
         open={otpModalOpen}
+        loadingStatus={buttonLoadingStatus}
+        loadingDescription='Submitting...'
         size="xs"
         modalHeading="Enter OTP"
         primaryButtonText='Submit'

@@ -99,7 +99,6 @@ export default function UserPage() {
   useEffect(() => {getInitialData()},[]);
   
   useEffect(() => {
-    console.log(contextData.selectedOrganization);
     setMapCenter({
       lat:parseFloat(contextData.selectedOrganization.lat),
       lng:parseFloat(contextData.selectedOrganization.long)
@@ -143,11 +142,25 @@ export default function UserPage() {
     });
     const dataResponse = await dataRequest.json();
     if (dataResponse.data) {
-      setContextData({
-        userInfo:dataResponse.data.getUserInfo,
-        selectedOrganization:dataResponse.data.getOrganizations[0]
-      });
-      setOrganizationList(dataResponse.data.getOrganizations);
+      if (dataResponse.data.getOrganizations.length === 0) {
+        setContextData(prevState => (
+          {
+            ...prevState,
+            userInfo:dataResponse.data.getUserInfo
+          }
+        ));
+        setLoadingState(prevState => ({
+          ...prevState,
+          facilitiesLoading:false
+        }));
+      };
+      if (dataResponse.data.getOrganizations.length > 0) {
+        setContextData({
+          userInfo:dataResponse.data.getUserInfo,
+          selectedOrganization:dataResponse.data.getOrganizations[0]
+        });
+        setOrganizationList(dataResponse.data.getOrganizations);
+      }
       setLoadingState(prevState => ({
         ...prevState,
         organizationsLoading:false
@@ -335,6 +348,68 @@ export default function UserPage() {
     };
     return elementsArray;
   };
+  function FacilitiyTiles(props) {
+    if (props.loading) {
+      const elementsArray = [];
+      for (let i=0;i<6;i++) {
+        elementsArray.push(
+          <div className='tile'>
+            <Tile
+              key={i}
+              children={
+                <>
+                  <SkeletonPlaceholder/>
+                  <br/>
+                  <SkeletonText/>
+                  <hr/>
+                  <SkeletonText/>
+                  <SkeletonText/>
+                </>
+              }
+            />
+          </div>
+        );
+      };
+      return elementsArray;
+    };
+    if (!props.loading && props.data.length > 0) {
+      const facilities = facilityData.map(facility => (
+        <div className='tile'>
+          <ClickableTile
+            key={facility.id}
+            onClick={() => {
+              setSelectedFacility(facility);
+              getBlueprints(facility.id);
+            }}
+            children={
+              <>
+                <img 
+                  className="tileImage"
+                  alt={facility.name}
+                  src={`data:image/png;base64,${facility.image.data}`}
+                />
+                <p style={{marginTop:'1rem'}}><strong>{facility.name}</strong></p>
+                <hr/>
+                <p>{facility.address}</p>
+                <p>{facility.city}, {facility.state} {facility.zip}</p>
+              </>
+            }
+          />
+        </div>
+      ));
+      return facilities;
+    };
+    if (!props.loading && props.data.length === 0) {
+      return (
+        <InlineNotification
+          hideCloseButton={true}
+          kind='warning'
+          title='Nothing to display' 
+          subtitle='No facilities are assigned to your account or none exist under the selected organization.'
+        />
+      )
+    }
+  };
 
   return (
     <>
@@ -375,42 +450,7 @@ export default function UserPage() {
               <TabPanels>
                 <TabPanel>
                   <div className='gridContainer'>
-                    { showFacilitiesNotification && (
-                      <InlineNotification
-                        hideCloseButton={true}
-                        kind='warning'
-                        title='Nothing to display' 
-                        subtitle='No facilities are assigned to your account or none exist under the selected organization.'
-                      />
-                    )}
-                    { loadingState.facilitiesLoading && (<LoadingTiles quantity={6}/>) }
-                    { !loadingState.facilitiesLoading &&
-                      facilityData &&
-                      (facilityData.map(facility => (
-                        <div className='tile'>
-                          <ClickableTile
-                            key={facility.id}
-                            onClick={() => {
-                              setSelectedFacility(facility);
-                              getBlueprints(facility.id);
-                            }}
-                            children={
-                              <>
-                                <img 
-                                  className="tileImage"
-                                  alt={facility.name}
-                                  src={`data:image/png;base64,${facility.image.data}`}
-                                />
-                                <p style={{marginTop:'1rem'}}><strong>{facility.name}</strong></p>
-                                <hr/>
-                                <p>{facility.address}</p>
-                                <p>{facility.city}, {facility.state} {facility.zip}</p>
-                              </>
-                            }
-                          />
-                        </div>    
-                      ))
-                    )}
+                    <FacilitiyTiles loading={loadingState.facilitiesLoading} data={facilityData}/>
                   </div>
                 </TabPanel>
                 <TabPanel>

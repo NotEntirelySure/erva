@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-//import { DataContext } from "../DataContext/DataContext";
 import { 
   getVenue,
   showVenue,
@@ -28,7 +27,6 @@ import {
 import { Content } from '@carbon/react';
 import { useLocation } from 'react-router-dom';
 import GlobalHeader from '../../components/GlobalHeader/GlobalHeader';
-import verifyJwt from '../../components/verifyJwt';
 
 export default function MapPage() {
 
@@ -60,15 +58,7 @@ export default function MapPage() {
     clientSecret:location.state.apiKey,
   };
   
-  useEffect(() => {
-    
-    verifyJwt()
-      .then(result => {
-        setAuthStatus(result);
-        if (result.isAuth) loadMap();
-      });
-      
-  },[]);
+  useEffect(() => {loadMap();},[]);
 
   useEffect(() => {
     if (mapView !== undefined) {
@@ -79,8 +69,8 @@ export default function MapPage() {
         mapView.on(E_SDK_EVENT.NOTHING_CLICKED, () => mapView.clearAllPolygonColors())
       }
       catch (error) {console.log(error)}
-    }
-  },[mapView])
+    };
+  },[mapView]);
 
   const loadMap = async() => {
     setContentLoading('block');

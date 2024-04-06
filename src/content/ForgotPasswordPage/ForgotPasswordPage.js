@@ -5,8 +5,8 @@ import GlobalHeader from "../../components/GlobalHeader/GlobalHeader";
 import {
   Button,
   Content,
+  InlineLoading,
   Layer,
-  Loading,
   Modal,
   SideNavDivider,
   Stack,
@@ -21,8 +21,9 @@ export default function ForgotPasswordPage() {
   const [emailInvalid, setEmailInvalid] = useState(false);
   const [invalidMessage, setInvalidMessage] = useState('');
   const [requestModalOpen, setRequestModalOpen] = useState(false);
-  const [buttonDescription, setButtonDescription] = useState('Submit')
   const [requestResult, setRequestResult] = useState({status:'',message:''});
+  const [showLoading, setShowLoading] = useState(false);
+  const [buttonDisabled, setButtonDisabled] = useState(false);
 
   function ValidateForm() {
     if (!textBoxRef.current.value) {
@@ -39,12 +40,8 @@ export default function ForgotPasswordPage() {
   }
 
   async function SubmitRequest() {
-    setButtonDescription(
-      <>
-        <Loading withOverlay={false} small={true}/>
-        <div style={{paddingLeft:'0.5rem'}}>Submitting...</div>
-      </>
-    );
+    setShowLoading(true);
+    setButtonDisabled(true);
     try {
       const resetRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/forgotpassword`, {
         method:'POST',
@@ -73,7 +70,8 @@ export default function ForgotPasswordPage() {
         });
       };
     };
-    setButtonDescription("Submit");
+    setShowLoading(false);
+    setButtonDisabled(false);
     setRequestModalOpen(true);
   };
 
@@ -121,10 +119,12 @@ export default function ForgotPasswordPage() {
                 <div>
                   <Button
                     renderIcon={Send}
-                    children={buttonDescription}
+                    disabled={buttonDisabled}
+                    children="Submit"
                     onClick={() => ValidateForm()}
                   />
                 </div>
+                {showLoading && (<InlineLoading description="Submitting..."/>)}
               </div>
             </Stack>
           </Tile>
