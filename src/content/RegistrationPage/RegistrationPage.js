@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import GlobalHeader from '../../components/GlobalHeader/GlobalHeader';
-import validator from 'validator';
+import { isAlpha, isEmail, isInt, isStrongPassword } from 'validator';
 import {
   Button, 
   Content,
@@ -93,22 +93,22 @@ export default function RegistrationPage() {
     const validation = {...formValidation};
     let isValid = true;
     
-    if (!validator.isAlpha(firstNameRef.current.value)) {
+    if (!isAlpha(firstNameRef.current.value)) {
       validation.firstNameInvalid = true;
       isValid = false;
     };
     
-    if (!validator.isAlpha(lastNameRef.current.value)) {
+    if (!isAlpha(lastNameRef.current.value)) {
       validation.lastNameInvalid = true;
       isValid = false;
     };
 
-    if (!validator.isEmail(emailRef.current.value)) {
+    if (!isEmail(emailRef.current.value)) {
       validation.emailInvalid = true;
       isValid = false;
     };
 
-    if (!validator.isStrongPassword(passwordRef.current.value)) {
+    if (!isStrongPassword(passwordRef.current.value)) {
       validation.passwordInvalid = true;
       isValid = false;
     };
@@ -118,7 +118,7 @@ export default function RegistrationPage() {
       isValid = false;
     };
 
-    if (!validator.isInt(otpRef.current.value) || otpRef.current.value.length < 6) {
+    if (!isInt(otpRef.current.value) || otpRef.current.value.length < 6) {
       validation.otpInvalid = true;
       isValid = false;
     };
