@@ -77,6 +77,8 @@ export default function UserPage() {
 
   const { contextData, setContextData } = useContext(DataContext);
 
+  const contentsRef = useRef();
+  const [sideNavRail, setSideNavRail] = useState(false);
   const [organizationList, setOrganizationList] = useState([{name:'',address:'',city:'',state:'',zip:'',lat:0,long:0}]);
   const [blueprintData, setBlueprintData] = useState([]);
   const [facilityData, setFacilityData] = useState([]);
@@ -416,6 +418,7 @@ export default function UserPage() {
       <GlobalHeader
         isAuth={true}
         showNav={true}
+        rail={sideNavRail}
         orgs={organizationList}
         orgsLoading={loadingState.organizationsLoading}
       />
@@ -601,7 +604,15 @@ export default function UserPage() {
             </div>
             <div>
               <Button 
-                onClick={() => getApiKey()}
+                onClick={() => navigate(
+                  '/mappage',
+                  {
+                    state:{
+                      "facilityId":selectedFacility.id,
+                      "facilityCode":selectedFacility.code
+                    }
+                  }
+                )}
                 renderIcon={View}
                 children={"Wayfind"}
               />
@@ -617,7 +628,7 @@ export default function UserPage() {
                 </IconTab>
               </TabList>
               <TabPanels>
-                <TabPanel>
+                <TabPanel ref={contentsRef}>
                   
                   <div className='gridContainer'>
                     { loadingState.blueprintsLoading && (<LoadingTiles quantity={6}/>)}
@@ -626,7 +637,11 @@ export default function UserPage() {
                         return (
                           <div>
                             <Tile key={blueprint.id} title={blueprint.name} className='locationCard'>
-                            <Image src={`data:image/png;base64,${blueprint.image.data}`} alt={blueprint.name}/>
+                              <Image
+                                preview={{ onVisibleChange:() => setSideNavRail(!sideNavRail) }}
+                                src={`data:image/png;base64,${blueprint.image.data}`} 
+                                alt={blueprint.name}
+                              />
                             </Tile>
                           </div>
                         )

@@ -7,7 +7,7 @@
     "@babel/preset-react": "^7.18.6",
     "@carbon/pictograms-react": "^11.44.0",
     "@carbon/react": "^1.39.0",
-    "@mappedin/mappedin-js": "^4.1.5",
+    "@mappedin/mappedin-js": "^5.33.0",
     "@mappedin/react-native-sdk": "^4.1.5",
     "@react-google-maps/api": "^2.19.2",
     "@testing-library/jest-dom": "^5.16.4",

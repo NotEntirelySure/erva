@@ -119,7 +119,7 @@ export default function GlobalHeader(props) {
                 {props.showNav && (
 
                 
-                <SideNav aria-label="Side navigation" expanded={isSideNavExpanded}>
+                <SideNav aria-label="Side navigation" expanded={isSideNavExpanded} isRail={props.rail}>
                   <SideNavItems>
                     <SideNavDivider/>
                     { props.orgs && (

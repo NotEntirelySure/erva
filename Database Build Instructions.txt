@@ -84,6 +84,21 @@ CREATE TABLE blueprints (
 	blueprint_image VARCHAR
 );
 
+CREATE TABLE map_components (
+	component_id SERIAL PRIMARY KEY,
+	component_type VARCHAR,
+	component_name VARCHAR,
+	component_icon TEXT
+);
+
+CREATE TABLE component_locations (
+	location_id SERIAL PRIMARY KEY,
+	location_component_id INT REFERENCES map_components(component_id),
+	location_facility_id INT REFERENCES facilities(facilities_id),
+	location_lat DECIMAL(9, 6),
+	location_long DECIMAL(9, 6)
+);
+
 CREATE TABLE access_log (
 	access_log_id SERIAL PRIMARY KEY,
 	access_log_user_id INT,
@@ -123,3 +138,41 @@ AS $$
     RETURN;
   END;
 $$;
+
+CREATE OR REPLACE FUNCTION get_map_components (userId INT, facilityId INT)
+RETURNS TABLE(
+  id INT,
+  type VARCHAR,
+  name VARCHAR,
+  icon TEXT,
+  lat NUMERIC,
+  long NUMERIC
+
+)
+LANGUAGE plpgsql
+AS $$
+  BEGIN 
+    IF EXISTS (
+      SELECT 1 
+      FROM facilitypermissions
+      WHERE fp_fk_user=userId
+      AND fp_fk_facility=facilityId
+    ) 
+    THEN RETURN QUERY 
+      SELECT
+        mc.component_id,
+        mc.component_type,
+        mc.component_name,
+        mc.component_icon,
+        cl.location_lat,
+        cl.location_long
+      FROM component_locations AS cl
+      INNER JOIN map_components AS mc
+      ON cl.location_component_id=mc.component_id
+      WHERE cl.location_facility_id=facilityId;
+    END IF;
+    RETURN;
+  END;
+$$;
+
+CREATE INDEX idx_user_id_permissions ON facilitypermissions(fp_fk_user);
