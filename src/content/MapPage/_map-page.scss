@@ -5,8 +5,11 @@
   width: 100vw;
 }
 
-#floorSelector {
+#mapControls {
   position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
   top: 3.5rem;
   right:3rem;
   z-index: 3;
@@ -66,23 +69,9 @@
   transition: 1s;
 }
 
-.openOptionsArrow {
+.rightPane {
   position: absolute;
-  height:3rem;
-  right: 0rem;
-  padding: 0.5rem 2rem 0.5rem 0.5rem;
-  background-color:#f4f4f4;
-  border: solid black 1px;
-  border-radius: 1rem 0rem 0rem 1rem;
-  margin-top: 2rem;
-  margin-right: -10rem;
-  transition: 1s; 
-  z-index: 2;
-  cursor: pointer;
-}
-
-.mapOptions {
-  position: absolute;
+  opacity: 0.95;
   display: grid;
   right: 1rem;
   max-width: 25%;
@@ -90,13 +79,22 @@
   min-height: fit-content;
   max-height: 80vh;
   overflow: auto;
-  margin-top: 1rem;
+  margin-top: 3rem;
   margin-left: 1rem;
   border-radius: 1rem;
   background-color:#f4f4f4;
   z-index: 2;
   padding: 1rem;
-  transition: 1s;
+  transition: 0.5s;
+}
+
+.infoIcon {
+  display: flex;
+  justify-content: center;
+  align-items:center;
+  width: 6rem;
+  height: 6rem;
+  border-radius: 50%;
 }
 
 #closeSideNavButton{border:none;}
@@ -121,5 +119,8 @@
   font-size: 125%;
 }
 
-
-#mapView{position: relative;}
+.marker {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+}

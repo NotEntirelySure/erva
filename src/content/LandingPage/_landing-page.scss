@@ -12,8 +12,7 @@ body{max-height: 75vh;}
 }
 #landingPageImage {
   animation: fadeIn 1s;
-  max-width: 500px;
-  min-width: 250px;
+  width: clamp(20rem, 35vw, 30rem);
   height: auto;
 }
 

@@ -53,8 +53,8 @@ CREATE TABLE offices (
 	offices_city VARCHAR,
 	offices_state VARCHAR,
 	offices_zip VARCHAR,
-	offices_lat NUMERIC(10, 6),
-	offices_long NUMERIC(10, 6)
+	offices_lat NUMERIC(18, 15),
+	offices_long NUMERIC(18, 15)
 );
 
 CREATE TABLE facilities (
@@ -65,8 +65,8 @@ CREATE TABLE facilities (
 	facilities_city VARCHAR,
 	facilities_state VARCHAR,
 	facilities_zip VARCHAR,
-	facilities_lat NUMERIC(10, 6),
-	facilities_long NUMERIC(10, 6),
+	facilities_lat NUMERIC(18, 15),
+	facilities_long NUMERIC(18, 15),
 	facilities_image TEXT,
 	facilities_code TEXT
 );
@@ -84,19 +84,26 @@ CREATE TABLE blueprints (
 	blueprint_image VARCHAR
 );
 
+CREATE TABLE component_categories (
+	category_id SERIAL PRIMARY KEY,
+	category_name VARCHAR
+);
+
 CREATE TABLE map_components (
 	component_id SERIAL PRIMARY KEY,
+  component_category INT REFERENCES component_categories(category_id),
 	component_type VARCHAR,
 	component_name VARCHAR,
-	component_icon TEXT
+	component_icon VARCHAR,
+	component_color VARCHAR
 );
 
 CREATE TABLE component_locations (
 	location_id SERIAL PRIMARY KEY,
 	location_component_id INT REFERENCES map_components(component_id),
 	location_facility_id INT REFERENCES facilities(facilities_id),
-	location_lat DECIMAL(9, 6),
-	location_long DECIMAL(9, 6)
+	location_lat DECIMAL(18, 15),
+	location_long DECIMAL(18, 15)
 );
 
 CREATE TABLE access_log (
@@ -142,12 +149,13 @@ $$;
 CREATE OR REPLACE FUNCTION get_map_components (userId INT, facilityId INT)
 RETURNS TABLE(
   id INT,
+  category VARCHAR,
+	color VARCHAR,
   type VARCHAR,
   name VARCHAR,
-  icon TEXT,
+  icon VARCHAR,
   lat NUMERIC,
   long NUMERIC
-
 )
 LANGUAGE plpgsql
 AS $$
@@ -160,15 +168,17 @@ AS $$
     ) 
     THEN RETURN QUERY 
       SELECT
-        mc.component_id,
+        cl.location_id,
+        cc.category_name,
+				mc.component_color,
         mc.component_type,
         mc.component_name,
         mc.component_icon,
         cl.location_lat,
         cl.location_long
       FROM component_locations AS cl
-      INNER JOIN map_components AS mc
-      ON cl.location_component_id=mc.component_id
+      INNER JOIN map_components AS mc ON cl.location_component_id=mc.component_id
+			INNER JOIN component_categories AS cc ON mc.component_category=cc.category_id
       WHERE cl.location_facility_id=facilityId;
     END IF;
     RETURN;

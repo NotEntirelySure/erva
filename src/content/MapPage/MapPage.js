@@ -11,7 +11,6 @@ import {
 } from "@mappedin/mappedin-js";
 import "@mappedin/mappedin-js/lib/mappedin.css";
 import {
-  Button,
   Checkbox,
   Divider,
   Input,
@@ -21,13 +20,24 @@ import {
   Tooltip
 } from 'antd';
 import {
-  ArrowRightOutlined,
   CloseOutlined,
-  EnvironmentOutlined,
-  ProfileOutlined
+  EnvironmentOutlined
 } from '@ant-design/icons';
-import { Content } from '@carbon/react';
-import { SearchLocate, SettingsAdjust } from '@carbon/react/icons';
+import { 
+  Button,
+  Content,
+  Dropdown,
+  DropdownSkeleton,
+  IconButton,
+  SideNavDivider,
+  Stack,
+  TextInput
+} from '@carbon/react';
+import { 
+  SearchLocate,
+  SettingsAdjust,
+  SidePanelOpenFilled
+} from '@carbon/react/icons';
 import GlobalHeader from '../../components/GlobalHeader/GlobalHeader';
 
 export default function MapPage() {
@@ -35,16 +45,18 @@ export default function MapPage() {
   const { Search } = Input;
   const location = useLocation();
   const mapRef = useRef(null);
+  const mapComponents = useRef({});
+  const svgData = useRef([{icon:'',data:''}]);
+  const infoIcon = useRef();
   const jwt = useRef(sessionStorage.getItem('ervaJwt'));
   
-  const [authStatus, setAuthStatus] = useState({});
   const [venue, setVenue] = useState();
   const [mapView, setMapView] = useState();
-  const [levels, setLevels] = useState([]);
+  const [levels, setLevels] = useState();
   const [sideNavPosition, setSideNavPosition] = useState('translate(0rem,0rem)');
   const [sideNavArrowPosition, setSideNavArrowPosition] = useState('');
-  const [mapOptionsPosition, setMapOptionsPosition] = useState('');
-  const [mapOptionsArrowPosition, setMapOptionsArrowPosition] = useState('');
+  const [mapOptionsPosition, setMapOptionsPosition] = useState('translate(25rem,0rem)');
+  const [markerInfoPosition, setMarkerInfoPosition] = useState('translate(25rem,0rem)');
   const [contentLoading, setContentLoading] = useState(false);
   const [venueDirectory, setVenueDirectory] = useState();
   const [searchResults, setSearchResults] = useState([{source:'',name:'',id:''}]);
@@ -53,6 +65,14 @@ export default function MapPage() {
   const [directionsEnd, setDirectionsEnd] = useState('');
   const [directionsInstructions, setDirectionsInstructions] = useState([]);
   const [displayTbtDirections, setDisplayTbtDirections] = useState('none');
+  const [selectedMarker, setSelectedMarker] = useState({
+    type:'',
+    color:'',
+    name:'',
+    lat:'',
+    long:'',
+    icon:''
+  });
 
   const options = {
     venue: "mappedin-demo-mall", //location.state.faciilityCode
@@ -60,35 +80,44 @@ export default function MapPage() {
     clientSecret: "RJyRXKcryCMy4erZqqCbuB1NbR66QTGNXVE0x3Pg6oCIlUR1" //location.state.apiKey // I may want to get the API key at the time of load instead of passing the value using location.state.
   };
 
-  useEffect(() => {
-    console.log(location.state);
-    loadMap();
-  },[]);
+  useEffect(() => {loadMap();},[]);
 
   useEffect(() => {
     if (mapView) {
       try {
-        GetMapComponents();
         mapView.addInteractivePolygonsForAllLocations();
         mapView.labelAllLocations({flatLabels: true})
-        mapView.on(E_SDK_EVENT.POLYGON_CLICKED, polygon => {console.log(polygon);mapView.setPolygonColor(polygon, "#BF4320")});
+        mapView.on(E_SDK_EVENT.POLYGON_CLICKED, polygon => {mapView.setPolygonColor(polygon, "#BF4320");});
         mapView.on(E_SDK_EVENT.NOTHING_CLICKED, () => mapView.clearAllPolygonColors())
+        mapView.on(E_SDK_EVENT.CLICK, ({ floatingLabels }) => {
+          setSelectedMarker(mapComponents.current[floatingLabels[0].id]);
+          handleRightPaneView("info","open");
+        });
+        GetMapComponents();
       }
       catch (error) {console.log(error)}
     };
   },[mapView]);
 
-  const loadMap = async() => {
+  useEffect(() => {
+    infoIcon.current.innerHTML = svgData.current.find(svg => svg.icon === selectedMarker.icon).data;
+  },[selectedMarker]);
+
+  async function loadMap() {
     setContentLoading(true);
     const venueData = await getVenue(options);
     // Update state variable after data is fetched
     setVenue(venueData);
-    let levelsArray = [];
+    const levelsArray = [];
     venueData.maps.sort(
-      (a, b) => a.elevation - b.elevation).forEach((level) => {
-        levelsArray.push({"value":level.id, "label":level.name,"shortName":level.shortName})
+      (a, b) => a.elevation - b.elevation).forEach(level => {
+        levelsArray.push({
+          value:level.id,
+          label:level.name,
+          shortName:level.shortName
+        })
       }
-    )
+    );
     setLevels(levelsArray);
     
     const directory = new OfflineSearch(venueData)
@@ -107,8 +136,6 @@ export default function MapPage() {
     // Try to render the mapView
     try {
       const _mapView = await showVenue(mapRef.current, venueData);
-      const svg = `<?xml version="1.0" ?><!DOCTYPE svg  PUBLIC '-//W3C//DTD SVG 1.1//EN'  'http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd'><svg enable-background="new 0 0 48 48" height="48px" version="1.1" viewBox="0 0 48 48" width="48px" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g id="Layer_5"><path d="M32.246,1.268c-1.676,0-3.109,0.999-3.764,2.43h-3.187c-0.599-1.771-2.257-3.052-4.228-3.052   c-1.201,0-2.285,0.478-3.089,1.245H6.805v3.519h6.441c-3.146,1.982-5.744,4.755-7.489,8.059l3.677,1.5   c1.791-3.217,4.593-5.774,7.963-7.302c0.468,0.685,1.119,1.229,1.886,1.565v1.419c-4.059,0.796-7.123,4.37-7.123,8.661v28.667   h17.655V19.312c0-4.243-2.992-7.784-6.983-8.631V9.241c0.968-0.423,1.759-1.176,2.232-2.119h3.417   c0.654,1.429,2.088,2.429,3.764,2.429l9.996,0.933V0.022L32.246,1.268z M21.004,7.095c-1.134,0-2.055-0.92-2.055-2.055   c0-1.135,0.92-2.054,2.055-2.054c1.135,0,2.055,0.919,2.055,2.054C23.059,6.175,22.139,7.095,21.004,7.095z" fill="#241F20"/></g></svg>`
-      
       setMapView(_mapView);
     }
     catch (error) {
@@ -134,12 +161,21 @@ export default function MapPage() {
   async function GetMapComponents () {
     const query = `query{
       getMapComponents (jwt:"${jwt.current}", facilityId:${location.state.facilityId}) {
-        id
-        type
-        name
-        icon
-        lat
-        long
+        components {
+          id
+          type
+          color
+          name
+          lat
+          long
+          icon
+        }
+        svgData {
+          success
+          message
+          data
+          name
+        }
       }
     }`;
     const componentRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api`,{
@@ -153,25 +189,64 @@ export default function MapPage() {
       body:JSON.stringify({query})
     });
     const componentResponse = await componentRequest.json();
-    if (componentResponse.data.getMapComponents.success) {
-
+    if (componentResponse.data.getMapComponents) {
+      componentResponse.data.getMapComponents.components.forEach(component => {
+        const coordinate = mapView.currentMap.createCoordinate(component.lat, component.long);
+        const base64Data = componentResponse.data.getMapComponents.svgData.find(svg => svg.name === component.icon).data
+        const svg = atob(base64Data);
+        const label = mapView.FloatingLabels.add(coordinate, component.name, {
+          interactive:true,
+          appearance: {
+            marker: {
+              iconSize: 20,
+              backgroundColor: {
+                active: "black",
+                inactive: "transparent",
+              },
+              foregroundColor: {
+                active: component.color,
+                inactive: "transparent",
+              },
+              icon:svg
+            },
+          }
+        });
+        mapComponents.current[label.id] = component;
+        if (!svgData.current.some(svg => svg.icon === component.icon)) svgData.current.push({
+          icon:component.icon,
+          data:svg
+        });
+      });
     };
-    if (componentResponse.errors) {
-
-    };
+    if (componentResponse.errors) {};
   };
 
-  const handleMapOptionsView = (state) => {
-
-    if (state === "open") {
-      setMapOptionsPosition('translate(0rem,0rem)');
-      setMapOptionsArrowPosition('translate(10rem,0rem)');
+  function handleRightPaneView(pane, state) {
+    switch (pane) {
+      case "options":
+        switch (state) {
+          case "open":
+            setMapOptionsPosition('translate(0rem,0rem)');
+            setMarkerInfoPosition('translate(25rem,0rem)');
+            break;
+          case "close":
+            setMapOptionsPosition('translate(25rem,0rem)');
+            break;
+        };
+        break;
+      case "info":
+        switch (state) {
+          case "open":
+            setMarkerInfoPosition('translate(0rem,0rem)');
+            setMapOptionsPosition('translate(25rem,0rem)');
+            break;
+          case "close":
+            setMarkerInfoPosition('translate(25rem,0rem)');
+            break;
+        };
+        break;
     };
-    if (state === "close") {
-      setMapOptionsPosition('translate(25rem,0rem)');
-      setMapOptionsArrowPosition('translate(-9rem,0rem)');
-    };
-  }
+  };
 
   const searchDirectory = async(source, searchValue) => {
     if (searchValue === "") {
@@ -264,152 +339,202 @@ export default function MapPage() {
   return (
     <>
       <GlobalHeader isAuth={true}/>
-      <Content>
-      <div>
-        {contentLoading && (
-          <div className='overlay' style={{display:contentLoading}}>
-            <div className='loadingIcon'>
-              <Spin tip="Loading..."/>
-            </div>
-          </div>
+      <div id='mapControls'>
+        {levels && (
+        <Dropdown
+          style={{width:'10rem'}}
+          initialSelectedItem={levels[0]}
+          items={levels}
+          itemToString={item => item.label ? item.label:''}
+          onChange={event => {
+            mapView.setMap(event.selectedItem.value)
+          }}
+        />
         )}
-        <div 
-          className='openSideNavArrow'
-          style={{transform: sideNavArrowPosition}}
-          onClick={() => handleSideNavView("open")}
-        >
-          <Tooltip title="Show Navigation" placement="topLeft">
-            <SearchLocate size={24}/>
-          </Tooltip>
-        </div>
-        <div className='mapSidenav' style={{transform: sideNavPosition}}>
-          <div style={{float:'right'}}>
-            <Tooltip title="Hide Navigation">
-              <CloseOutlined id="closeSideNavButton" onClick={() => handleSideNavView("close")}/>
+        {!levels && (<DropdownSkeleton hideLabel={true}/>)}
+        <IconButton
+          closeOnActivation={true}
+          hasIconOnly={true}
+          renderIcon={SettingsAdjust}
+          label='Map Options'
+          align='bottom'
+          onClick={() => handleRightPaneView("options","open")}
+        />
+      </div>
+      <Content>
+        <div>
+          {contentLoading && (
+            <div className='overlay' style={{display:contentLoading}}>
+              <div className='loadingIcon'>
+                <Spin tip="Loading..."/>
+              </div>
+            </div>
+          )}
+          <div 
+            className='openSideNavArrow'
+            style={{transform: sideNavArrowPosition}}
+            onClick={() => handleSideNavView("open")}
+          >
+            <Tooltip title="Show Navigation" placement="topLeft">
+              <SearchLocate size={24}/>
             </Tooltip>
           </div>
-          <div>
-            <div style={{paddingBottom:'1rem'}}>  
+          <div className='mapSidenav' style={{transform: sideNavPosition}}>
+            <div style={{float:'right'}}>
+              <Tooltip title="Hide Navigation">
+                <CloseOutlined id="closeSideNavButton" onClick={() => handleSideNavView("close")}/>
+              </Tooltip>
+            </div>
+            <div>
+              <div style={{paddingBottom:'1rem'}}>  
+                <Search 
+                  id="searchStart"
+                  placeholder={`Search ${location.state.map}`}
+                  onSearch={() => {}}
+                  enterButton
+                  value={directionsStart}
+                  onChange={(event) => {
+                    setDirectionsStart(event.target.value)
+                    searchDirectory("start",event.target.value)
+                    if (directionsInstructions.length) {
+                      setDirectionsInstructions([])
+                      setDisplayTbtDirections('none')
+                    }
+                  }} 
+                />
+              </div>
+            </div>
+            <div style={{paddingBottom:'1rem'}}>
               <Search 
-                id="searchStart"
-                placeholder={`Search ${location.state.map}`}
+                id="searchEnd"
+                placeholder='Search Destination'
                 onSearch={() => {}}
                 enterButton
-                value={directionsStart}
-                onChange={(event) => {
-                  setDirectionsStart(event.target.value)
-                  searchDirectory("start",event.target.value)
+                value={directionsEnd}
+                onChange={event => {
+                  setDirectionsEnd(event.target.value)
+                  searchDirectory("end",event.target.value)
                   if (directionsInstructions.length) {
                     setDirectionsInstructions([])
                     setDisplayTbtDirections('none')
                   }
-                }} 
+                }
+                } 
               />
             </div>
-          </div>
-          <div style={{paddingBottom:'1rem'}}>
-            <Search 
-              id="searchEnd"
-              placeholder='Search Destination'
-              onSearch={() => {}}
-              enterButton
-              value={directionsEnd}
-              onChange={event => {
-                setDirectionsEnd(event.target.value)
-                searchDirectory("end",event.target.value)
-                if (directionsInstructions.length) {
-                  setDirectionsInstructions([])
-                  setDisplayTbtDirections('none')
-                }
-              }
-              } 
-            />
-          </div>
-          <div style={{paddingBottom:'1rem'}}>
-            <Button type="primary" onClick={() => getDirections()}>Get Directions <EnvironmentOutlined /></Button>  
-          </div> 
-          <div className='searchResults' style={{display:displaySearch}}>
-          <List
-            bordered={false}
-            dataSource={searchResults}
-            renderItem={(item) => (
-              <List.Item 
-                className="listItem"
-                onClick={() => {
-                  if (item.source === "start") setDirectionsStart(item.name)
-                  if (item.source === "end") setDirectionsEnd(item.name)
-                  setDisplaySearch('none')
-                  setSearchResults('') 
-                }}
-              >
-                {item.name}
-              </List.Item>
-            )}
-          />
-          </div>
-          <div className='tbtDirections' style={{display:displayTbtDirections}}>
-            <Divider orientation='center'>Directions to {directionsEnd}</Divider>
+            <div style={{paddingBottom:'1rem'}}>
+              <Button type="primary" onClick={() => getDirections()}>Get Directions <EnvironmentOutlined /></Button>  
+            </div> 
+            <div className='searchResults' style={{display:displaySearch}}>
             <List
               bordered={false}
-              dataSource={directionsInstructions}
-              renderItem={step => (
-                <List.Item>
-                  <div>
-                    <p className='stepDistance'>
-                      {step.distanceFeet} {step.distanceFeet === 1 ? "foot":"feet"} ({step.distanceMeters} meters)
-                    </p>
-                    <p className='stepInstruction'>{step.instruction}</p>
-                  </div>
+              dataSource={searchResults}
+              renderItem={(item) => (
+                <List.Item 
+                  className="listItem"
+                  onClick={() => {
+                    if (item.source === "start") setDirectionsStart(item.name)
+                    if (item.source === "end") setDirectionsEnd(item.name)
+                    setDisplaySearch('none')
+                    setSearchResults('') 
+                  }}
+                >
+                  {item.name}
                 </List.Item>
               )}
             />
-          </div>
-        </div>
-        <div 
-          className='openOptionsArrow'
-          style={{transform: mapOptionsArrowPosition, display:'flex',alignItems:'center'}}
-          onClick={() => handleMapOptionsView("open")}
-        >
-          <Tooltip title="Show Map Options" placement="topRight">
-            <SettingsAdjust size={24}/>
-          </Tooltip>
-        </div>
-        <div className='mapOptions' style={{transform: mapOptionsPosition}}>
-          <div style={{display:'flex',gap:'2rem'}}>
-            <div>
-              <Tooltip title="Hide Map Options">
-                <CloseOutlined id="closeMapOptionsButton" onClick={() => handleMapOptionsView("close")}/>
-              </Tooltip>
             </div>
-            <div>
-              <p><strong>Map Options</strong></p>
+            <div className='tbtDirections' style={{display:displayTbtDirections}}>
+              <Divider orientation='center'>Directions to {directionsEnd}</Divider>
+              <List
+                bordered={false}
+                dataSource={directionsInstructions}
+                renderItem={step => (
+                  <List.Item>
+                    <div>
+                      <p className='stepDistance'>
+                        {step.distanceFeet} {step.distanceFeet === 1 ? "foot":"feet"} ({step.distanceMeters} meters)
+                      </p>
+                      <p className='stepInstruction'>{step.instruction}</p>
+                    </div>
+                  </List.Item>
+                )}
+              />
             </div>
           </div>
-          
-          <div style={{paddingBottom:'1rem'}}>
-            <Checkbox.Group onChange={event => handleCheckboxChange(event)}>
-              <div style={{display:'grid',marginLeft:'1rem'}}>
-                <div>
-                  <Checkbox value="safe">Safe Room Locations</Checkbox>
-                </div>
-                <div>
-                  <Checkbox value="defense">ERVA Defense</Checkbox>
-                </div>
+          <div className='rightPane' style={{transform: mapOptionsPosition}}>
+            <div style={{display:'flex',gap:'2rem'}}>
+              <div>
+                <Tooltip title="Hide Map Options">
+                  <CloseOutlined id="closeMapOptionsButton" onClick={() => handleRightPaneView("options","close")}/>
+                </Tooltip>
               </div>
-            </Checkbox.Group>
+              <div>
+                <p><strong>Map Options</strong></p>
+              </div>
+            </div>
+            <div style={{paddingBottom:'1rem'}}>
+              <Checkbox.Group onChange={event => handleCheckboxChange(event)}>
+                <div style={{display:'grid',marginLeft:'1rem'}}>
+                  <div>
+                    <Checkbox value="safe">Safe Room Locations</Checkbox>
+                  </div>
+                  <div>
+                    <Checkbox value="defense">ERVA Defense</Checkbox>
+                  </div>
+                </div>
+              </Checkbox.Group>
+            </div>
           </div>
         </div>
-      </div>
+        <div className='rightPane' style={{transform:markerInfoPosition}}>
+          <Button
+            size='sm'
+            kind='ghost'
+            closeOnActivation={true}
+            renderIcon={SidePanelOpenFilled}
+            label='Close'
+            align='top'
+            onClick={() => handleRightPaneView("info","close")}
+            children="Close"
+          />
+          <Stack gap={5}>
+            <div>
+              <p><strong>{selectedMarker.name.toLocaleUpperCase()}</strong></p>
+            </div>
+            <div style={{display:'flex', justifyContent:'center'}}>
+              <div className='infoIcon' style={{backgroundColor:selectedMarker.color}}>
+                <svg style={{height:'5rem'}} ref={infoIcon}/>
+              </div>
+            </div>
+            <SideNavDivider/>
+            <div>
+              <TextInput
+                id="componentType"
+                value={selectedMarker.type}
+                readOnly={true}
+                labelText="Type"
+                inline={true}
+              />
+              <TextInput
+                id="componentLat"
+                value={selectedMarker.lat}
+                readOnly={true}
+                labelText="Latitude"
+                inline={true}
+              />
+              <TextInput
+                id="componentLong"
+                value={selectedMarker.long}
+                readOnly={true}
+                labelText="Longitude"
+                inline={true}
+              />
+            </div>
+          </Stack>
+        </div>
         <div id="mapView" ref={mapRef} />
       </Content>
-        <div id='floorSelector'>
-            <Select
-              defaultValue={"Select Floor"}
-              style={{width:'10rem'}}
-              onChange={selection => mapView.setMap(selection)}
-              options={levels}
-            />
-          </div>
     </>
   );
 }

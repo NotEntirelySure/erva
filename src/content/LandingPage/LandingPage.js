@@ -206,7 +206,9 @@ export default function LandingPage() {
         }
       />
       <div id="LandingPageContent">
-        <div id="imageContainer"><img id='landingPageImage' src={logo}></img></div>
+        <div id="imageContainer">
+          <img id='landingPageImage' src={logo}></img>
+        </div>
         <div className='buttondiv'>
           <Button
             className='landingPageButton'
