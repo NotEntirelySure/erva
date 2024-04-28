@@ -1,27 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import {
-  createCoordinate, 
+import { 
   getVenue,
   showVenue,
+  E_BLUEDOT_EVENT,
+  E_BLUEDOT_STATE,
+  E_BLUEDOT_STATE_REASON,
   E_SDK_EVENT,
-  OfflineSearch,
-  MappedinLocation,
-  TGetVenueOptions,
+  PositionUpdater,
+  OfflineSearch
 } from "@mappedin/mappedin-js";
 import "@mappedin/mappedin-js/lib/mappedin.css";
 import {
   Checkbox,
   Divider,
-  Input,
   List,
-  Select,
-  Spin,
   Tooltip
 } from 'antd';
 import {
-  CloseOutlined,
-  EnvironmentOutlined
+  CloseOutlined
 } from '@ant-design/icons';
 import { 
   Button,
@@ -29,20 +26,34 @@ import {
   Dropdown,
   DropdownSkeleton,
   IconButton,
+  Loading,
+  Search,
   SideNavDivider,
   Stack,
-  TextInput
+  TextInput,
+  Toggle
 } from '@carbon/react';
-import { 
+import {
+  Location,
   SearchLocate,
   SettingsAdjust,
+  SidePanelCloseFilled,
   SidePanelOpenFilled
 } from '@carbon/react/icons';
 import GlobalHeader from '../../components/GlobalHeader/GlobalHeader';
 
 export default function MapPage() {
 
-  const { Search } = Input;
+  let positionData = {
+    timestamp: Date.now(),
+    coords: {
+      accuracy: 5,
+      latitude: 43.51905183293411,
+      longitude: -80.53701846381122,
+      floorLevel: 0
+    }
+  };
+
   const location = useLocation();
   const mapRef = useRef(null);
   const mapComponents = useRef({});
@@ -77,23 +88,57 @@ export default function MapPage() {
   const options = {
     venue: "mappedin-demo-mall", //location.state.faciilityCode
     clientId: "5eab30aa91b055001a68e996",
-    clientSecret: "RJyRXKcryCMy4erZqqCbuB1NbR66QTGNXVE0x3Pg6oCIlUR1" //location.state.apiKey // I may want to get the API key at the time of load instead of passing the value using location.state.
+    clientSecret: "RJyRXKcryCMy4erZqqCbuB1NbR66QTGNXVE0x3Pg6oCIlUR1" //location.state.apiKey - I may want to get the API key at the time of load instead of passing the value using location.state.
   };
 
-  useEffect(() => {loadMap();},[]);
+  // const options = {
+  //   venue: location.state.facilityCode,
+  //   clientId: "6616d537a89505c89c59f2a2",
+  //   clientSecret: "nGytExsX3kTyJk5bk9nsTkYYcNK5GUucm1btKV68p8MRXUT1",
+  // };
+
+  useEffect(() => {
+    loadMap();
+  },[]);
 
   useEffect(() => {
     if (mapView) {
       try {
+        GetMapComponents();
         mapView.addInteractivePolygonsForAllLocations();
         mapView.labelAllLocations({flatLabels: true})
         mapView.on(E_SDK_EVENT.POLYGON_CLICKED, polygon => {mapView.setPolygonColor(polygon, "#BF4320");});
         mapView.on(E_SDK_EVENT.NOTHING_CLICKED, () => mapView.clearAllPolygonColors())
-        mapView.on(E_SDK_EVENT.CLICK, ({ floatingLabels }) => {
-          setSelectedMarker(mapComponents.current[floatingLabels[0].id]);
-          handleRightPaneView("info","open");
+        mapView.on(E_SDK_EVENT.CLICK, event => {
+          if (event.floatingLabels.length > 0) {
+            setSelectedMarker(mapComponents.current[event.floatingLabels[0].id]);
+            handleRightPaneView("info","open");
+          };
         });
-        GetMapComponents();
+        const staticPositionUpdater = new PositionUpdater();
+        setInterval(() => {
+          navigator.geolocation.getCurrentPosition(position => {
+            staticPositionUpdater.update(position);
+          })
+        }, 10000);
+        mapView.BlueDot.enable({
+          positionUpdater: staticPositionUpdater,
+          smoothing: false
+        });
+      
+        staticPositionUpdater.update(positionData);
+      
+        mapView.BlueDot.on(E_BLUEDOT_EVENT.POSITION_UPDATE, update => {
+          console.info(update.position);
+        });
+      
+        mapView.BlueDot.on(E_BLUEDOT_EVENT.STATE_CHANGE, state => {
+          const stateWithNames = {
+            state: E_BLUEDOT_STATE[state.name],
+            reason: state.reason && E_BLUEDOT_STATE_REASON[state.reason]
+          };
+          console.info(stateWithNames);
+        });
       }
       catch (error) {console.log(error)}
     };
@@ -125,17 +170,34 @@ export default function MapPage() {
     if (mapRef.current === null || venueData === null) {
       setContentLoading(false);
       return;
-    }
+    };
     // Do nothing if the mapView is already rendered with the current venue data
     if (mapView != null && mapView.venue.venue.id === venue.venue.id) {
       setContentLoading(false);
       return;
-    }
+    };
     // If the mapView has been rendered with old data, destroy it
     if (mapView != null) mapView.destroy();
     // Try to render the mapView
     try {
-      const _mapView = await showVenue(mapRef.current, venueData);
+      const _mapView = await showVenue(mapRef.current, venueData, {
+        multiBufferRendering: true,
+        xRayPath: true,
+        loadOptions: {
+          outdoorGeometryLayers: [
+            "__TEXT__",
+            "__AUTO_BORDER__",
+            "Void",
+            "Base",
+            "Tarmac",
+            "Landscape",
+            "Floor Shadow",
+            "Airplanes",
+            "Airplane Shadows",
+            "Walkways"
+          ]
+        }
+      });
       setMapView(_mapView);
     }
     catch (error) {
@@ -168,6 +230,7 @@ export default function MapPage() {
           name
           lat
           long
+          floor
           icon
         }
         svgData {
@@ -191,7 +254,9 @@ export default function MapPage() {
     const componentResponse = await componentRequest.json();
     if (componentResponse.data.getMapComponents) {
       componentResponse.data.getMapComponents.components.forEach(component => {
-        const coordinate = mapView.currentMap.createCoordinate(component.lat, component.long);
+        //const coordinate = mapView.currentMap.createCoordinate(component.lat, component.long);
+        const floor = component.floor ? component.floor - 1:0;
+        const coordinate = venue.maps[floor].createCoordinate(component.lat, component.long);
         const base64Data = componentResponse.data.getMapComponents.svgData.find(svg => svg.name === component.icon).data
         const svg = atob(base64Data);
         const label = mapView.FloatingLabels.add(coordinate, component.name, {
@@ -300,13 +365,13 @@ export default function MapPage() {
             "distanceFeet":Math.round(step.distance*3.28084)
           }
         )}
-      )
+      );
       setDirectionsInstructions(instructionsArray);
       if (displaySearch === 'block') setDisplaySearch('none');
       setDisplayTbtDirections('block')
       mapView.Journey.draw(directions);
-    }
-  }
+    };
+  };
 
   function handleCheckboxChange(value) {
     const safePolygons = [
@@ -339,6 +404,7 @@ export default function MapPage() {
   return (
     <>
       <GlobalHeader isAuth={true}/>
+      <Loading active={contentLoading} description='Loading...'/>
       <div id='mapControls'>
         {levels && (
         <Dropdown
@@ -363,13 +429,6 @@ export default function MapPage() {
       </div>
       <Content>
         <div>
-          {contentLoading && (
-            <div className='overlay' style={{display:contentLoading}}>
-              <div className='loadingIcon'>
-                <Spin tip="Loading..."/>
-              </div>
-            </div>
-          )}
           <div 
             className='openSideNavArrow'
             style={{transform: sideNavArrowPosition}}
@@ -380,20 +439,29 @@ export default function MapPage() {
             </Tooltip>
           </div>
           <div className='mapSidenav' style={{transform: sideNavPosition}}>
-            <div style={{float:'right'}}>
-              <Tooltip title="Hide Navigation">
-                <CloseOutlined id="closeSideNavButton" onClick={() => handleSideNavView("close")}/>
-              </Tooltip>
+            <Stack gap={4}>
+            <div style={{display:'flex', justifyContent:'end'}}>
+              <Button
+                size='sm'
+                kind='ghost'
+                closeOnActivation={true}
+                renderIcon={SidePanelCloseFilled}
+                label='Close'
+                align='top'
+                onClick={() => handleSideNavView("close")}
+                children="Close"
+              />
             </div>
             <div>
               <div style={{paddingBottom:'1rem'}}>  
                 <Search 
                   id="searchStart"
-                  placeholder={`Search ${location.state.map}`}
+                  placeholder={`Search ${location.state.facilityName}`}
                   onSearch={() => {}}
                   enterButton
                   value={directionsStart}
-                  onChange={(event) => {
+                  onClear={() => mapView.Journey.clear()}
+                  onChange={event => {
                     setDirectionsStart(event.target.value)
                     searchDirectory("start",event.target.value)
                     if (directionsInstructions.length) {
@@ -411,6 +479,7 @@ export default function MapPage() {
                 onSearch={() => {}}
                 enterButton
                 value={directionsEnd}
+                onClear={() => mapView.Journey.clear()}
                 onChange={event => {
                   setDirectionsEnd(event.target.value)
                   searchDirectory("end",event.target.value)
@@ -423,8 +492,11 @@ export default function MapPage() {
               />
             </div>
             <div style={{paddingBottom:'1rem'}}>
-              <Button type="primary" onClick={() => getDirections()}>Get Directions <EnvironmentOutlined /></Button>  
+              <Button 
+                renderIcon={Location}
+                onClick={() => getDirections()}>Directions</Button>  
             </div> 
+            </Stack>
             <div className='searchResults' style={{display:displaySearch}}>
             <List
               bordered={false}
@@ -485,6 +557,18 @@ export default function MapPage() {
                 </div>
               </Checkbox.Group>
             </div>
+            <div>
+              <Toggle
+                onToggle={toggled => {
+                  toggled ? 
+                    mapView.StackedMaps.enable({
+                      verticalDistanceBetweenMaps: 125
+                    })
+                  :
+                    mapView.StackedMaps.disable();
+                }}
+              />
+            </div>
           </div>
         </div>
         <div className='rightPane' style={{transform:markerInfoPosition}}>
@@ -498,6 +582,7 @@ export default function MapPage() {
             onClick={() => handleRightPaneView("info","close")}
             children="Close"
           />
+          <SideNavDivider/>
           <Stack gap={5}>
             <div>
               <p><strong>{selectedMarker.name.toLocaleUpperCase()}</strong></p>

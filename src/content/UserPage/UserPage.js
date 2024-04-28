@@ -385,11 +385,13 @@ export default function UserPage() {
             }}
             children={
               <>
-                <img 
-                  className="tileImage"
-                  alt={facility.name}
-                  src={`data:image/png;base64,${facility.image.data}`}
-                />
+                <div>
+                  <img 
+                    className="tileImage"
+                    alt={facility.name}
+                    src={`data:image/png;base64,${facility.image.data}`}
+                  />
+                </div>
                 <p style={{marginTop:'1rem'}}><strong>{facility.name}</strong></p>
                 <hr/>
                 <p>{facility.address}</p>
@@ -431,7 +433,7 @@ export default function UserPage() {
               <p>{contextData.selectedOrganization.city}, {contextData.selectedOrganization.state} {contextData.selectedOrganization.zip}</p>
             </>
           </div>
-          <div><img className='logo' src={entPortal}></img></div>
+          <div><img className='logo' alt='' src={entPortal}></img></div>
         </div>
         <hr/>
         <div id="facilityData" style={{display:showFacilityData}}>
@@ -609,7 +611,8 @@ export default function UserPage() {
                   {
                     state:{
                       "facilityId":selectedFacility.id,
-                      "facilityCode":selectedFacility.code
+                      "facilityCode":selectedFacility.code,
+                      "facilityName":selectedFacility.name
                     }
                   }
                 )}
