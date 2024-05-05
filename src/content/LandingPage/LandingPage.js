@@ -78,13 +78,12 @@ export default function LandingPage() {
       sessionStorage.setItem("ervaJwt",loginResult.jwt);
       navigate('/userpage');
     };
-    if (!loginResult.success) {
-      userTextBoxRef.current.value = '';
-      passTextBoxRef.current.value = ''; 
+    if (!loginResult.success) { 
       otpTextBoxRef.current.value = '';
       setErrorInfo({
         heading:`Error ${loginResult.errorCode}`,
-        message:`A login error occured: ${loginResult.errorMessage}`
+        message:`A login error occured: ${loginResult.errorMessage}`,
+        code:loginResult.errorCode
       });
       setOtpModalOpen(false);
       setErrorModalOpen(true);
@@ -109,6 +108,16 @@ export default function LandingPage() {
         onRequestSubmit={() => {
           setErrorModalOpen(false);
           setTimeout(() => setErrorInfo({heading:'',message:''}),750)
+          switch (errorInfo.code) {
+            case 601:
+              setOtpModalOpen(true);
+              break;
+            case 602:
+            case 603:
+            case 401:
+              setLoginModalOpen(true);
+              break;
+          }
         }}
         children={
           <div style={{display:'flex', gap:'1rem', alignContent:'center'}}>
