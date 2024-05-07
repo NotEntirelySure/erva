@@ -130,7 +130,7 @@ export default function LandingPage() {
         shouldSubmitOnEnter={true}
         preventCloseOnClickOutside={true}
         open={loginModalOpen}
-        size="sm"
+        size="xs"
         modalHeading="Login"
         primaryButtonText='Continue'
         secondaryButtonText='Cancel'

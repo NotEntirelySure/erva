@@ -130,19 +130,22 @@ export default function RegistrationPage() {
   async function Register() {
     setRegistering(true);
     try {
+      const payload = {
+        fname:firstNameRef.current.value,
+        lname:lastNameRef.current.value,
+        email:emailRef.current.value,
+        password:passwordRef.current.value,
+        confirmPassword:confirmPasswordRef.current.value,
+        otp:otpRef.current.value,
+        otpsecret:qrCode.secret.base32
+      };
+      console.log(payload);
+      
       const registerRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/register`, {
         method:'POST',
         mode:'cors',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-          "fname":firstNameRef.current.value,
-          "lname":lastNameRef.current.value,
-          "email":emailRef.current.value,
-          "password":passwordRef.current.value,
-          "confirmPassword":confirmPasswordRef.current.value,
-          "otp":otpRef.current.value,
-          "otpsecret":qrCode.secret
-        })
+        body:JSON.stringify(payload)
       });
       const registerResponse = await registerRequest.json();
       if (!registerResponse.success) {
