@@ -71,8 +71,7 @@ export default function MapPage() {
   const jwt = useRef(sessionStorage.getItem('ervaJwt'));
   const selectedPolygon = useRef({id:''});
   const onClickListener = useRef(false);
-  const search = useRef([{source:'',name:'',id:''}])
-  
+
   const [venue, setVenue] = useState();
   const [mapView, setMapView] = useState();
   const [levels, setLevels] = useState();
@@ -82,14 +81,13 @@ export default function MapPage() {
   const [contentLoading, setContentLoading] = useState(false);
   const [venueDirectory, setVenueDirectory] = useState();
   const [showDestSearchBar, setShowDestSearchBar] = useState(true);
+  const [startSearchResults, setStartSearchResults] = useState([]);
   const [destSearchResults, setDestSearchResults] = useState([]);
   const [showStartSearchBar, setShowStartSearchBar] = useState(false);
   const [showLocationInfo, setShowLocationInfo] = useState(false);
-  const [searchResults, setSearchResults] = useState([{source:'',name:'',id:''}]);
-  const [showSearchResults, setShowSearchResults] = useState(true);
   const [startLocation, setStartLocation] = useState({name:'',polygonId:''});
   const [directionsInstructions, setDirectionsInstructions] = useState([]);
-  const [displayTbtDirections, setDisplayTbtDirections] = useState('none');
+  const [displayTbtDirections, setDisplayTbtDirections] = useState(false);
   const [currentJourney, setCurrentJourney] = useState({});
   const [selectedLocation, setSelectedLocation] = useState({
     polygonId:'',
@@ -412,20 +410,18 @@ export default function MapPage() {
 
   async function searchDirectory (source, searchValue) {
     if (!searchValue) {
-      setSearchResults([{source:'',name:'',id:''}]);
-      setShowSearchResults(false);
-      setDestSearchResults([]);
-    };
+      if (source === "start") setStartSearchResults([]);
+      if (source === "end") setDestSearchResults([]);
+    }
     if (searchValue){
-      if(!showSearchResults) setShowSearchResults(true);
       const results = await venueDirectory.search(searchValue);
-      search.current = [];
+      const filteredResults = [];
       results.filter(r => r.type === "MappedinLocation").map(r => r.object).filter(l => l.type === "tenant")
       if (results.length > 0) {
         const size = results.length > 10 ? 10:results.length - 1;
         for (let i=0;i<=size;i++) {
           if (results[i].matches[0].weight >= 1) {
-            search.current.push({
+            filteredResults.push({
               "source":source,
               "name":results[i].matches[0].value,
               "polygonId":results[i].object.id
@@ -434,15 +430,14 @@ export default function MapPage() {
         };
       };
       if (results.length <= 0) {
-        search.current.push({
+        filteredResults.push({
           source:source,
           name:"No results",
           polygonId:0
         });
       };
-      console.log(search.current);
-      setDestSearchResults(search.current.map(result => result.name));
-      //setSearchResults();
+      if (source === "start") {setStartSearchResults(filteredResults)};
+      if (source === "end") setDestSearchResults(filteredResults);
     };
   };
 
@@ -485,8 +480,7 @@ export default function MapPage() {
         )}
       );
       setDirectionsInstructions(instructions);
-      if (showSearchResults) setShowSearchResults(false);
-      setDisplayTbtDirections('block');
+      setDisplayTbtDirections(true);
       const journey = mapView.Journey.draw(directions);
       mapView.Camera.focusOn(
         { polygons:start.polygons },
@@ -566,7 +560,6 @@ export default function MapPage() {
             onClick={() => handleSideNavView("open")}
           >
             <SidePanelOpenFilled size={26}/>
-            
           </div>
           <div className='mapSidenav' style={{transform: sideNavPosition}}>
               <div style={{display:'flex', justifyContent:'end'}}>
@@ -581,27 +574,59 @@ export default function MapPage() {
                   children="Close"
                 />
               </div>
-              {showStartSearchBar && (
-                <Search 
-                  id="searchStart"
-                  labelText="Start"
-                  renderIcon={NavaidMilitaryCivil}
-                  placeholder={'Choose start location'}
-                  value={startLocation.name}
-                  onClear={() => {
-                    setStartLocation({name:'',polygonId:''});
-                    mapView.Journey.clear();
-                  }}
-                  onChange={event => {
-                    setStartLocation({name:event.target.value});
-                    searchDirectory("start",event.target.value);
-                    if (directionsInstructions.length) {
-                      setDirectionsInstructions([]);
-                      setDisplayTbtDirections('none');
-                    };
-                  }} 
-                />
-              )}
+              {
+                showStartSearchBar && (
+                  <div>
+                    <Layer>
+                      <ContainedList>
+                        <Search 
+                          id="searchStart"
+                          labelText="Start"
+                          renderIcon={NavaidMilitaryCivil}
+                          placeholder={'Choose start location'}
+                          value={startLocation.name}
+                          onClear={() => {
+                            setStartLocation({name:'',polygonId:''});
+                            setStartSearchResults([]);
+                            mapView.Journey.clear();
+                          }}
+                          onChange={event => {
+                            setStartLocation({name:event.target.value});
+                            searchDirectory("start",event.target.value);
+                            if (directionsInstructions.length) {
+                              setDirectionsInstructions([]);
+                              setDisplayTbtDirections(false);
+                            };
+                          }}
+                        />
+                        {
+                          startSearchResults.map((result, index) => (
+                            <ContainedListItem
+                            key={index}
+                            children={result.name}
+                            onClick={() => {
+                              const location = venue.locations.find(location => location.id === result.polygonId);
+                                const locationData = {
+                                  polygonId:location.id,
+                                  source:'location',
+                                  type:'Room',
+                                  name:location.name,
+                                  color:'#78a9ff',
+                                  lat:location.nodes[0].lat,
+                                  long:location.nodes[0].lon,
+                                  icon:location.logo ? location.logo.original:defaultLocation
+                                }
+                                setStartLocation(locationData);
+                                setStartSearchResults([]);
+                            }}
+                          />
+                          ))
+                        }
+                      </ContainedList>
+                    </Layer>
+                  </div>
+                )
+              }
               {showDestSearchBar && (
                 <div>
                   <Layer>
@@ -628,24 +653,40 @@ export default function MapPage() {
                           onClickListener.current = false;
                           if (directionsInstructions.length) {
                             setDirectionsInstructions([]);
-                            setDisplayTbtDirections('none');
+                            setDisplayTbtDirections(false);
                           };
                         }}
                         onChange={event => {
                           setSelectedLocation(prevState => ({...prevState, name:event.target.value}));
-                          searchDirectory("end",event.target.value)
+                          searchDirectory("end",event.target.value);
                           if (directionsInstructions.length) {
-                            setDirectionsInstructions([])
-                            setDisplayTbtDirections('none')
+                            setDirectionsInstructions([]);
+                            setDisplayTbtDirections(false);
                           }
                         }} 
                       />
                       {
                         destSearchResults.map((result, index) => (
                           <ContainedListItem
-                            onClick={() => {console.log(search.current[index])}}
                             key={index}
-                            children={result}
+                            children={result.name}
+                            onClick={() => {
+                              const location = venue.locations.find(location => location.id === result.polygonId);
+                                const locationData = {
+                                  polygonId:location.id,
+                                  source:'location',
+                                  type:'Room',
+                                  name:location.name,
+                                  color:'#78a9ff',
+                                  lat:location.nodes[0].lat,
+                                  long:location.nodes[0].lon,
+                                  icon:location.logo ? location.logo.original:defaultLocation
+                                }
+                                setSelectedLocation(locationData);
+                                setShowDestSearchBar(false);
+                                setShowLocationInfo(true);
+                                setDestSearchResults([]);
+                            }}
                           />
                         ))
                       }
@@ -654,138 +695,105 @@ export default function MapPage() {
                 </div>
               )}
               
-              {showLocationInfo && (
-                <>
-                <SideNavDivider/>
-                <Stack gap={6}>
-                <div>
-                  <p><strong>{selectedLocation.name.toLocaleUpperCase()}</strong></p>
-                </div>
-                  <div 
-                    className='iconContainer'
-                    style={{backgroundColor:`${selectedLocation.source === "marker" ? selectedLocation.color:"#D0E2FF"}`}}
-                  >
-                    { 
-                      selectedLocation.source === "marker" ?  
-                        <svg dangerouslySetInnerHTML={{__html: `${svgData.current.find(svg => svg.icon === selectedLocation.icon).data}`}}/>
-                        :
-                        <img className='locationIcon' src={selectedLocation.icon}/>
-                    }
-                  </div>
-                  <div>
-                    <TextInput
-                      id="componentType"
-                      value={selectedLocation.type}
-                      readOnly={true}
-                      labelText="Type"
-                      inline={true}
-                    />
-                    <TextInput
-                      id="componentLat"
-                      value={selectedLocation.lat}
-                      readOnly={true}
-                      labelText="Latitude"
-                      inline={true}
-                      />
-                    <TextInput
-                      id="componentLong"
-                      value={selectedLocation.long}
-                      readOnly={true}
-                      labelText="Longitude"
-                      inline={true}
-                      />
-                  </div>
-                  <div style={{maxWidth:'10rem'}}>
-                    <ButtonSet>
-                      <Button
-                        renderIcon={CloseOutline}
-                        kind="secondary"
-                        onClick={() => {
-                          setShowDestSearchBar(true);
-                          setShowStartSearchBar(false);
-                          setShowLocationInfo(false);
-                          setSelectedLocation({
-                            polygonId:'',
-                            type:'',
-                            color:'',
-                            name:'',
-                            lat:'',
-                            long:'',
-                            icon:''
-                          });
-                        }}
-                        children="Back"
-                      /> 
-                      <Button 
-                        renderIcon={Location}
-                        onClick={() => {
-                          onClickListener.current = true;
-                          console.log("directions button clicked.")
-                          setShowLocationInfo(false);
-                          setShowDestSearchBar(true);
-                          setShowStartSearchBar(true);
-                        }}
-                        children="Directions"
-                        />
-                    </ButtonSet>
-                  </div>
-            </Stack>
-                </>
-              )}
-            {showSearchResults && (
-            <div className='searchResults'>
-              <List
-                bordered={true}
-                dataSource={searchResults}
-                renderItem={(item, index) => (
-                  <List.Item
-                    key={index}
-                    className="listItem"
-                    onClick={() => {
-                      const location = venue.locations.find(location => location.id === item.polygonId);
-                        const locationData = {
-                          polygonId:location.id,
-                          source:'location',
-                          type:'Room',
-                          name:location.name,
-                          color:'#78a9ff',
-                          lat:location.nodes[0].lat,
-                          long:location.nodes[0].lon,
-                          icon:location.logo ? location.logo.original:defaultLocation
-                        }
-                      if (item.source === "start") setStartLocation(locationData);
-                      if (item.source === "end") {
-                        setSelectedLocation(locationData);
-                        setShowDestSearchBar(false);
-                        setShowLocationInfo(true);
-                      };
-                      setShowSearchResults(false);
-                      setSearchResults('');
-                    }}
-                  >
-                    {item.name}
-                  </List.Item>
-                )}
-              />
-            </div>
-            )}
-            <div className='tbtDirections' style={{display:displayTbtDirections}}>
-              <Divider orientation='center'>Directions to {selectedLocation.name}</Divider>
-              <List
-                bordered={false}
-                dataSource={directionsInstructions}
-                renderItem={step => (
-                  <List.Item>
+              {
+                showLocationInfo && (
+                  <>
+                    <SideNavDivider/>
+                    <Stack gap={6}>
                     <div>
-                      <p className='stepDistance'>
-                        {step.distanceFeet} {step.distanceFeet === 1 ? "foot":"feet"} ({step.distanceMeters} meters)
-                      </p>
-                      <p className='stepInstruction'>{step.instruction}</p>
+                      <p><strong>{selectedLocation.name.toLocaleUpperCase()}</strong></p>
                     </div>
-                  </List.Item>
-                )}
-              />
-            </div>
+                      <div 
+                        className='iconContainer'
+                        style={{backgroundColor:`${selectedLocation.source === "marker" ? selectedLocation.color:"#D0E2FF"}`}}
+                      >
+                        { 
+                          selectedLocation.source === "marker" ?  
+                            <svg dangerouslySetInnerHTML={{__html: `${svgData.current.find(svg => svg.icon === selectedLocation.icon).data}`}}/>
+                            :
+                            <img className='locationIcon' src={selectedLocation.icon}/>
+                        }
+                      </div>
+                      <div>
+                        <TextInput
+                          id="componentType"
+                          value={selectedLocation.type}
+                          readOnly={true}
+                          labelText="Type"
+                          inline={true}
+                        />
+                        <TextInput
+                          id="componentLat"
+                          value={selectedLocation.lat}
+                          readOnly={true}
+                          labelText="Latitude"
+                          inline={true}
+                          />
+                        <TextInput
+                          id="componentLong"
+                          value={selectedLocation.long}
+                          readOnly={true}
+                          labelText="Longitude"
+                          inline={true}
+                          />
+                      </div>
+                      <div style={{maxWidth:'10rem'}}>
+                        <ButtonSet>
+                          <Button
+                            renderIcon={CloseOutline}
+                            kind="secondary"
+                            onClick={() => {
+                              setShowDestSearchBar(true);
+                              setShowStartSearchBar(false);
+                              setShowLocationInfo(false);
+                              setSelectedLocation({
+                                polygonId:'',
+                                type:'',
+                                color:'',
+                                name:'',
+                                lat:'',
+                                long:'',
+                                icon:''
+                              });
+                            }}
+                            children="Back"
+                          /> 
+                          <Button 
+                            renderIcon={Location}
+                            onClick={() => {
+                              onClickListener.current = true;
+                              console.log("directions button clicked.")
+                              setShowLocationInfo(false);
+                              setShowDestSearchBar(true);
+                              setShowStartSearchBar(true);
+                            }}
+                            children="Directions"
+                            />
+                        </ButtonSet>
+                      </div>
+                    </Stack>
+                  </>
+                )
+              }
+            {displayTbtDirections && (
+              <div className='tbtDirections'>
+                <Divider orientation='center'>Directions to {selectedLocation.name}</Divider>
+                <List
+                  bordered={false}
+                  dataSource={directionsInstructions}
+                  renderItem={step => (
+                    <List.Item>
+                      <div>
+                        <p className='stepDistance'>
+                          {step.distanceFeet} {step.distanceFeet === 1 ? "foot":"feet"} ({step.distanceMeters} meters)
+                        </p>
+                        <p className='stepInstruction'>{step.instruction}</p>
+                      </div>
+                    </List.Item>
+                  )}
+                />
+              </div>
+            )}
           </div>
           <div className='rightPane' style={{transform: mapOptionsPosition}}>
             <div style={{display:'flex',gap:'2rem'}}>
