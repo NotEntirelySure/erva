@@ -154,7 +154,6 @@ export default function MapPage() {
               icon:event.polygons[0].locations[0].logo ? event.polygons[0].locations[0].logo.original:<><svg>{defaultLocation}</svg></>
             };
             if (onClickListener.current) {
-              console.log('click listener');
               setStartLocation(locationData);
               return;
             };
@@ -671,21 +670,38 @@ export default function MapPage() {
                             key={index}
                             children={result.name}
                             onClick={() => {
-                              const location = venue.locations.find(location => location.id === result.polygonId);
-                                const locationData = {
-                                  polygonId:location.id,
-                                  source:'location',
-                                  type:'Room',
-                                  name:location.name,
-                                  color:'#78a9ff',
-                                  lat:location.nodes[0].lat,
-                                  long:location.nodes[0].lon,
-                                  icon:location.logo ? location.logo.original:defaultLocation
+                              const location = mapView.venue.locations.find(location => location.id === result.polygonId);
+                              console.log(location);
+                              const locationData = {
+                                polygonId:location.id,
+                                source:'location',
+                                type:'Room',
+                                name:location.name,
+                                color:'#78a9ff',
+                                lat:location.nodes[0].lat,
+                                long:location.nodes[0].lon,
+                                icon:location.logo ? location.logo.original:defaultLocation
+                              }
+                              location.polygons.forEach(polygon => {
+                                mapView.setPolygonColor(polygon, "#BF4320")
+                              }); 
+                              mapView.Camera.focusOn(
+                                { polygons: location.polygons },
+                                {
+                                  updateZoomLimits: true,
+                                  changeZoom: true,
+                                  rotation:0,
+                                  tilt:0.5,
+                                  minZoom:1500,
+                                  duration: 1250,
+                                  easing: CAMERA_EASING_MODE.EASE_OUT
                                 }
-                                setSelectedLocation(locationData);
-                                setShowDestSearchBar(false);
-                                setShowLocationInfo(true);
-                                setDestSearchResults([]);
+                              );
+                              
+                              setSelectedLocation(locationData);
+                              setShowDestSearchBar(false);
+                              setShowLocationInfo(true);
+                              setDestSearchResults([]);
                             }}
                           />
                         ))
