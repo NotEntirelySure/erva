@@ -775,25 +775,27 @@ export default function MapPage() {
                   </>
                 )
               }
-            {displayTbtDirections && (
-              <div className='tbtDirections'>
-                <Divider orientation='center'>Directions to {selectedLocation.name}</Divider>
-                <List
-                  bordered={false}
-                  dataSource={directionsInstructions}
-                  renderItem={step => (
-                    <List.Item>
-                      <div>
-                        <p className='stepDistance'>
-                          {step.distanceFeet} {step.distanceFeet === 1 ? "foot":"feet"} ({step.distanceMeters} meters)
-                        </p>
-                        <p className='stepInstruction'>{step.instruction}</p>
-                      </div>
-                    </List.Item>
-                  )}
-                />
-              </div>
-            )}
+            {
+              displayTbtDirections && (
+                <div className='tbtDirections'>
+                  <Divider orientation='center'>Directions to {selectedLocation.name}</Divider>
+                  <List
+                    bordered={false}
+                    dataSource={directionsInstructions}
+                    renderItem={step => (
+                      <List.Item>
+                        <div>
+                          <p className='stepDistance'>
+                            {step.distanceFeet} {step.distanceFeet === 1 ? "foot":"feet"} ({step.distanceMeters} meters)
+                          </p>
+                          <p className='stepInstruction'>{step.instruction}</p>
+                        </div>
+                      </List.Item>
+                    )}
+                  />
+                </div>
+              )
+            }
           </div>
           <div className='rightPane' style={{transform: mapOptionsPosition}}>
             <div style={{display:'flex',gap:'2rem'}}>
