@@ -93,9 +93,9 @@ CREATE TABLE access_log (
 
 #Check that the tables were successfully created by using this command: 
 
-\dt tables;
+\dt;
 
-#You should see 8 rows listed
+#You should see 11 rows listed
 
 #Copy and paste all of the following lines as well
 
