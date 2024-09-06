@@ -1,8 +1,19 @@
+
 #mapView {
   margin-top: -2rem;
   margin-left: -2rem;
   height: 90vh;
   width: 100vw;
+  cursor: crosshair;
+}
+
+.mapNotification {
+  padding-top: 1rem;
+  width:100%;
+  display: flex;
+  justify-content: center;
+  position:absolute;
+  z-index: 5;
 }
 
 #mapControls {

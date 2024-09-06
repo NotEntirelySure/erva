@@ -21,7 +21,8 @@ import {
 import {
   CloseOutlined
 } from '@ant-design/icons';
-import { 
+import {
+  ActionableNotification,
   Button,
   ButtonSet,
   ContainedList,
@@ -47,7 +48,8 @@ import {
   SearchLocate,
   SettingsAdjust,
   SidePanelCloseFilled,
-  SidePanelOpenFilled
+  SidePanelOpenFilled,
+  TrashCan
 } from '@carbon/react/icons';
 import GlobalHeader from '../../components/GlobalHeader/GlobalHeader';
 import { ReactComponent as defaultLocation } from '../../assets/images/noun-room-3368532.svg'
@@ -71,10 +73,15 @@ export default function MapPage() {
   const jwt = useRef(sessionStorage.getItem('ervaJwt'));
   const selectedPolygon = useRef({id:''});
   const onClickListener = useRef(false);
+  const addComponentListener = useRef({
+    listening: false,
+    componentId:-1
+  })
 
   const [venue, setVenue] = useState();
   const [mapView, setMapView] = useState();
   const [levels, setLevels] = useState();
+  const [components, setComponents] = useState([]);
   const [sideNavPosition, setSideNavPosition] = useState('translate(0rem,0rem)');
   const [sideNavArrowPosition, setSideNavArrowPosition] = useState('');
   const [mapOptionsPosition, setMapOptionsPosition] = useState('translate(25rem,0rem)');
@@ -89,6 +96,7 @@ export default function MapPage() {
   const [directionsInstructions, setDirectionsInstructions] = useState([]);
   const [displayTbtDirections, setDisplayTbtDirections] = useState(false);
   const [currentJourney, setCurrentJourney] = useState({});
+  const [showNotification, setShowNotification] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState({
     polygonId:'',
     type:'init',
@@ -115,18 +123,28 @@ export default function MapPage() {
     loadMap();
   },[]);
 
+  useEffect(()=>{console.log(components)},[components]);
   useEffect(() => {getDirections();},[startLocation]);
   useEffect(() => {
     if (mapView) {
       try {
-        GetMapComponents();
+        GetComponents();
         mapView.addInteractivePolygonsForAllLocations();
         mapView.labelAllLocations({flatLabels: true})
         mapView.on(E_SDK_EVENT.CLICK, event => {
-          console.log(event);
-
+          if (addComponentListener.current.listening) {
+            console.log(event);
+            const data = {
+              floor:event.maps[0].elevation + 1,
+              lat:event.position.latitude,
+              long:event.position.longitude,
+              facilityId:parseInt(location.state.facilityId),
+              componentId:addComponentListener.current.componentId
+            };
+            AddMapComponent(data);
+          }
           if (!event.polygons.length && !event.floatingLabels.length) {
-              if (!currentJourney.length) {
+            if (!currentJourney.length) {
               setShowDestSearchBar(true);
               setShowStartSearchBar(false);
               setShowLocationInfo(false);
@@ -139,7 +157,7 @@ export default function MapPage() {
                 icon:''
               });
               if (onClickListener.current) onClickListener.current = false;
-              };
+            };
           };
 
           if (event.polygons.length && !currentJourney.length) {
@@ -158,7 +176,6 @@ export default function MapPage() {
               return;
             };
             if (!onClickListener.current) {
-                console.log('no click listener');
                 setSelectedLocation(locationData);
                 setShowLocationInfo(true);
                 setShowDestSearchBar(false);
@@ -314,8 +331,16 @@ export default function MapPage() {
     }
   }
 
-  async function GetMapComponents () {
-    const query = `query{
+  async function GetComponents () {
+    const query = `query {
+      getComponents (jwt:"${jwt.current}") {
+        componentId
+        categoryName
+        componentType
+        componentName
+        componentIcon
+        componentColor
+      }
       getMapComponents (jwt:"${jwt.current}", facilityId:${location.state.facilityId}) {
         components {
           id
@@ -346,6 +371,7 @@ export default function MapPage() {
       body:JSON.stringify({query})
     });
     const componentResponse = await componentRequest.json();
+    if (componentResponse.data.getComponents) setComponents(componentResponse.data.getComponents);
     if (componentResponse.data.getMapComponents) {
       componentResponse.data.getMapComponents.components.forEach(component => {
         const floor = component.floor ? component.floor - 1:0;
@@ -381,6 +407,38 @@ export default function MapPage() {
       });
     };
     if (componentResponse.errors) {};
+  };
+
+  async function AddMapComponent(componentData) {
+    setShowNotification(false);
+    const query = `
+      mutation ($token:String!, $data: NewMapComponent!) {
+        addMapComponent(jwt: $token, component: $data) {
+          success
+          message
+        }
+      }
+    `;
+
+    const addRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api`,{
+      mode:'cors',
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        Accept:'application/json',
+        Authorization:`Bearer ${jwt.current}`
+      },
+      body:JSON.stringify({
+        query,
+        variables: { 
+          data: componentData,
+          token: jwt.current
+        }
+      })
+    });
+    const addResponse = await addRequest.json();
+    if (addResponse.data.addMapComponent.success) GetComponents();
+    addComponentListener.current = {listening: false, componentId:-1};
   };
 
   function handleRightPaneView(pane, state) {
@@ -528,6 +586,26 @@ export default function MapPage() {
   return (
     <>
       <GlobalHeader isAuth={true}/>
+        {
+          showNotification && (
+          <div className='mapNotification'>
+            <ActionableNotification
+              inline
+              hideCloseButton
+              actionButtonLabel="Cancel"
+              aria-label="cancels action"
+              kind="warning"
+              statusIconDescription="notification"
+              subtitle="Click the map to add the component"
+              title="Add Map Component"
+              onActionButtonClick={() => {
+                addComponentListener.current = {listening: false, componentId:-1}
+                setShowNotification(false);
+              }}
+            />
+          </div>
+          )
+        }
       <Loading active={contentLoading} description='Loading...'/>
       <div id='mapControls'>
         {levels && (
@@ -773,12 +851,11 @@ export default function MapPage() {
                               });
                             }}
                             children="Back"
-                          /> 
+                          />
                           <Button 
                             renderIcon={Location}
                             onClick={() => {
                               onClickListener.current = true;
-                              console.log("directions button clicked.")
                               setShowLocationInfo(false);
                               setShowDestSearchBar(true);
                               setShowStartSearchBar(true);
@@ -786,6 +863,9 @@ export default function MapPage() {
                             children="Directions"
                             />
                         </ButtonSet>
+                        <div style={{paddingTop:'1rem',width:'20rem',display:'flex',justifyContent:'center'}}>
+                          <Button kind='danger' renderIcon={TrashCan}>Remove</Button>
+                          </div>
                       </div>
                     </Stack>
                   </>
@@ -822,7 +902,8 @@ export default function MapPage() {
                 <p><strong>Map Options</strong></p>
               </div>
             </div>
-            <div style={{paddingBottom:'1rem'}}>
+            <SideNavDivider/>
+            <div id="mapOptionsCheckBoxes" style={{paddingBottom:'1rem'}}>
               <Checkbox.Group onChange={event => handleCheckboxChange(event)}>
                 <div style={{display:'grid',marginLeft:'1rem'}}>
                   <div>
@@ -834,7 +915,8 @@ export default function MapPage() {
                 </div>
               </Checkbox.Group>
             </div>
-            <div>
+            <SideNavDivider/>
+            <div id="mapOptionsToggle">
               <Toggle
                 id="stackedMapsToggle"
                 labelText='Stacked Maps'
@@ -847,6 +929,26 @@ export default function MapPage() {
                     mapView.StackedMaps.disable();
                 }}
               />
+            </div>
+            <SideNavDivider/>
+            <div id="mapOptionsAddComponent">
+              <Layer>
+                <ContainedList label="Add Component">
+                  <Search>
+
+                  </Search>
+                  {components && (
+                    components.map(component => (
+                      <ContainedListItem onClick={() => {
+                      setShowNotification(true);
+                      handleRightPaneView("options","close")
+                      addComponentListener.current = {listening: true, componentId:component.componentId};
+                      console.log(addComponentListener);
+                      }}>{component.componentName} {component.componentType ? `(${component.componentType})`:null}</ContainedListItem>
+                    ))
+                  )}
+                </ContainedList>
+              </Layer>
             </div>
           </div>
         </div>

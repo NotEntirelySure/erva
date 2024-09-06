@@ -137,7 +137,7 @@ export default function RegistrationPage() {
         password:passwordRef.current.value,
         confirmPassword:confirmPasswordRef.current.value,
         otp:otpRef.current.value,
-        otpsecret:qrCode.secret.base32
+        otpsecret:qrCode.secret
       };
       console.log(payload);
       
