@@ -17,10 +17,10 @@
 }
 
 #mapControls {
-  position: absolute;
+  position: fixed;
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  align-items:center;
+  gap: 1.5rem;
   top: 3.5rem;
   right:3rem;
   z-index: 3;
@@ -96,7 +96,7 @@
 }
 
 .rightPane {
-  position: absolute;
+  position: fixed;
   opacity: 0.95;
   display: grid;
   right: 1rem;
@@ -144,4 +144,8 @@
 .stepInstruction {
   font-weight: bold;
   font-size: 125%;
+}
+
+#mapOptionsAddComponent {
+  margin-top: 1rem;
 }

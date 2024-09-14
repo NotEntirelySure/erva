@@ -4,7 +4,6 @@ import { Layout } from 'antd';
 
 import WithAuth from './components/ProtectedRoute/WithAuth.js';
 import LandingPage from './content/LandingPage';
-import AboutUsPage from './content/AboutUsPage/AboutUsPage';
 import RegistrationPage from './content/RegistrationPage';
 import AccountVerificationPage from './content/AccountVerification';
 import ForgotPasswordPage from './content/ForgotPasswordPage/ForgotPasswordPage';
@@ -21,7 +20,6 @@ export default function App() {
       <Content>
         <Routes>
           <Route exact path="/" element={<LandingPage/>}/>
-          <Route path="/aboutus" element={<AboutUsPage/>}/>
           <Route path="/register" element={<RegistrationPage/>}/>
           <Route path="/verifyaccount" element={<AccountVerificationPage/>}/>
           <Route path="/forgotpassword" element={<ForgotPasswordPage/>}/>

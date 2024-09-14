@@ -15,25 +15,27 @@ import "@mappedin/mappedin-js/lib/mappedin.css";
 import {
   Checkbox,
   Divider,
-  List,
-  Tooltip
+  List
 } from 'antd';
 import {
   CloseOutlined
 } from '@ant-design/icons';
 import {
+  Accordion,
+  AccordionItem,
   ActionableNotification,
   Button,
   ButtonSet,
   ContainedList,
   ContainedListItem,
   Content,
+  ClickableTile,
   Dropdown,
   DropdownSkeleton,
   IconButton,
   Layer,
-  ListItem,
   Loading,
+  Modal,
   Search,
   SideNavDivider,
   Stack,
@@ -41,11 +43,12 @@ import {
   Toggle
 } from '@carbon/react';
 import {
+  Add,
   CloseOutline,
   Location,
   LocationFilled,
   NavaidMilitaryCivil,
-  SearchLocate,
+  RightPanelCloseFilled,
   SettingsAdjust,
   SidePanelCloseFilled,
   SidePanelOpenFilled,
@@ -92,6 +95,7 @@ export default function MapPage() {
   const [destSearchResults, setDestSearchResults] = useState([]);
   const [showStartSearchBar, setShowStartSearchBar] = useState(false);
   const [showLocationInfo, setShowLocationInfo] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [startLocation, setStartLocation] = useState({name:'',polygonId:''});
   const [directionsInstructions, setDirectionsInstructions] = useState([]);
   const [displayTbtDirections, setDisplayTbtDirections] = useState(false);
@@ -122,18 +126,17 @@ export default function MapPage() {
   useEffect(() => {
     loadMap();
   },[]);
-
-  useEffect(()=>{console.log(components)},[components]);
+  
   useEffect(() => {getDirections();},[startLocation]);
   useEffect(() => {
     if (mapView) {
+      mapView.StackedMaps.enable({verticalDistanceBetweenMaps: 125})
       try {
         GetComponents();
         mapView.addInteractivePolygonsForAllLocations();
         mapView.labelAllLocations({flatLabels: true})
         mapView.on(E_SDK_EVENT.CLICK, event => {
           if (addComponentListener.current.listening) {
-            console.log(event);
             const data = {
               floor:event.maps[0].elevation + 1,
               lat:event.position.latitude,
@@ -179,7 +182,7 @@ export default function MapPage() {
                 setSelectedLocation(locationData);
                 setShowLocationInfo(true);
                 setShowDestSearchBar(false);
-                handleSideNavView("open");
+                handlePaneView("left","open");
               if (event.polygons[0].id !== selectedPolygon.current.id) mapView.clearPolygonColor(selectedPolygon.current);
               mapView.setPolygonColor(event.polygons[0], "#BF4320");
               mapView.Camera.focusOn(
@@ -222,11 +225,11 @@ export default function MapPage() {
             );
             setSelectedLocation({
               ...mapComponents.current[event.floatingLabels[0].id],
-              polygonId:event.floatingLabels[0].id
+              polygonId:event.floatingLabels[0].id,
             }); 
             setShowLocationInfo(true);
             setShowDestSearchBar(false);
-            handleSideNavView("open");
+            handlePaneView("left","open");
           };
           if (onClickListener.current) onClickListener.current = false;
         });
@@ -319,38 +322,17 @@ export default function MapPage() {
     setContentLoading(false);
   }
 
-  const handleSideNavView = (state) => {
-
-    if (state === "open") {
-      setSideNavPosition('translate(0rem,0rem)')
-      setSideNavArrowPosition('translate(-10rem,0rem)')
-    }
-    if (state === "close") {
-      setSideNavPosition('translate(-25rem,0rem)')
-      setSideNavArrowPosition('translate(9rem,0rem)')
-    }
-  }
-
   async function GetComponents () {
+    
     const query = `query {
       getComponents (jwt:"${jwt.current}") {
-        componentId
-        categoryName
-        componentType
-        componentName
-        componentIcon
-        componentColor
-      }
-      getMapComponents (jwt:"${jwt.current}", facilityId:${location.state.facilityId}) {
         components {
-          id
-          type
-          color
-          name
-          lat
-          long
-          floor
-          icon
+          componentId
+          categoryName
+          componentType
+          componentName
+          componentIcon
+          componentColor
         }
         svgData {
           success
@@ -358,6 +340,16 @@ export default function MapPage() {
           data
           name
         }
+      }
+      getMapComponents (jwt:"${jwt.current}", facilityId:${location.state.facilityId}) {
+        id
+        type
+        color
+        name
+        lat
+        long
+        floor
+        icon
       }
     }`;
     const componentRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api`,{
@@ -371,13 +363,23 @@ export default function MapPage() {
       body:JSON.stringify({query})
     });
     const componentResponse = await componentRequest.json();
-    if (componentResponse.data.getComponents) setComponents(componentResponse.data.getComponents);
+    
+    if (componentResponse.data.getComponents) {
+      const svgs = componentResponse.data.getComponents.svgData.map(item => (
+        {
+          icon:item.name,
+          data:atob(item.data)
+        }
+      ));
+      svgData.current = svgs;
+      setComponents(componentResponse.data.getComponents.components);
+    };
+
     if (componentResponse.data.getMapComponents) {
-      componentResponse.data.getMapComponents.components.forEach(component => {
+      mapView.FloatingLabels.removeAll();
+      componentResponse.data.getMapComponents.forEach(component => {
         const floor = component.floor ? component.floor - 1:0;
         const coordinate = venue.maps[floor].createCoordinate(component.lat, component.long);
-        const base64Data = componentResponse.data.getMapComponents.svgData.find(svg => svg.name === component.icon).data
-        const svg = atob(base64Data)
         const label = mapView.FloatingLabels.add(
           coordinate,
           component.name, {
@@ -393,17 +395,12 @@ export default function MapPage() {
                   active: component.color,
                   inactive: "transparent",
                 },
-                icon:svg
+                icon:svgData.current.find(svg => svg.icon === component.icon).data
               },
             }
           }
-        )
-
+        );
         mapComponents.current[label.id] = {...component, source:"marker"};
-        if (!svgData.current.some(svg => svg.icon === component.icon)) svgData.current.push({
-          icon:component.icon,
-          data:svg
-        });
       });
     };
     if (componentResponse.errors) {};
@@ -441,9 +438,55 @@ export default function MapPage() {
     addComponentListener.current = {listening: false, componentId:-1};
   };
 
-  function handleRightPaneView(pane, state) {
+  async function DeleteMapComponent () {
+    setDeleteModalOpen(false);
+    if (selectedLocation.id && selectedLocation.source === "marker") {
+      const query = `
+        mutation ($token:String!, $data: Int!) {
+          deleteMapComponent(jwt: $token, componentId: $data) {
+            success
+            message
+          }
+        }
+      `;
+
+      const deleteRequest = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api`,{
+        mode:'cors',
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          Accept:'application/json',
+          Authorization:`Bearer ${jwt.current}`
+        },
+        body:JSON.stringify({
+          query,
+          variables: { 
+            data: parseInt(selectedLocation.id),
+            token: jwt.current
+          }
+        })
+      });
+      const deleteResponse = await deleteRequest.json();
+      if (deleteResponse.data.deleteMapComponent.success) GetComponents();
+
+    };
+  };
+
+  function handlePaneView(pane, state) {
     switch (pane) {
-      case "options":
+      case "left":
+        switch (state) {
+          case "open":
+            setSideNavPosition('translate(0rem,0rem)');
+            setSideNavArrowPosition('translate(-10rem,0rem)');
+            break;
+          case "close":
+            setSideNavPosition('translate(-25rem,0rem)');
+            setSideNavArrowPosition('translate(9rem,0rem)');
+            break;
+        };
+        break;
+      case "right":
         switch (state) {
           case "open":
             setMapOptionsPosition('translate(0rem,0rem)');
@@ -453,16 +496,46 @@ export default function MapPage() {
             break;
         };
         break;
-      case "info":
-        switch (state) {
-          case "open":
-            setMapOptionsPosition('translate(25rem,0rem)');
-            break;
-          case "close":
-            break;
-        };
-        break;
     };
+  };
+
+  function BuildComponentOptions() {
+    const categories = [...new Set(components.map(obj => obj.categoryName))].sort();
+    return (
+      <>
+        <Layer>
+          <Accordion size='lg'>
+            {categories.map(category => (
+              <AccordionItem title={category}>
+                <div style={{display:'grid', gridTemplateColumns:'repeat(2,0.5fr)', padding:"0.5rem 0rem 0.5rem 0rem"}}>
+                  {components.map(component => {
+                    if (component.categoryName === category) return (
+                      <ClickableTile
+                        style={{backgroundColor:`${component.componentColor}`}} 
+                        onClick={() => {
+                          setShowNotification(true);
+                          handlePaneView("right","close")
+                          addComponentListener.current = {listening: true, componentId:component.componentId};
+                        }}
+                        children={
+                          <>
+                            <div style={{display:'flex', flexDirection:'column', alignItems:'center'}}>
+                              <div><strong>{component.componentName}</strong></div>
+                              <div><svg width="3rem" height="3rem" dangerouslySetInnerHTML={{__html: `${svgData.current.find(svg => svg.icon === component.componentIcon).data}`}}/></div>
+                              <div><strong>{component.componentType ? `(${component.componentType})`:null}</strong></div>
+                            </div>
+                          </>
+                        }
+                      />
+                    );
+                  })}
+                </div>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </Layer>
+      </>
+    );
   };
 
   async function searchDirectory (source, searchValue) {
@@ -493,7 +566,7 @@ export default function MapPage() {
           polygonId:0
         });
       };
-      if (source === "start") {setStartSearchResults(filteredResults)};
+      if (source === "start") setStartSearchResults(filteredResults);
       if (source === "end") setDestSearchResults(filteredResults);
     };
   };
@@ -555,34 +628,6 @@ export default function MapPage() {
     };
   };
 
-  function handleCheckboxChange(value) {
-    const safePolygons = [
-      "62042759e325474a3000002b",
-      "62042759e325474a3000001d",
-      "62051551e325474a30001088"
-    ];
-    const defensePolygons = [
-      "62042759e325474a30000092",
-      "62042759e325474a3000008d",
-      "62042759e325474a30000018",
-      "62042759e325474a3000002f",
-      "62051551e325474a300010ad",
-      "62051551e325474a30001087"
-    ]
-    if (value.length > 0) {
-      value.includes("safe") ?
-        safePolygons.forEach(polygon => mapView.setPolygonColor(polygon, "#03730B")):
-        safePolygons.forEach(polygon => mapView.clearPolygonColor(polygon));
-      (value.includes("defense")) ?
-        defensePolygons.forEach(polygon => mapView.setPolygonColor(polygon, "#A10808")):
-        defensePolygons.forEach(polygon => mapView.clearPolygonColor(polygon));
-    };
-    if (value.length === 0 ) {
-      safePolygons.forEach(polygon => mapView.clearPolygonColor(polygon));
-      defensePolygons.forEach(polygon => mapView.clearPolygonColor(polygon));
-    }
-  };
-
   return (
     <>
       <GlobalHeader isAuth={true}/>
@@ -623,18 +668,31 @@ export default function MapPage() {
         <IconButton
           closeOnActivation={true}
           hasIconOnly={true}
-          renderIcon={SettingsAdjust}
-          label='Map Options'
+          renderIcon={Add}
+          label='Add Component'
           align='bottom'
-          onClick={() => handleRightPaneView("options","open")}
+          onClick={() => handlePaneView("right","open")}
         />
       </div>
+      <Modal
+        danger
+        size='sm'
+        modalHeading="Confirm Delete"
+        open={deleteModalOpen}
+        primaryButtonText='Delete'
+        secondaryButtonText='Cancel'
+        onRequestClose={() => setDeleteModalOpen(false)}
+        onRequestSubmit={() => DeleteMapComponent()}
+        children="Are you sure you want to delete this component?"
+      >
+
+      </Modal>
       <Content>
         <div>
           <div 
             className='openSideNavArrow'
             style={{transform: sideNavArrowPosition}}
-            onClick={() => handleSideNavView("open")}
+            onClick={() => handlePaneView("left","open")}
           >
             <SidePanelOpenFilled size={26}/>
           </div>
@@ -647,7 +705,7 @@ export default function MapPage() {
                   renderIcon={SidePanelCloseFilled}
                   label='Close'
                   align='top'
-                  onClick={() => handleSideNavView("close")}
+                  onClick={() => handlePaneView("left","close")}
                   children="Close"
                 />
               </div>
@@ -861,11 +919,22 @@ export default function MapPage() {
                               setShowStartSearchBar(true);
                             }}
                             children="Directions"
-                            />
+                          />
                         </ButtonSet>
-                        <div style={{paddingTop:'1rem',width:'20rem',display:'flex',justifyContent:'center'}}>
-                          <Button kind='danger' renderIcon={TrashCan}>Remove</Button>
-                          </div>
+                        {
+                          selectedLocation.source === "marker" ? 
+                          <>
+                          <ButtonSet style={{paddingTop:"0.25rem"}}>
+                          <Button 
+                            kind='danger'
+                            renderIcon={TrashCan}
+                            children="Delete"
+                            onClick={() => {setDeleteModalOpen(true)}}
+                            />
+                          </ButtonSet>
+                            </>:
+                            null
+                        }
                       </div>
                     </Stack>
                   </>
@@ -896,58 +965,22 @@ export default function MapPage() {
           <div className='rightPane' style={{transform: mapOptionsPosition}}>
             <div style={{display:'flex',gap:'2rem'}}>
               <div>
-                <CloseOutlined id="closeMapOptionsButton" onClick={() => handleRightPaneView("options","close")}/>
+              <Button
+                  size='sm'
+                  kind='ghost'
+                  closeOnActivation={true}
+                  renderIcon={RightPanelCloseFilled}
+                  label='Close'
+                  align='top'
+                  onClick={() => handlePaneView("right","close")}
+                  children="Close"
+                />
               </div>
-              <div>
-                <p><strong>Map Options</strong></p>
-              </div>
             </div>
-            <SideNavDivider/>
-            <div id="mapOptionsCheckBoxes" style={{paddingBottom:'1rem'}}>
-              <Checkbox.Group onChange={event => handleCheckboxChange(event)}>
-                <div style={{display:'grid',marginLeft:'1rem'}}>
-                  <div>
-                    <Checkbox value="safe">Safe Room Locations</Checkbox>
-                  </div>
-                  <div>
-                    <Checkbox value="defense">ERVA Defense</Checkbox>
-                  </div>
-                </div>
-              </Checkbox.Group>
-            </div>
-            <SideNavDivider/>
-            <div id="mapOptionsToggle">
-              <Toggle
-                id="stackedMapsToggle"
-                labelText='Stacked Maps'
-                onToggle={toggled => {
-                  toggled ? 
-                    mapView.StackedMaps.enable({
-                      verticalDistanceBetweenMaps: 125
-                    })
-                  :
-                    mapView.StackedMaps.disable();
-                }}
-              />
-            </div>
-            <SideNavDivider/>
             <div id="mapOptionsAddComponent">
               <Layer>
-                <ContainedList label="Add Component">
-                  <Search>
-
-                  </Search>
-                  {components && (
-                    components.map(component => (
-                      <ContainedListItem onClick={() => {
-                      setShowNotification(true);
-                      handleRightPaneView("options","close")
-                      addComponentListener.current = {listening: true, componentId:component.componentId};
-                      console.log(addComponentListener);
-                      }}>{component.componentName} {component.componentType ? `(${component.componentType})`:null}</ContainedListItem>
-                    ))
-                  )}
-                </ContainedList>
+                <ContainedList label="Add Map Component"/>
+                <BuildComponentOptions/>
               </Layer>
             </div>
           </div>
