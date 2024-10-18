@@ -189,11 +189,3 @@ app.delete('/facilities/deleteimage', (req, res) => {
 app.listen(process.env.API_BASE_LISTENING_PORT, () => {
   console.log(`App running on port ${process.env.API_BASE_LISTENING_PORT}.`)
 })
-
-// https.createServer(
-//   {
-//     pfx:fs.readFileSync('C:/ErvaAPI/APICert.pfx'),
-//     passphrase:'14ug5YO@vb_=7iXr'
-//   },
-//   app
-// ).listen(process.env.API_BASE_LISTENING_PORT, () => {console.log(`Secure API running on port ${process.env.API_BASE_LISTENING_PORT}.`)})
