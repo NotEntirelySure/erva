@@ -1,7 +1,7 @@
 #Enter the following command into the postgres SQL shell prompt:
 
 CREATE DATABASE erva;
-CREATE USER superuser WITH ENCRYPTED PASSWORD 'root';
+CREATE USER superuser WITH ENCRYPTED PASSWORD '[redacted]';
 
 #Log into the newly-created erva database with the following command:
 
